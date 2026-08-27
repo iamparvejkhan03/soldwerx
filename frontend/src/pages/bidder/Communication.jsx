@@ -1,0 +1,472 @@
+import { useState, useEffect, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
+import { BidderSidebar, BidderHeader, BidderContainer, LoadingSpinner, AccountInactiveBanner } from "../../components";
+import axiosInstance from "../../utils/axiosInstance";
+import {
+    ArrowLeft,
+    Send,
+    Paperclip,
+    Download,
+    User,
+    Truck,
+    Package,
+    Calendar,
+    Info,
+    Edit3,
+} from "lucide-react";
+import { format } from "date-fns";
+
+const Communication = () => {
+    const { auctionId } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [communication, setCommunication] = useState(null);
+    const [newMessage, setNewMessage] = useState("");
+    const [attachments, setAttachments] = useState([]);
+    const [sending, setSending] = useState(false);
+    const [shippingForm, setShippingForm] = useState({
+        company: "",
+        trackingNumber: "",
+        estimatedDelivery: "",
+        notes: "",
+    });
+    const [updatingShipping, setUpdatingShipping] = useState(false);
+    const [user, setUser] = useState(null); // current user role
+    const fileInputRef = useRef(null);
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        fetchCommunication();
+        // Get current user from context or localStorage
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        setUser(userData);
+    }, []);
+
+    useEffect(() => {
+        if (communication) {
+            scrollToBottom();
+            // Mark messages as read
+            markRead();
+        }
+    }, [communication]);
+
+    const fetchCommunication = async () => {
+        try {
+            setLoading(true);
+            const { data } = await axiosInstance.get(`/api/v1/communication/${auctionId}`);
+            if (data.success) {
+                setCommunication(data.data);
+                // Populate shipping form
+                if (data.data.shippingInfo) {
+                    setShippingForm({
+                        company: data.data.shippingInfo.company || "",
+                        trackingNumber: data.data.shippingInfo.trackingNumber || "",
+                        estimatedDelivery: data.data.shippingInfo.estimatedDelivery
+                            ? format(new Date(data.data.shippingInfo.estimatedDelivery), "yyyy-MM-dd")
+                            : "",
+                        notes: data.data.shippingInfo.notes || "",
+                    });
+                }
+            } else {
+                setError("Failed to load communication");
+            }
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.message || "Error loading communication");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const markRead = async () => {
+        try {
+            await axiosInstance.post(`/api/v1/communication/${auctionId}/read`);
+        } catch (err) {
+            console.error("Mark read error:", err);
+        }
+    };
+
+    const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!newMessage.trim() && attachments.length === 0) return;
+
+        setSending(true);
+        const formData = new FormData();
+        formData.append("content", newMessage);
+        attachments.forEach((file) => {
+            formData.append("attachments", file);
+        });
+
+        try {
+            const { data } = await axiosInstance.post(
+                `/api/v1/communication/${auctionId}/message`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
+            if (data.success) {
+                setCommunication(data.data);
+                setNewMessage("");
+                setAttachments([]);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            } else {
+                alert("Failed to send message");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error sending message");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setAttachments((prev) => [...prev, ...files]);
+    };
+
+    const removeAttachment = (index) => {
+        setAttachments((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleShippingUpdate = async (e) => {
+        e.preventDefault();
+        setUpdatingShipping(true);
+        try {
+            const payload = {
+                company: shippingForm.company,
+                trackingNumber: shippingForm.trackingNumber,
+                estimatedDelivery: shippingForm.estimatedDelivery || undefined,
+                notes: shippingForm.notes,
+            };
+            const { data } = await axiosInstance.put(
+                `/api/v1/communication/${auctionId}/shipping`,
+                payload
+            );
+            if (data.success) {
+                setCommunication(data.data);
+                alert("Shipping info updated");
+            } else {
+                alert("Failed to update shipping");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error updating shipping");
+        } finally {
+            setUpdatingShipping(false);
+        }
+    };
+
+    const isSeller = user?.userType === "seller";
+    const isAdmin = user?.userType === "admin";
+    const canEditShipping = isSeller || isAdmin;
+
+    if (loading) {
+        return (
+            <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+                <BidderSidebar />
+                <div className="w-full relative">
+                    <BidderHeader />
+                    <BidderContainer>
+                        <div className="flex justify-center items-center min-h-96">
+                            <LoadingSpinner />
+                        </div>
+                    </BidderContainer>
+                </div>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+                <BidderSidebar />
+                <div className="w-full relative">
+                    <BidderHeader />
+                    <BidderContainer>
+                        <AccountInactiveBanner />
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                            <p className="text-red-600">{error}</p>
+                            <button
+                                onClick={fetchCommunication}
+                                className="mt-4 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    </BidderContainer>
+                </div>
+            </section>
+        );
+    }
+
+    if (!communication) return null;
+
+    const { messages, shippingInfo, seller, winningBidder, auction } = communication;
+
+    return (
+        <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+            <BidderSidebar />
+            <div className="w-full relative">
+                <BidderHeader />
+                <BidderContainer>
+                    <AccountInactiveBanner />
+
+                    {/* Header with back button */}
+                    <div className="flex items-center gap-4 mb-6 mt-16 md:mt-0">
+                        <Link
+                            to={isSeller ? "/seller/auctions/sold" : "/bidder/auctions/won"}
+                            className="p-2 bg-white rounded-full shadow hover:shadow-md transition"
+                        >
+                            <ArrowLeft size={20} className="text-gray-700" />
+                        </Link>
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800">Communication</h2>
+                            <p className="text-sm text-gray-500">
+                                Auction: <span className="font-medium">{auction?.title || "N/A"}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Main chat area */}
+                        <div className="lg:col-span-2 bg-white rounded-xl shadow border border-gray-200 flex flex-col h-[600px]">
+                            {/* Messages container */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {messages.length === 0 ? (
+                                    <div className="text-center text-gray-500 py-8">
+                                        <p>No messages yet. Start the conversation!</p>
+                                    </div>
+                                ) : (
+                                    messages.map((msg, idx) => {
+                                        const isCurrentUser = msg.sender._id === user?._id;
+                                        const senderName = msg.sender?.firstName
+                                            ? `${msg.sender.firstName} ${msg.sender.lastName || ""}`
+                                            : msg.sender?.username || "Unknown";
+                                        const roleLabel = msg.senderRole === "seller" ? "Seller" :
+                                            msg.senderRole === "admin" ? "Admin" : "Bidder";
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                                            >
+                                                <div ref={messagesEndRef} />
+                                                <div
+                                                    className={`max-w-[75%] rounded-lg p-3 ${isCurrentUser
+                                                        ? "bg-[#C59D55] text-white"
+                                                        : "bg-gray-100 text-gray-800"
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-2 text-xs mb-1">
+                                                        <span className="font-semibold">{senderName}</span>
+                                                        <span className="text-gray-600 dark:text-gray-600">•</span>
+                                                        {/* <span className="text-gray-600 dark:text-gray-600">{roleLabel}</span>
+                                                        <span className="text-gray-600 dark:text-gray-600">•</span> */}
+                                                        <span className="text-gray-600 dark:text-gray-600">
+                                                            {format(new Date(msg.createdAt), "MMM d, h:mm a")}
+                                                        </span>
+                                                    </div>
+                                                    {msg.content && <p className="text-sm break-words">{msg.content}</p>}
+                                                    {msg.attachments.length > 0 && (
+                                                        <div className="mt-2 space-y-1">
+                                                            {msg.attachments.map((att, i) => (
+                                                                <a
+                                                                    key={i}
+                                                                    href={att.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 text-sm underline hover:text-blue-600 transition"
+                                                                >
+                                                                    <Download size={14} />
+                                                                    <span>{att.originalName}</span>
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {/* Message input */}
+                            <form
+                                onSubmit={handleSendMessage}
+                                className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-xl"
+                            >
+                                <div className="flex items-center flex-wrap gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Ask anything..."
+                                        className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#C59D55] focus:border-transparent"
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        disabled={sending}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current.click()}
+                                        className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                                    >
+                                        <Paperclip size={20} />
+                                    </button>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        className="hidden"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={sending || (!newMessage.trim() && attachments.length === 0)}
+                                        className="bg-[#C59D55] text-white px-4 py-2 rounded-lg hover:bg-[#C59D55]/90 transition disabled:opacity-50 flex items-center gap-2 grow sm:grow-0 w-auto justify-center"
+                                    >
+                                        <Send size={18} />
+                                        Send
+                                    </button>
+                                </div>
+                                {attachments.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {attachments.map((file, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded-full px-2 py-1 text-xs"
+                                            >
+                                                <span className="truncate max-w-[120px]">{file.name}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeAttachment(idx)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+
+                        {/* Right sidebar: Auction & Shipping info */}
+                        <div className="space-y-6">
+                            {/* Shipping Info */}
+                            <div className="bg-white rounded-xl shadow border border-gray-200 p-4">
+                                <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <Truck size={18} /> Shipping Information
+                                </h3>
+                                {canEditShipping ? (
+                                    <form onSubmit={handleShippingUpdate} className="space-y-3">
+                                        <div>
+                                            <label className="block text-sm text-gray-600">Courier / Company</label>
+                                            <input
+                                                type="text"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                value={shippingForm.company}
+                                                onChange={(e) =>
+                                                    setShippingForm({ ...shippingForm, company: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600">Tracking Number</label>
+                                            <input
+                                                type="text"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                value={shippingForm.trackingNumber}
+                                                onChange={(e) =>
+                                                    setShippingForm({ ...shippingForm, trackingNumber: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600">Estimated Delivery</label>
+                                            <input
+                                                type="date"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                value={shippingForm.estimatedDelivery}
+                                                onChange={(e) =>
+                                                    setShippingForm({ ...shippingForm, estimatedDelivery: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-600">Notes</label>
+                                            <textarea
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                rows="2"
+                                                value={shippingForm.notes}
+                                                onChange={(e) =>
+                                                    setShippingForm({ ...shippingForm, notes: e.target.value })
+                                                }
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={updatingShipping}
+                                            className="w-full bg-[#C59D55] text-white py-2 rounded-lg hover:bg-[#C59D55]/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            <Edit3 size={16} />
+                                            Update Shipping
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <div className="text-sm space-y-2">
+                                        {shippingInfo?.company ? (
+                                            <>
+                                                <p><span className="text-gray-500">Courier:</span> {shippingInfo.company}</p>
+                                                <p><span className="text-gray-500">Tracking:</span> {shippingInfo.trackingNumber}</p>
+                                                {shippingInfo.estimatedDelivery && (
+                                                    <p><span className="text-gray-500">Est. Delivery:</span> {format(new Date(shippingInfo.estimatedDelivery), "MMM d, yyyy")}</p>
+                                                )}
+                                                {shippingInfo.notes && <p><span className="text-gray-500">Notes:</span> {shippingInfo.notes}</p>}
+                                                {shippingInfo.updatedBy && (
+                                                    <p className="text-xs text-gray-400">
+                                                        Updated by {shippingInfo.updatedBy.firstName || shippingInfo.updatedBy.username}
+                                                    </p>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="text-gray-500 italic">No shipping info yet.</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Auction summary */}
+                            <div className="bg-white rounded-xl shadow border border-gray-200 p-4">
+                                <h3 className="font-semibold text-gray-700 mb-2">Auction Details</h3>
+                                <div className="text-sm space-y-1">
+                                    <p><span className="text-gray-500">Title:</span> {auction?.title}</p>
+                                    <p><span className="text-gray-500">Final Price:</span> ${auction?.finalPrice?.toLocaleString()}</p>
+                                    <p><span className="text-gray-500">Status:</span> {auction?.status}</p>
+                                </div>
+                            </div>
+
+                            {/* Participants */}
+                            <div className="bg-white rounded-xl shadow border border-gray-200 p-4">
+                                <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                    <User size={18} /> Participants
+                                </h3>
+                                <div className="text-sm space-y-1">
+                                    <p><span className="text-gray-500">Seller:</span> {seller?.firstName || seller?.username}</p>
+                                    <p><span className="text-gray-500">Winning Bidder:</span> {winningBidder?.firstName || winningBidder?.username}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </BidderContainer>
+            </div>
+        </section>
+    );
+};
+
+export default Communication;

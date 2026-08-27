@@ -1,0 +1,698 @@
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, User, Phone, ChevronDown, Gavel, Store, Handshake, Upload, FileText, X, AlertCircle } from 'lucide-react';
+import { darkLogo } from '../assets';
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { useAuth } from '../contexts/AuthContext';
+import useCountryStates from '../hooks/useCountryStates';
+
+// Main Register component
+const Register = () => {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [userType, setUserType] = useState('bidder');
+    const navigate = useNavigate();
+    const { setUser, setLoading, user } = useAuth();
+    const countriesAPI = useCountryStates();
+    const [countries, setCountries] = useState([]);
+
+    const [identificationDocument, setIdentificationDocument] = useState(null);
+    const [identificationDocumentPreview, setIdentificationDocumentPreview] = useState(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [idVerificationError, setIdVerificationError] = useState('');
+    const [isCompleting, setIsCompleting] = useState(false);
+
+    useEffect(() => {
+        const fetchCountries = async () => {
+            setCountries(await countriesAPI())
+        }
+        fetchCountries()
+    }, [])
+
+    useEffect(() => {
+        if (user) {
+            navigate(`/${user.userType}/profile`);
+        }
+    }, [user])
+
+    const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
+        defaultValues: {
+            email: '',
+            phone: '',
+            password: '',
+            confirmPassword: '',
+            username: '',
+            firstName: '',
+            lastName: '',
+            // Add new address fields
+            dealershipName: '',
+            buildingNameNo: '',
+            street: '',
+            city: '',
+            county: '',
+            postCode: '',
+            country: '',
+            userType: 'bidder'
+        }
+    });
+
+    const password = watch('password');
+
+    // Update form value when userType changes
+    const handleUserTypeChange = (type) => {
+        setUserType(type);
+        setValue('userType', type);
+    };
+
+    const handleIdentificationDocumentChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('File size should be less than 5MB');
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                toast.error('Please upload JPG, PNG, or PDF files only');
+                return;
+            }
+
+            setIdentificationDocument(file);
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setIdentificationDocumentPreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setIdentificationDocumentPreview(null);
+            }
+        }
+    };
+
+    const removeIdentificationDocument = () => {
+        setIdentificationDocument(null);
+        setIdentificationDocumentPreview(null);
+        document.getElementById('identificationDocument').value = '';
+    };
+
+    const hasCompleted = useRef(false);
+
+    const onSubmit = async (registrationData) => {
+        // Validate ID document
+        if (!identificationDocument) {
+            setIdVerificationError('Please upload an identification document');
+            toast.error('Identification document is required');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Step 1: Initiate registration
+            const formData = new FormData();
+            // Append all fields (same as before)
+            formData.append('firstName', registrationData.firstName);
+            formData.append('lastName', registrationData.lastName);
+            formData.append('email', registrationData.email);
+            formData.append('phone', registrationData.phone);
+            formData.append('password', registrationData.password);
+            formData.append('username', registrationData.username);
+            formData.append('countryCode', registrationData.country);
+            formData.append('countryName', countries.find(c => c.code === registrationData.country)?.name || registrationData.country);
+            formData.append('userType', registrationData.userType);
+            formData.append('street', registrationData.street);
+            formData.append('city', registrationData.city);
+            formData.append('postCode', registrationData.postCode);
+            formData.append('state', registrationData.state);
+            formData.append('country', countries.find(c => c.code === registrationData.country)?.name || registrationData.country);
+            formData.append('currency', registrationData.currency);
+
+            if (identificationDocument) {
+                formData.append('identificationDocument', identificationDocument);
+            }
+
+            // Send registration request
+            const { data } = await axios.post(
+                `${import.meta.env.VITE_DOMAIN_URL}/api/v1/users/register`,
+                formData,
+                {
+                    withCredentials: true,
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                }
+            );
+
+            if (data.success) {
+                const accessToken = data.data.accessToken;
+                const refreshToken = data.data.refreshToken;
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+                localStorage.setItem('user', JSON.stringify(data.data.user));
+
+                setUser(data.data.user);
+
+                const redirectPath = data.data.user.userType === 'seller'
+                    ? '/seller/dashboard'
+                    : '/bidder/dashboard';
+
+                navigate(redirectPath);
+                toast.success(data.message);
+            }
+
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Registration failed');
+            console.error('Registration error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen pt-32 pb-16 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
+                {/* Header */}
+                <div className="pt-8 text-center flex flex-col items-center justify-center gap-3">
+                    <img src={darkLogo} alt="logo" className='h-12' />
+                    <p className="text-black text-lg">Create your account</p>
+                </div>
+
+                {/* Registration Form */}
+                <div className="p-5 sm:p-8">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        {/* Account Information */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-800">Account Information</h3>
+
+                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4`}>
+                                <div className={`${errors.email && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Mail size={20} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="email"
+                                            {...register('email', {
+                                                required: 'Email is required',
+                                                pattern: {
+                                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                                    message: 'Invalid email address'
+                                                }
+                                            })}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Enter your email"
+                                        />
+                                        {errors.email && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.email.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className={`${errors.phone && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Phone *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Phone size={20} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            {...register('phone', {
+                                                required: 'Phone is required',
+                                                pattern: {
+                                                    value: /^[\d+\s()-]{10,15}$/,
+                                                    message: 'Please enter a valid phone number'
+                                                }
+                                            })}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="e.g., +471234567890"
+                                        />
+                                        {errors.phone && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.phone.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className={`${errors.password && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Password *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Lock size={20} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            {...register('password', {
+                                                required: 'Password is required',
+                                                minLength: { value: 6, message: 'Password must be at least 6 characters' }
+                                            })}
+                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Enter your password"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                                            ) : (
+                                                <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                                            )}
+                                        </button>
+                                        {errors.password && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.password.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className={`${errors.confirmPassword && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Confirm Password *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Lock size={20} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            {...register('confirmPassword', {
+                                                required: 'Please confirm your password',
+                                                validate: value => value === password || 'Passwords do not match'
+                                            })}
+                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Confirm your password"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                        >
+                                            {showConfirmPassword ? (
+                                                <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                                            ) : (
+                                                <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                                            )}
+                                        </button>
+                                        {errors.confirmPassword && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.confirmPassword.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Personal Information */}
+                        <div className="space-y-4 border-t pt-6">
+                            <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className={`${errors.firstName && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        First name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('firstName', {
+                                            required: 'First name is required',
+                                            minLength: { value: 2, message: 'First name must be at least 2 characters' }
+                                        })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="First name"
+                                    />
+                                    {errors.firstName && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.firstName.message}</p>
+                                    )}
+                                </div>
+
+                                <div className={`${errors.lastName && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Last name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('lastName', {
+                                            required: 'Last name is required',
+                                            minLength: { value: 2, message: 'Last name must be at least 2 characters' }
+                                        })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="Last name"
+                                    />
+                                    {errors.lastName && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.lastName.message}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Add new address fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Username field */}
+                                <div className={`${errors.username && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Username *
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <User size={20} className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            {...register('username', {
+                                                required: 'Username is required',
+                                                minLength: { value: 3, message: 'Username must be at least 3 characters' },
+                                                pattern: {
+                                                    value: /^[a-zA-Z0-9_]+$/,
+                                                    message: 'Username can only contain letters, numbers, and underscores'
+                                                }
+                                            })}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="What others see when you bid"
+                                        />
+                                        {errors.username && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.username.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Dealership Name field */}
+                                {/* <div className={`${errors.dealershipName && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Dealership Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('dealershipName')}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="Dealership name (optional)"
+                                    />
+                                    {errors.dealershipName && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.dealershipName.message}</p>
+                                    )}
+                                </div> */}
+
+                                {/* Building Name/No field - spans full width on mobile, half on desktop */}
+                                {/* <div className="md:col-span-1">
+                                    <div className={`${errors.buildingNameNo && 'mb-3'}`}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Building Name/No
+                                        </label>
+                                        <input
+                                            type="text"
+                                            {...register('buildingNameNo', {
+                                                required: 'Building name/number is required'
+                                            })}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Building name or number"
+                                        />
+                                        {errors.buildingNameNo && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.buildingNameNo.message}</p>
+                                        )}
+                                    </div>
+                                </div> */}
+
+                                {/* Street field - spans full width on mobile, half on desktop */}
+                                {/* <div className="md:col-span-1">
+                                    <div className={`${errors.street && 'mb-3'}`}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Street
+                                        </label>
+                                        <input
+                                            type="text"
+                                            {...register('street', {
+                                                required: 'Street is required'
+                                            })}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="Street address"
+                                        />
+                                        {errors.street && (
+                                            <p className="text-red-500 text-sm mt-1 absolute">{errors.street.message}</p>
+                                        )}
+                                    </div>
+                                </div> */}
+
+                                {/* City field */}
+                                {/* <div className={`${errors.city && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        City
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('city', {
+                                            required: 'City is required'
+                                        })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="City"
+                                    />
+                                    {errors.city && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.city.message}</p>
+                                    )}
+                                </div> */}
+
+                                {/* County field */}
+                                {/* <div className={`${errors.county && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        County
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('county', {
+                                            required: 'County is required'
+                                        })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="County"
+                                    />
+                                    {errors.county && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.county.message}</p>
+                                    )}
+                                </div> */}
+
+                                {/* Post Code field */}
+                                {/* <div className={`${errors.postCode && 'mb-3'}`}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Post Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        {...register('postCode', {
+                                            required: 'Post code is required'
+                                        })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        placeholder="Postal code"
+                                    />
+                                    {errors.postCode && (
+                                        <p className="text-red-500 text-sm mt-1 absolute">{errors.postCode.message}</p>
+                                    )}
+                                </div> */}
+
+                                {/* Country field - spans full width on mobile, half on desktop */}
+                                <div className="md:col-span-1">
+                                    <div className={`${errors.country && 'mb-3'}`}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Country of residence
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                {...register('country', { required: 'Country is required' })}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
+                                            >
+                                                <option value="">Select country</option>
+                                                {countries.map(country => (
+                                                    <option key={country.code} value={country.code}>
+                                                        {country.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={20} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                                            {errors.country && (
+                                                <p className="text-red-500 text-sm mt-1 absolute">{errors.country.message}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* User Type Selection */}
+                        {/* <div className={`border-t pt-6 ${errors.email && 'mb-3'}`}>
+                            <label className="text-sm font-medium leading-none text-gray-700 flex items-center gap-2 mb-4">
+                                <User size={20} />
+                                <span>User Type</span>
+                            </label>
+
+                            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch gap-3 my-2">
+                                <label
+                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'bidder' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        value="bidder"
+                                        {...register('userType', { required: 'Please select user type' })}
+                                        className="hidden"
+                                        onChange={() => handleUserTypeChange('bidder')}
+                                    />
+                                    <Gavel size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'bidder' ? 'bg-[#C59D55] text-white' : 'bg-gray-200 text-gray-600'
+                                        }`} />
+                                    <div>
+                                        <p className="text-sm font-semibold">I'm a bidder</p>
+                                        <p className="text-sm text-gray-600">I want to bid on the listings on the platform.</p>
+                                    </div>
+                                </label>
+
+                                <label
+                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'seller' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        value="seller"
+                                        {...register('userType', { required: 'Please select user type' })}
+                                        className="hidden"
+                                        onChange={() => handleUserTypeChange('seller')}
+                                    />
+                                    <Store size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'seller' ? 'bg-[#C59D55] text-white' : 'bg-gray-200 text-gray-600'
+                                        }`} />
+                                    <div>
+                                        <p className="text-sm font-semibold">I'm a seller</p>
+                                        <p className="text-sm text-gray-600">I want to list things on the platform.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            {errors.userType && (
+                                <p className="text-red-500 text-sm mt-1 absolute">{errors.userType.message}</p>
+                            )}
+                        </div> */}
+
+                        {/* ID Verification Section */}
+                            <div id="id-verification-section" className="border-t border-gray-200 dark:border-bg-primary-light pt-6">
+                                <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Identity Verification <span className='text-red-600'>*</span></h3>
+                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-4">
+                                    Please upload a valid government-issued ID (Driver's License, Passport, or National ID Card)
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            id="identificationDocument"
+                                            accept=".jpg,.jpeg,.png,.pdf"
+                                            onChange={handleIdentificationDocumentChange}
+                                            className="hidden"
+                                        />
+
+                                        {!identificationDocument ? (
+                                            <label
+                                                htmlFor="identificationDocument"
+                                                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-bg-primary-light rounded-lg cursor-pointer hover:border-primary dark:hover:border-primary-dark hover:bg-blue-50 dark:hover:bg-bg-primary-light transition-colors"
+                                            >
+                                                <Upload size={24} className="text-bg-secondary-dark dark:text-gray-600 mb-2" />
+                                                <span className="text-sm text-text-secondary dark:text-text-secondary-dark">Click to upload or drag and drop</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">JPG, PNG, or PDF (Max 5MB)</span>
+                                            </label>
+                                        ) : (
+                                            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-bg-primary-light rounded-lg bg-gray-50 dark:bg-bg-primary-light">
+                                                <div className="flex items-center gap-3">
+                                                    {identificationDocument.type.startsWith('image/') && identificationDocumentPreview ? (
+                                                        <img
+                                                            src={identificationDocumentPreview}
+                                                            alt="ID Preview"
+                                                            className="w-12 h-12 object-cover rounded"
+                                                        />
+                                                    ) : (
+                                                        <FileText size={24} className="text-primary dark:text-primary-dark" />
+                                                    )}
+                                                    <div>
+                                                        <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark">{identificationDocument.name}</p>
+                                                        <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                                            {(identificationDocument.size / 1024 / 1024).toFixed(2)} MB
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={removeIdentificationDocument}
+                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                                >
+                                                    <X size={20} className="text-gray-500 dark:text-bg-secondary-dark" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {uploadProgress > 0 && uploadProgress < 100 && (
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                                            <div
+                                                className="bg-primary dark:bg-primary-dark h-2.5 rounded-full transition-all duration-300"
+                                                style={{ width: `${uploadProgress}%` }}
+                                            ></div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-bg-primary-light rounded-lg">
+                                        <AlertCircle size={20} className="text-blue-600 dark:text-blue-700 flex-shrink-0 mt-0.5" />
+                                        <p className="text-xs text-blue-700 dark:text-blue-700">
+                                            Your ID will be securely stored and verified. We use this to prevent fraud and ensure platform safety.
+                                            {userType === 'seller' && ' Sellers require ID verification to list items.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <div className={`${errors.termsConditions && 'mb-3'}`}>
+                            <label className='flex items-center gap-2'>
+                                <input
+                                    type="checkbox"
+                                    {...register('termsConditions', { required: 'Accepting terms of use is required for registration.' })}
+                                />
+
+                                <p className="text-sm text-gray-600">By registering, I agree to La-Boveda's <Link className='text-blue-600 underline' to={`/terms-of-use`}>Terms of Use</Link>. My information will be used as described in the <Link to={`/privacy-policy`} className='text-blue-600 underline'>Privacy Policy</Link>.</p>
+                            </label>
+                            {errors.termsConditions && (
+                                <p className="text-red-500 text-sm mt-1">{errors.termsConditions.message}</p>
+                            )}
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-[#C59D55] hover:bg-[#D8B96F] text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                        >
+                            {isLoading ? 'Creating account...' : 'Create Account'}
+                        </button>
+                    </form>
+
+                    {/* Already have account */}
+                    <div className="text-center mt-6">
+                        <p className="text-gray-600 text-sm">
+                            Already have an account?{' '}
+                            <Link to="/login" className="text-primary hover:text-primary-dark font-semibold underline">
+                                Sign in
+                            </Link>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-white px-4 pb-4 text-center">
+                    <p className="text-xs text-gray-500">
+                        © {new Date().getFullYear()} La-Boveda. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+export default Register;
