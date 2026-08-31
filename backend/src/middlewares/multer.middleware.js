@@ -43,7 +43,7 @@ const fileFilter = (req, file, cb) => {
         false,
       );
     }
-  } else if (file.fieldname === "icon" || file.fieldname === "image") {
+  } else if (file.fieldname === "icon" || file.fieldname === "image" || file.fieldname === 'event-photos') {
     // For category icons and images
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
@@ -53,7 +53,7 @@ const fileFilter = (req, file, cb) => {
         false
       );
     }
-  } else if (file.fieldname === "documents" || file.fieldname === "invoice") {
+  } else if (file.fieldname === "documents" || file.fieldname === "invoice" || file.fieldname === 'event-documents') {
     // ADDED 'invoice' here
     // Allow almost all file types for documents and invoices, but exclude executables and scripts
     const forbiddenTypes = [

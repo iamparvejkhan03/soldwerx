@@ -11,12 +11,12 @@ const SellerAgreement = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Seller Agreement</h1>
-                    <p className="text-gray-600 mb-6">La-Bóveda | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
 
                     <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
                         <p className="text-green-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
                         <p className="text-green-700 text-sm">
-                            This Seller Agreement governs all listings and sales made through La-Bóveda.
+                            This Seller Agreement governs all listings and sales made through SoldWerX.
                             By listing collectibles on our platform, you agree to be bound by this Agreement.
                         </p>
                     </div>
@@ -28,7 +28,7 @@ const SellerAgreement = () => {
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
-                                <strong>La-Bóveda</strong> ("we", "our", "us") and you, the seller ("Seller"),
+                                <strong>SoldWerX</strong> ("we", "our", "us") and you, the seller ("Seller"),
                                 enter into this Seller Agreement governing all collectibles listings and sales made through our platform.
                             </p>
                             <p className="text-gray-700">
@@ -40,7 +40,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>La-Bóveda is open to both trade sellers and private individuals</li>
+                                <li>SoldWerX is open to both trade sellers and private individuals</li>
                                 <li>Trade sellers include dealers, collectors, and memorabilia businesses</li>
                                 <li>All sellers must register and maintain accurate account information</li>
                                 <li>We reserve the right to verify identity and eligibility</li>
@@ -51,7 +51,7 @@ const SellerAgreement = () => {
                         {/* Section 2 - Seller Fees */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Seller Fees</h2>
-                            <p className="text-gray-700 mb-3">La-Bóveda charges a simple fee structure for sellers:</p>
+                            <p className="text-gray-700 mb-3">SoldWerX charges a simple fee structure for sellers:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
                                 <li><strong>Commission-based:</strong> 5% of the final sale price</li>
                             </ul>
@@ -74,12 +74,12 @@ const SellerAgreement = () => {
                                 <li>Providing clear, honest photographs</li>
                                 <li>Ensuring all descriptions are truthful and not misleading</li>
                                 <li>Responding to buyer questions through our secure communication window</li>
-                                <li>Managing their own listings without additional services from La-Bóveda</li>
+                                <li>Managing their own listings without additional services from SoldWerX</li>
                                 <li>Complying with all applicable laws</li>
                                 <li>Arranging delivery or collection with the buyer after payment is confirmed</li>
                             </ul>
                             <p className="text-gray-600 text-sm mt-3">
-                                La-Bóveda does not provide photography, inspection, or listing preparation services.
+                                SoldWerX does not provide photography, inspection, or listing preparation services.
                             </p>
                         </div>
 
@@ -135,11 +135,11 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">7. Payment to Sellers</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>La-Bóveda collects full payment from buyers via USD bank transfer</li>
+                                <li>SoldWerX collects full payment from buyers via USD bank transfer</li>
                                 <li>The 5% commission is deducted from the sale proceeds</li>
                                 <li>Payment to sellers is processed after:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
-                                    <li>• Buyer's payment has fully cleared into the La-Bóveda collection account</li>
+                                    <li>• Buyer's payment has fully cleared into the SoldWerX collection account</li>
                                     <li>• All transaction conditions are satisfied</li>
                                     <li>• No disputes or concerns are pending</li>
                                 </ul>
@@ -153,7 +153,7 @@ const SellerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Sellers must make collectibles available for collection or delivery promptly after payment is confirmed</li>
                                 <li>Sellers must cooperate with buyers to arrange collection or delivery</li>
-                                <li>Title and ownership transfer only after full payment is received and confirmed by La-Bóveda</li>
+                                <li>Title and ownership transfer only after full payment is received and confirmed by SoldWerX</li>
                                 <li>Risk transfers to buyer upon collection or delivery, whichever occurs first</li>
                                 <li>Tracking or shipping labels can be shared through our secure communication window</li>
                             </ul>
@@ -164,7 +164,7 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Seller Default</h2>
                             <p className="text-gray-700 mb-2">If a seller fails to transfer collectibles after a sale:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>La-Bóveda will attempt to mediate and resolve the issue</li>
+                                <li>SoldWerX will attempt to mediate and resolve the issue</li>
                                 <li>We will work with both parties to find a fair solution</li>
                                 <li>If resolution is not possible, the sale may be cancelled</li>
                                 <li>Buyer will receive a full refund</li>
@@ -184,7 +184,7 @@ const SellerAgreement = () => {
                                 If a buyer claims a collectible is significantly not as described:
                             </p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>La-Bóveda will investigate the claim</li>
+                                <li>SoldWerX will investigate the claim</li>
                                 <li>We may request evidence from both parties</li>
                                 <li>If the listing was misleading, seller may be liable for:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
@@ -199,7 +199,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Communication Rules</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>All communication between buyers and sellers must go through the La-Bóveda platform</li>
+                                <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
                                 <li>Only tracking or shipping labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
@@ -223,7 +223,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">13. Limitation of Liability</h2>
                             <p className="text-gray-700">
-                                To the extent permitted by law, La-Bóveda's total liability to sellers is limited to
+                                To the extent permitted by law, SoldWerX's total liability to sellers is limited to
                                 the fees paid for the specific transaction in question. We are not liable for indirect or
                                 consequential losses including lost profits. This does not limit liability for fraud, death,
                                 or personal injury caused by negligence.
@@ -254,7 +254,7 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">16. Entire Agreement</h2>
                             <p className="text-gray-700">
                                 This Seller Agreement, together with our Terms of Use and Privacy Policy, constitutes the
-                                entire agreement between you and La-Bóveda regarding your listings and sales on our platform.
+                                entire agreement between you and SoldWerX regarding your listings and sales on our platform.
                             </p>
                         </div>
 
@@ -262,11 +262,11 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Acceptance & Contact</h2>
                             <p className="text-gray-700 mb-4">
-                                By listing collectibles on La-Bóveda, you acknowledge that you have read, understood, and agree
+                                By listing collectibles on SoldWerX, you acknowledge that you have read, understood, and agree
                                 to this Seller Agreement.
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
-                                <p className="font-semibold text-gray-900 mb-2">La-Bóveda</p>
+                                <p className="font-semibold text-gray-900 mb-2">SoldWerX</p>
                                 <p className="text-gray-700 text-sm mb-1">
                                     Email: <a href={`mailto:${email}`} className="text-blue-600 hover:underline break-all">{email}</a>
                                 </p>
@@ -280,7 +280,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Seller Agreement was last updated on August 9, 2026. It forms an integral part of
-                                the contract for every collectibles listing made through La-Bóveda.
+                                the contract for every collectibles listing made through SoldWerX.
                             </p>
                         </div>
                     </div>

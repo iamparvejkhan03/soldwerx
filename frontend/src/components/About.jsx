@@ -6,7 +6,7 @@ import {
     Sparkles,
     Trophy,
 } from "lucide-react";
-import { whoWeAre, about, heroImg } from "../assets";
+import { about, heroImg } from "../assets";
 import { useEffect, useRef, useState } from "react";
 
 function About() {
@@ -182,7 +182,7 @@ function About() {
 
                         {/* Description */}
                         <p className="mt-7 max-w-xl text-base leading-7 text-gray-500 sm:text-lg">
-                            We created a sanctuary where rare collectibles meet passionate collectors. From iconic sports cards and signed jerseys to game-used memorabilia and pop culture rarities — every piece inside La-Bóveda has a story, a legacy, and a rightful owner waiting to claim it.
+                            We created a sanctuary where rare collectibles meet passionate collectors. From iconic sports cards and signed jerseys to game-used memorabilia and pop culture rarities — every piece inside SoldWerX has a story, a legacy, and a rightful owner waiting to claim it.
                         </p>
 
                         {/* Feature list */}

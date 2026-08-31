@@ -1,68 +1,18 @@
 import { lazy, Suspense } from "react";
-import { Hero, Container, Testimonial, HowItWorksCard, LoadingSpinner, AuctionCard, AuctionListItem, CategoryCarousel, HowItWorks } from "../components";
-import Marquee from "react-fast-marquee";
-import { BadgeCheck, Gavel, Grid, List, Tag, Upload, Filter, UserCog2, LucideVerified, UserPlus, Clock, PhoneCall, Target, Users, ArrowRight, User, CarFront, Hand } from "lucide-react";
-import {
-    CaseIH,
-    Claas,
-    Cummins,
-    Fendt,
-    Freightliner,
-    Hitachi,
-    JCB,
-    JohnDeere,
-    Komatsu,
-    Kubota,
-    Liebherr,
-    MasseyFerguson,
-    Mercedes,
-    NewHolland,
-    NokianTyres,
-    Peterbilt,
-    Scag,
-    Skania,
-    Stiga,
-    Timberjack,
-    Toro,
-    Toyota,
-    Volvo,
-} from "../assets";
+import { Hero, Container, LoadingSpinner, AuctionCard, AuctionListItem, HowItWorks } from "../components";
+import { Filter } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import axiosInstance from "../utils/axiosInstance";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const CTA = lazy(() => import('../components/CTA'));
 const CategoryIconsSection = lazy(() => import('../components/CategoryIconsSection'));
 const TestimonialSection = lazy(() => import('../components/TestimonialSection'));
 const About = lazy(() => import('../components/About'));
 
-const trustedBrands = [
-    { src: CaseIH, alt: 'Case IH' },
-    { src: Claas, alt: 'Claas' },
-    { src: Cummins, alt: 'Cummins' },
-    { src: Fendt, alt: 'Fendt' },
-    { src: Freightliner, alt: 'Freightliner' },
-    { src: Hitachi, alt: 'Hitachi' },
-    { src: JCB, alt: 'JCB' },
-    { src: JohnDeere, alt: 'John Deere' },
-    { src: Komatsu, alt: 'Komatsu' },
-    { src: Kubota, alt: 'Kubota' },
-    { src: Liebherr, alt: 'Liebherr' },
-    { src: MasseyFerguson, alt: 'Massey Ferguson' },
-    { src: Mercedes, alt: 'Mercedes' },
-    { src: NewHolland, alt: 'New Holland' },
-    { src: NokianTyres, alt: 'Nokian Tyres' },
-    { src: Peterbilt, alt: 'Peterbilt' },
-    { src: Scag, alt: 'Scag' },
-    { src: Skania, alt: 'Skania' },
-    { src: Stiga, alt: 'Stiga' },
-    { src: Timberjack, alt: 'Timberjack' },
-    { src: Toro, alt: 'Toro' },
-    { src: Toyota, alt: 'Toyota' },
-    { src: Volvo, alt: 'Volvo' },
-];
+const trustedBrands = [];
 
 function Home() {
     const [auctions, setAuctions] = useState([]);
@@ -221,24 +171,6 @@ function Home() {
                                     </label>
                                 </div>
                             </div>
-
-                            {/* Add this view mode toggle */}
-                            {/* <div className="hidden md:flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                                <button
-                                    onClick={() => setViewMode("grid")}
-                                    className={`p-2 rounded transition-colors ${viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-                                    title="Grid View"
-                                >
-                                    <Grid size={18} className={viewMode === "grid" ? "text-orange-600" : "text-gray-500"} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("list")}
-                                    className={`p-2 rounded transition-colors ${viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-                                    title="List View"
-                                >
-                                    <List size={18} className={viewMode === "list" ? "text-orange-600" : "text-gray-500"} />
-                                </button>
-                            </div> */}
                         </div>
                     </div>
                     <p className="text-sm md:text-base text-gray-500 order-2 md:order-3">

@@ -11,12 +11,12 @@ const PrivacyPolicy = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Privacy Policy</h1>
-                    <p className="text-gray-600 mb-6">La-Bóveda | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-800 font-semibold mb-2">VENEZUELA COLLECTIBLES MARKETPLACE</p>
                         <p className="text-blue-700 text-sm">
-                            La-Bóveda is a digital auction and direct-purchase marketplace for sports and non-sports collectibles operating in Venezuela.
+                            SoldWerX is a digital auction and direct-purchase marketplace for sports and non-sports collectibles operating in Venezuela.
                             This policy explains how we handle your information in accordance with applicable data protection laws.
                         </p>
                     </div>
@@ -28,7 +28,7 @@ const PrivacyPolicy = () => {
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
-                                <strong>La-Bóveda</strong> ("we", "our", "us") is committed to protecting
+                                <strong>SoldWerX</strong> ("we", "our", "us") is committed to protecting
                                 and respecting your privacy. This Privacy Policy explains how we collect, use, and
                                 safeguard your information when you use our collectibles marketplace platform.
                             </p>
@@ -183,7 +183,7 @@ const PrivacyPolicy = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">10. Third-Party Links</h2>
                             <p className="text-gray-700">
                                 Our platform may contain links to third-party websites. This policy applies only
-                                to La-Bóveda.
+                                to SoldWerX.
                             </p>
                         </div>
 
@@ -203,7 +203,7 @@ const PrivacyPolicy = () => {
                                 For questions about this policy or to exercise your data protection rights:
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
-                                <p className="font-semibold text-gray-900 mb-2">La-Bóveda</p>
+                                <p className="font-semibold text-gray-900 mb-2">SoldWerX</p>
                                 <p className="text-gray-700 text-sm mb-1">
                                     Email: <a href={`mailto:${email}`} className="text-blue-600 hover:underline break-all">{email}</a>
                                 </p>

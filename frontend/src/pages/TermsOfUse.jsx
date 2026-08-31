@@ -11,12 +11,12 @@ const TermsOfUse = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Terms of Use</h1>
-                    <p className="text-gray-600 mb-6">La-Bóveda | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
 
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
                         <p className="text-red-800 font-semibold mb-2">IMPORTANT – PLEASE READ</p>
                         <p className="text-red-700 text-sm">
-                            These Terms govern your use of La-Bóveda. By registering or using our platform,
+                            These Terms govern your use of SoldWerX. By registering or using our platform,
                             you confirm your agreement to these Terms. All collectibles are sold on an "as-is"
                             basis without warranty unless otherwise stated.
                         </p>
@@ -29,7 +29,7 @@ const TermsOfUse = () => {
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
-                                <strong>La-Bóveda</strong> ("we", "our", "us") operates an online marketplace for sports
+                                <strong>SoldWerX</strong> ("we", "our", "us") operates an online marketplace for sports
                                 and non-sports collectibles, including cards, signed jerseys, game-used balls, and other
                                 valuable memorabilia. These Terms of Use ("Terms") govern your access to and use
                                 of our website, platform, and services.
@@ -43,7 +43,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Platform Access</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>La-Bóveda is open to both collectors and private buyers</li>
+                                <li>SoldWerX is open to both collectors and private buyers</li>
                                 <li>All users must register and maintain accurate account information</li>
                                 <li>We reserve the right to refuse or terminate access at our discretion</li>
                                 <li>Users must comply with all applicable laws</li>
@@ -65,13 +65,13 @@ const TermsOfUse = () => {
                         {/* Section 3 - Our Role */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Our Role</h2>
-                            <p className="text-gray-700 mb-3">La-Bóveda acts as:</p>
+                            <p className="text-gray-700 mb-3">SoldWerX acts as:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
                                 <li><strong>Intermediary:</strong> Facilitating sales between third-party sellers and buyers</li>
                             </ul>
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-gray-700 font-semibold">
-                                    In all cases, La-Bóveda manages the transaction, collects payment, and releases funds to the seller.
+                                    In all cases, SoldWerX manages the transaction, collects payment, and releases funds to the seller.
                                 </p>
                             </div>
                         </div>
@@ -115,7 +115,7 @@ const TermsOfUse = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Bank transfer in USD is the only accepted payment method</li>
                                 <li>Payment must be completed within 48 hours of winning an auction or confirming a direct purchase</li>
-                                <li>All payments must be made to the La-Bóveda collection account</li>
+                                <li>All payments must be made to the SoldWerX collection account</li>
                                 <li>Items will not be released until payment clears in full</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
                             </ul>
@@ -145,7 +145,7 @@ const TermsOfUse = () => {
                             </div>
                             <p className="text-gray-700">
                                 Item descriptions and photographs are provided for guidance only. Buyers are encouraged to ask questions
-                                before bidding or purchasing through our secure communication window. La-Bóveda is a marketplace and
+                                before bidding or purchasing through our secure communication window. SoldWerX is a marketplace and
                                 does not guarantee condition beyond what is described.
                             </p>
                         </div>
@@ -164,7 +164,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Communication Rules</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>All communication between buyers and sellers must go through the La-Bóveda platform</li>
+                                <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
                                 <li>Only tracking or shipping labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
@@ -197,7 +197,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">14. Limitation of Liability</h2>
                             <p className="text-gray-700">
-                                To the extent permitted by law, La-Bóveda's total liability is limited to the
+                                To the extent permitted by law, SoldWerX's total liability is limited to the
                                 purchase price of the collectible in question. We are not liable for indirect or consequential
                                 losses. This does not limit liability for fraud, death, or personal injury caused by negligence.
                             </p>
@@ -226,7 +226,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
                             <div className="bg-gray-50 p-4 rounded">
-                                <p className="font-semibold text-gray-900 mb-2">La-Bóveda</p>
+                                <p className="font-semibold text-gray-900 mb-2">SoldWerX</p>
                                 <p className="text-gray-700 text-sm mb-1">
                                     Email: <a href={`mailto:${email}`} className="text-blue-600 hover:underline break-all">{email}</a>
                                 </p>

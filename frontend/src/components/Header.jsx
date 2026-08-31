@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { usePopUp } from "../contexts/PopUpContextProvider";
 import axiosInstance from "../utils/axiosInstance";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const navLinks = [
     {
@@ -13,17 +14,29 @@ const navLinks = [
         href: '/'
     },
     {
-        name: 'About',
-        href: '/about'
+        name: 'Liquidate',
+        href: '/liquidate'
     },
     {
-        name: 'Contact',
-        href: '/contact'
+        name: 'Sell With Us',
+        href: '/sell-with-us'
     },
     {
-        name: 'FAQs',
-        href: '/faqs'
+        name: 'Events',
+        href: '/events'
     },
+    // {
+    //     name: 'About',
+    //     href: '/about'
+    // },
+    // {
+    //     name: 'Contact',
+    //     href: '/contact'
+    // },
+    // {
+    //     name: 'FAQs',
+    //     href: '/faqs'
+    // },
 ];
 
 const auctionTypes = [
@@ -276,6 +289,10 @@ function Header() {
                         </li>
 
                         <li>
+                            <LanguageSwitcher isScrolled={isScrolled} />
+                        </li>
+
+                        <li>
                             {
                                 user
                                     ?
@@ -463,6 +480,7 @@ function Header() {
                 </div>
 
                 <div className="lg:hidden z-50 flex items-center gap-5">
+                    <LanguageSwitcher />
                     {
                         isMenuOpen ? (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={closeMenu} alt="menu icon" className={`h-7 cursor-pointer invert-25 z-50 ${isScrolled}`} />) : (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={menuIcon} alt="menu icon" className={`h-5 cursor-pointer ${isScrolled && 'invert'} z-50`} />)
                     }

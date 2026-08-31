@@ -9,7 +9,7 @@ const testimonials = [
     name: "Carlos Mendoza",
     position: "Collector & Sports Enthusiast",
     review:
-      "La-Bóveda has completely changed how I buy and sell memorabilia. The auctions are smooth, the verification gives me peace of mind, and I've found pieces I never thought I'd own. Highly recommended.",
+      "SoldWerX has completely changed how I buy and sell memorabilia. The auctions are smooth, the verification gives me peace of mind, and I've found pieces I never thought I'd own. Highly recommended.",
     image: "/avatars/1.jpg",
     date: "January 12, 2026",
   },
@@ -17,7 +17,7 @@ const testimonials = [
     name: "Alejandra Rojas",
     position: "Memorabilia Dealer",
     review:
-      "I've sold over 200 items through La-Bóveda. The platform is professional, the buyers are serious, and the 5% commission is more than fair. Payment via bank transfer in USD is seamless. I'll definitely be back.",
+      "I've sold over 200 items through SoldWerX. The platform is professional, the buyers are serious, and the 5% commission is more than fair. Payment via bank transfer in USD is seamless. I'll definitely be back.",
     image: "/avatars/2.jpg",
     date: "February 8, 2026",
   },
@@ -25,7 +25,7 @@ const testimonials = [
     name: "Miguel Torres",
     position: "Sports Card Collector",
     review:
-      "The selection of rare cards on La-Bóveda is unmatched. I recently bought a signed rookie card and the entire process — from bidding to delivery — was simple and transparent. Trustworthy and reliable.",
+      "The selection of rare cards on SoldWerX is unmatched. I recently bought a signed rookie card and the entire process — from bidding to delivery — was simple and transparent. Trustworthy and reliable.",
     image: "/avatars/3.jpg",
     date: "March 15, 2026",
   },
@@ -33,7 +33,7 @@ const testimonials = [
     name: "Daniela Suárez",
     position: "Auction House Owner",
     review:
-      "Finally a platform that understands the Venezuelan collector. Great support, transparent bidding, secure communications, and fast payouts. La-Bóveda is the gold standard for memorabilia in our region.",
+      "Finally a platform that understands the Venezuelan collector. Great support, transparent bidding, secure communications, and fast payouts. SoldWerX is the gold standard for memorabilia in our region.",
     image: "/avatars/4.jpg",
     date: "April 5, 2026",
   },
@@ -41,7 +41,7 @@ const testimonials = [
     name: "Roberto Fernández",
     position: "Collectibles Dealer",
     review:
-      "We use La-Bóveda for all our high-end inventory. The platform is intuitive, buyers are verified, and the direct purchase option has boosted our sales significantly. Couldn't ask for more.",
+      "We use SoldWerX for all our high-end inventory. The platform is intuitive, buyers are verified, and the direct purchase option has boosted our sales significantly. Couldn't ask for more.",
     image: "/avatars/5.jpg",
     date: "May 20, 2026",
   },
@@ -49,7 +49,7 @@ const testimonials = [
     name: "Mariana Castillo",
     position: "Collector & Business Owner",
     review:
-      "As someone who collects both sports and non-sports memorabilia, La-Bóveda is my go-to platform. Secure transactions, clear communication, and a community that truly values authenticity. Outstanding results every time.",
+      "As someone who collects both sports and non-sports memorabilia, SoldWerX is my go-to platform. Secure transactions, clear communication, and a community that truly values authenticity. Outstanding results every time.",
     image: "/avatars/6.jpg",
     date: "June 10, 2026",
   },
@@ -194,7 +194,7 @@ export default function TestimonialSection() {
                 : "translate-y-6 opacity-0"
               }`}
           >
-            Join collectors across Venezuela who trust La-Bóveda
+            Join collectors across Venezuela who trust SoldWerX
             for their sports memorabilia, rare cards, and
             one-of-a-kind collectibles.
           </p>

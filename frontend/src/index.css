@@ -56,3 +56,22 @@
 .animate-sweep {
   animation: sweep 4s linear infinite;
 }
+
+/* Hide Google Translate banner */
+.goog-te-banner-frame {
+    display: none !important;
+}
+
+body {
+    top: 0px !important;
+}
+
+/* Hide the Google Translate element */
+.goog-te-gadget {
+    display: none !important;
+}
+
+/* Hide the simple gadget */
+.goog-te-gadget-simple {
+    display: none !important;
+}

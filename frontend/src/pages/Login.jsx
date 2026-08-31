@@ -144,7 +144,7 @@ const Login = () => {
                             <div className="w-full border-t border-gray-300" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-secondary">New to La-Boveda?</span>
+                            <span className="px-2 bg-white text-secondary">New to SoldWerX?</span>
                         </div>
                     </div>
 
@@ -162,7 +162,7 @@ const Login = () => {
                 {/* Footer */}
                 <div className="bg-white px-4 pb-4 text-center">
                     <p className="text-xs text-secondary">
-                        © {new Date().getFullYear()} La-Boveda. All rights reserved.
+                        © {new Date().getFullYear()} SoldWerX. All rights reserved.
                     </p>
                 </div>
             </div>

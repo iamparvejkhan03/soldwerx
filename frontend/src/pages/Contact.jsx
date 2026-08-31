@@ -385,7 +385,7 @@ function Contact() {
                                         <input
                                             type="tel"
                                             {...register("phone")}
-                                            placeholder="+58 xxx xxxxx"
+                                            placeholder="+1 xxx xxxxx"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-300 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
                                         />
 

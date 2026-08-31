@@ -17,32 +17,6 @@ import {
 
 import { Link } from "react-router-dom";
 
-import {
-    CaseIH,
-    Claas,
-    Cummins,
-    Fendt,
-    Freightliner,
-    Hitachi,
-    JCB,
-    JohnDeere,
-    Komatsu,
-    Kubota,
-    Liebherr,
-    MasseyFerguson,
-    Mercedes,
-    NewHolland,
-    NokianTyres,
-    Peterbilt,
-    Scag,
-    Skania,
-    Stiga,
-    Timberjack,
-    Toro,
-    Toyota,
-    Volvo,
-} from "../assets";
-
 import { Container } from "../components";
 
 // ============================================================
@@ -142,31 +116,7 @@ const features = [
 // BRANDS
 // ============================================================
 
-const brands = [
-    { name: "Case IH", image: CaseIH },
-    { name: "Claas", image: Claas },
-    { name: "Cummins", image: Cummins },
-    { name: "Fendt", image: Fendt },
-    { name: "Freightliner", image: Freightliner },
-    { name: "Hitachi", image: Hitachi },
-    { name: "JCB", image: JCB },
-    { name: "John Deere", image: JohnDeere },
-    { name: "Komatsu", image: Komatsu },
-    { name: "Kubota", image: Kubota },
-    { name: "Liebherr", image: Liebherr },
-    { name: "Mercedes", image: Mercedes },
-    { name: "New Holland", image: NewHolland },
-    { name: "Scag", image: Scag },
-    { name: "Scania", image: Skania },
-    { name: "Nokian Tyres", image: NokianTyres },
-    { name: "Massey Ferguson", image: MasseyFerguson },
-    { name: "Peterbilt", image: Peterbilt },
-    { name: "Toyota", image: Toyota },
-    { name: "Stiga", image: Stiga },
-    { name: "Timberjack", image: Timberjack },
-    { name: "Toro", image: Toro },
-    { name: "Volvo", image: Volvo },
-];
+const brands = [];
 
 // ============================================================
 // ABOUT PAGE
@@ -195,7 +145,7 @@ function About() {
                             <span className="h-px w-10 bg-[#C59D55]" />
 
                             <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#A17B35]">
-                                About La-Bóveda
+                                About SoldWerX
                             </span>
                         </div>
 
@@ -215,7 +165,7 @@ function About() {
                         <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
 
                             <p className="max-w-2xl text-base leading-8 text-gray-500 md:text-lg">
-                                La-Bóveda brings together buyers and sellers from across Venezuela in a marketplace built on confidence. With transparency, verified authenticity, and secure transactions at our core, we help collectors trade smarter and acquire the pieces they truly value.
+                                SoldWerX brings together buyers and sellers from across Venezuela in a marketplace built on confidence. With transparency, verified authenticity, and secure transactions at our core, we help collectors trade smarter and acquire the pieces they truly value.
                             </p>
 
                             <div className="flex flex-wrap gap-3">
@@ -369,7 +319,7 @@ function About() {
                         </h2>
 
                         <p className="mt-5 text-sm md:text-base leading-7 text-gray-500 max-w-full">
-                            Whether you're searching for iconic memorabilia or looking to sell from your collection, La-Bóveda gives both sides the tools, flexibility, and confidence to trade smarter.
+                            Whether you're searching for iconic memorabilia or looking to sell from your collection, SoldWerX gives both sides the tools, flexibility, and confidence to trade smarter.
                         </p>
                     </div>
 
@@ -547,7 +497,7 @@ function About() {
                         <div className="lg:sticky lg:top-24 lg:self-start">
 
                             <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#A17B35]">
-                                Why Choose La-Bóveda
+                                Why Choose SoldWerX
                             </p>
 
                             <h2 className="text-4xl font-black leading-tight tracking-[-0.035em] text-gray-950 md:text-5xl">
@@ -558,7 +508,7 @@ function About() {
                             </h2>
 
                             <p className="mt-6 max-w-sm text-sm md:text-base leading-7 text-gray-500">
-                                Every part of La-Bóveda is designed to make buying and selling collectibles clearer, faster, and more dependable.
+                                Every part of SoldWerX is designed to make buying and selling collectibles clearer, faster, and more dependable.
                             </p>
 
                         </div>
@@ -624,7 +574,7 @@ function About() {
                                 <span className="h-1.5 w-1.5 rounded-full bg-[#C59D55]" />
 
                                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A17B35]">
-                                    The La-Bóveda Advantage
+                                    The SoldWerX Advantage
                                 </span>
                             </div>
 
@@ -674,7 +624,7 @@ function About() {
 
                                     <div className="mt-7 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#A17B35] opacity-0 transition-all duration-300 group-hover:opacity-100">
                                         <Check size={13} />
-                                        La-Bóveda Advantage
+                                        SoldWerX Advantage
                                     </div>
 
                                 </div>
@@ -710,7 +660,7 @@ function About() {
                                     </h3>
 
                                     <p className="mt-4 text-sm leading-6 text-white/65">
-                                        Whether you're buying your next treasure or selling your collection, La-Bóveda is built to make the process straightforward.
+                                        Whether you're buying your next treasure or selling your collection, SoldWerX is built to make the process straightforward.
                                     </p>
 
                                 </div>

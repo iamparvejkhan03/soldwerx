@@ -21,6 +21,10 @@ const BuyerAgreement = lazy(() => import('./pages/BuyerAgreement'));
 const SingleAuction = lazy(() => import('./pages/SingleAuction'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const FAQs = lazy(() => import('./pages/FAQs'));
+const Liquidate = lazy(() => import('./pages/Liquidate'));
+const SellWithUs = lazy(() => import('./pages/SellWithUs'));
+const Events = lazy(() => import('./pages/Events'));
+const SingleEvent = lazy(() => import('./pages/SingleEvent'));
 
 {/* Seller Pages */ }
 const SellerLayout = lazy(() => import('./pages/seller/Layout'));
@@ -37,6 +41,9 @@ const SellerBilling = lazy(() => import('./pages/seller/Billing'));
 const SellerCommunication = lazy(() => import('./pages/seller/Communication'));
 const SellerPayoutMethods = lazy(() => import('./pages/seller/PayoutMethods'));
 const SellerPayouts = lazy(() => import('./pages/seller/Payouts'));
+const CreateEventSeller = lazy(() => import('./pages/seller/CreateEvent'));
+const EditEventSeller = lazy(() => import('./pages/seller/EditEvent'));
+const SellerAllEvents = lazy(() => import('./pages/seller/AllEvents'));
 
 {/* Broker Pages */ }
 const BrokerLayout = lazy(() => import('./pages/broker/Layout'));
@@ -73,6 +80,8 @@ const AdminAllAuctions = lazy(() => import('./pages/admin/AllAuctions'));
 const AdminCreateAuction = lazy(() => import('./pages/admin/CreateAuction'));
 const AdminEditAuction = lazy(() => import('./pages/admin/EditAuction'));
 const UserQueries = lazy(() => import('./pages/admin/UserQueries'));
+const LiquidationRequests = lazy(() => import('./pages/admin/LiquidationRequests'));
+const SellRequests = lazy(() => import('./pages/admin/SellRequests'));
 const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
 const AdminProfile = lazy(() => import('./pages/admin/Profile'));
 const AdminComments = lazy(() => import('./pages/admin/Comments'));
@@ -85,6 +94,9 @@ const AllCommunications = lazy(() => import('./pages/admin/AllCommunications'));
 const AdminCommunication = lazy(() => import('./pages/admin/Communication'));
 const AdminPayouts = lazy(() => import('./pages/admin/Payouts'));
 const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
+const AdminAllEvents = lazy(() => import('./pages/admin/AllEvents'));
+const AdminCreateEvent = lazy(() => import('./pages/admin/CreateEvent'));
+const AdminEditEvent = lazy(() => import('./pages/admin/EditEvent'));
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>
@@ -95,31 +107,40 @@ createRoot(document.getElementById('root')).render(
                     <Route path='/' element={<App />}>
                         <Route path='' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Home /></Suspense>} />
 
-                        <Route path='/contact' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Contact /></Suspense>} />
+                        <Route path='/contact' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Contact /></Suspense>} />
 
-                        <Route path='/about' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><About /></Suspense>} />
+                        <Route path='/about' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><About /></Suspense>} />
 
-                        <Route path='/faqs' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><FAQs /></Suspense>} />
+                        <Route path='/faqs' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><FAQs /></Suspense>} />
 
-                        <Route path='/login' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Login /></Suspense>} />
+                        <Route path='/liquidate' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Liquidate /></Suspense>} />
 
-                        <Route path='/register' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Register /></Suspense>} />
+                        <Route path='/sell-with-us' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellWithUs /></Suspense>} />
 
-                        <Route path='/auctions' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Auctions /></Suspense>} />
+                        <Route path='/login' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Login /></Suspense>} />
 
-                        <Route path='/auction/:id' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleAuction /></Suspense>} />
+                        <Route path='/register' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Register /></Suspense>} />
 
-                        <Route path='/privacy-policy' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PrivacyPolicy /></Suspense>} />
+                        <Route path='/auctions' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Auctions /></Suspense>} />
 
-                        <Route path='/terms-of-use' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><TermsOfUse /></Suspense>} />
+                        <Route path='/auction/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleAuction /></Suspense>} />
 
-                        <Route path='/payment-refund-policy' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PaymentRefundPolicy /></Suspense>} />
+                        <Route path='/privacy-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PrivacyPolicy /></Suspense>} />
 
-                        <Route path='/seller-agreement' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellerAgreement /></Suspense>} />
+                        <Route path='/terms-of-use' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><TermsOfUse /></Suspense>} />
 
-                        <Route path='/buyer-agreement' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BuyerAgreement /></Suspense>} />
+                        <Route path='/payment-refund-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PaymentRefundPolicy /></Suspense>} />
 
-                        <Route path='/reset-password' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><ResetPassword /></Suspense>} />
+                        <Route path='/seller-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellerAgreement /></Suspense>} />
+
+                        <Route path='/buyer-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BuyerAgreement /></Suspense>} />
+
+                        <Route path='/reset-password' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><ResetPassword /></Suspense>} />
+
+                        <Route path='/events' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Events /></Suspense>} />
+
+                        <Route path='/event/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleEvent /></Suspense>} />
+
                     </Route>
 
                     {/* Seller Layout */}
@@ -244,6 +265,34 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             /> */}
+
+                        {/* Seller Create Event */}
+                        <Route
+                            path='/seller/events/create'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <CreateEventSeller />
+                                </Suspense>
+                            }
+                        />
+                        {/* Seller Edit Event */}
+                        <Route
+                            path='/seller/events/edit/:eventId'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <EditEventSeller />
+                                </Suspense>
+                            }
+                        />
+                        {/* Seller Live Events */}
+                        <Route
+                            path='/seller/events/all'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <SellerAllEvents />
+                                </Suspense>
+                            }
+                        />
                     </Route>
 
                     {/* Broker Layout */}
@@ -526,6 +575,26 @@ createRoot(document.getElementById('root')).render(
                             }
                         />
 
+                        {/* Admin Liquidation Requests */}
+                        <Route
+                            path='/admin/liquidation-requests'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <LiquidationRequests />
+                                </Suspense>
+                            }
+                        />
+
+                        {/* Admin Liquidation Requests */}
+                        <Route
+                            path='/admin/sell-requests'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <SellRequests />
+                                </Suspense>
+                            }
+                        />
+
                         {/* Admin Notifications */}
                         {/* <Route
                                 path='/admin/notifications'
@@ -635,6 +704,36 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             /> */}
+
+                        {/* Admin All Events */}
+                        <Route
+                            path='/admin/events/all'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <AdminAllEvents />
+                                </Suspense>
+                            }
+                        />
+
+                        {/* Admin All Events */}
+                        <Route
+                            path='/admin/events/create'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <AdminCreateEvent />
+                                </Suspense>
+                            }
+                        />
+
+                        {/* Admin Edit Event */}
+                        <Route
+                            path='/admin/events/edit/:eventId'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <AdminEditEvent />
+                                </Suspense>
+                            }
+                        />
                     </Route>
                 </Routes>
             </BrowserRouter>

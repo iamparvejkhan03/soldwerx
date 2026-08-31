@@ -22,8 +22,8 @@ const faqs = [
         icon: <Gavel size={20} />,
         questions: [
             {
-                question: "Who can bid on La-Bóveda?",
-                answer: "La-Bóveda is open to both collectors and private buyers across Venezuela. Whether you're a serious collector or just starting your journey, anyone can register and participate."
+                question: "Who can bid on SoldWerX?",
+                answer: "SoldWerX is open to both collectors and private buyers across Venezuela. Whether you're a serious collector or just starting your journey, anyone can register and participate."
             },
             {
                 question: "Are there any fees for buyers?",
@@ -35,7 +35,7 @@ const faqs = [
             },
             {
                 question: "Are items sold with a warranty?",
-                answer: "No. All collectibles are sold on an 'as-is' basis without warranty. La-Bóveda is a marketplace that connects buyers and sellers — we verify listings but do not guarantee condition beyond what is described."
+                answer: "No. All collectibles are sold on an 'as-is' basis without warranty. SoldWerX is a marketplace that connects buyers and sellers — we verify listings but do not guarantee condition beyond what is described."
             },
             {
                 question: "Can I return an item after purchase?",
@@ -57,7 +57,7 @@ const faqs = [
         questions: [
             {
                 question: "What payment methods do you accept?",
-                answer: "Bank transfer in USD is our primary and only payment method. All payments must be made to the La-Bóveda collection account."
+                answer: "Bank transfer in USD is our primary and only payment method. All payments must be made to the SoldWerX collection account."
             },
             {
                 question: "How long do I have to make payment?",
@@ -69,7 +69,7 @@ const faqs = [
             },
             {
                 question: "Is off-platform communication or payment allowed?",
-                answer: "No. All communication, offers, and payments must go through La-Bóveda. Off-platform activity — including sharing personal contact information — is strictly prohibited and may result in account suspension."
+                answer: "No. All communication, offers, and payments must go through SoldWerX. Off-platform activity — including sharing personal contact information — is strictly prohibited and may result in account suspension."
             }
         ]
     },
@@ -87,7 +87,7 @@ const faqs = [
             },
             {
                 question: "When does ownership transfer to me?",
-                answer: "Ownership transfers to the buyer once full payment is received and confirmed by La-Bóveda. Risk transfers once the item is collected or delivered, whichever occurs first."
+                answer: "Ownership transfers to the buyer once full payment is received and confirmed by SoldWerX. Risk transfers once the item is collected or delivered, whichever occurs first."
             },
             {
                 question: "Can you share tracking or shipping labels?",
@@ -113,7 +113,7 @@ const faqs = [
             },
             {
                 question: "How and when do I get paid?",
-                answer: "Once the buyer sends payment to the La-Bóveda collection account and we verify the funds, we release the payment to you — minus our 5% commission. You'll receive your funds via USD bank transfer."
+                answer: "Once the buyer sends payment to the SoldWerX collection account and we verify the funds, we release the payment to you — minus our 5% commission. You'll receive your funds via USD bank transfer."
             }
         ]
     },
@@ -130,16 +130,16 @@ const faqs = [
                 answer: "Our platform and support team operate in English. We're here to help you in English for all your questions and concerns."
             },
             {
-                question: "What is La-Bóveda?",
-                answer: "La-Bóveda is a digital auction and marketplace platform for sports and non-sports collectibles — including cards, signed jerseys, game-used balls, and other valuable memorabilia. We connect buyers and sellers across Venezuela in a secure, transparent environment."
+                question: "What is SoldWerX?",
+                answer: "SoldWerX is a digital auction and marketplace platform for sports and non-sports collectibles — including cards, signed jerseys, game-used balls, and other valuable memorabilia. We connect buyers and sellers across Venezuela in a secure, transparent environment."
             },
             {
                 question: "How do I create an account?",
                 answer: "Click 'Sign Up' and provide your email address, phone number, address, etc. Once verified, you can start bidding, buying, or selling immediately."
             },
             {
-                question: "How can I contact La-Bóveda?",
-                answer: `La-Bóveda | Phone: +11234567890 | Email: admin@la-boveda.com`
+                question: "How can I contact SoldWerX?",
+                answer: `SoldWerX | Phone: +11234567890 | Email: admin@soldwerx.com`
             }
         ]
     }
@@ -691,7 +691,7 @@ function FAQsPage() {
                                         to="/contact"
                                         className="group flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#C59D55] px-6 py-3.5 text-sm font-bold text-[#111] transition-all duration-300 hover:bg-[#D8B96F]"
                                     >
-                                        Contact La-Boveda
+                                        Contact SoldWerX
 
                                         <ArrowRight
                                             size={16}

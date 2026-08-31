@@ -17,6 +17,9 @@ import {
 function Footer() {
     const quickLinks = [
         { name: "Home", href: "/" },
+        { name: "Events", href: "/events" },
+        {name: 'Liquidate',href: '/liquidate'},
+        {name: 'Sell With Us',href: '/sell-with-us'},
         { name: "About Us", href: "/about" },
         { name: "Contact", href: "/contact" },
         { name: "FAQs", href: "/faqs" },
@@ -368,7 +371,7 @@ function Footer() {
                                 to="/"
                                 className="font-medium text-white/55 transition-colors hover:text-[#C59D55]"
                             >
-                                La-Bóveda
+                                SoldWerX
                             </Link>
                             . All rights reserved.
                         </p>

@@ -126,7 +126,7 @@ export const registerUser = async (req, res) => {
       countryName,
       phone,
       image,
-      isVerified: false,
+      isVerified: true,
       identificationDocument: identificationDocumentUrl,
       identificationDocumentPublicId,
       identificationStatus: identificationDocumentUrl ? 'pending' : undefined,

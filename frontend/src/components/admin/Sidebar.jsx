@@ -25,7 +25,10 @@ import {
     Tags,
     PoundSterling,
     BanknoteArrowDown,
-    BanknoteArrowUp
+    BanknoteArrowUp,
+    Store,
+    Briefcase,
+    CalendarDaysIcon
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
@@ -49,15 +52,30 @@ const navigation = [
         icon: <Gavel size={20} />
     },
     {
+        name: 'Events',
+        path: '/admin/events/all',
+        icon: <CalendarDaysIcon size={20} />
+    },
+    {
         name: 'Bids',
         path: '/admin/bids',
         icon: <Hand size={20} />
     },
-    // {
-    //     name: 'Offers',
-    //     path: '/admin/offers',
-    //     icon: <Hand size={20} />
-    // },
+    {
+        name: 'Offers',
+        path: '/admin/offers',
+        icon: <Hand size={20} />
+    },
+    {
+        name: 'Liquidations',
+        path: '/admin/liquidation-requests',
+        icon: <Store size={20} />
+    },
+    {
+        name: 'Consultations',
+        path: '/admin/sell-requests',
+        icon: <Briefcase size={20} />
+    },
     {
         name: 'Communications',
         path: '/admin/communications/all',

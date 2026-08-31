@@ -10,7 +10,6 @@ import Testimonial from "./Testimonial";
 import CTA from "./CTA";
 import About from "./About";
 import CategoryImg from "./CategoryImg";
-import AllCategoryImages from "./AllCategoryImages";
 import AuctionCard from "./AuctionCard";
 import VimeoEmbed from "./VimeoEmbed";
 import YouTubeEmbed from "./YouTubeEmbed";
@@ -59,6 +58,9 @@ import AuctionListItem from "./AuctionListItem";
 import CategoryCarousel from "./CategoryCarousel";
 import HowItWorks from "./HowItWorks";
 import TestimonialSection from "./TestimonialSection";
+import LanguageSwitcher from "./LanguageSwitcher";
+import LiquidateForm from "./LiquidateForm";
+import EventCard from "./EventCard";
 
 export {
     Container,
@@ -73,7 +75,6 @@ export {
     CTA,
     About,
     CategoryImg,
-    AllCategoryImages,
     AuctionCard,
     VimeoEmbed,
     YouTubeEmbed,
@@ -122,4 +123,7 @@ export {
     CategoryCarousel,
     HowItWorks,
     TestimonialSection,
+    LanguageSwitcher,
+    LiquidateForm,
+    EventCard,
 }

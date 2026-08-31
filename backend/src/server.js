@@ -20,6 +20,9 @@ import categoryRouter from "./routes/category.route.js";
 import communicationRouter from "./routes/communication.route.js";
 import payoutRouter from "./routes/payout.route.js";
 import paymentRouter from "./routes/payment.route.js";
+import liquidateRouter from "./routes/liquidateRequest.route.js";
+import sellRouter from "./routes/sellRequest.route.js";
+import eventRouter from "./routes/event.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -74,6 +77,9 @@ app.use('/api/v1/categories', categoryRouter);
 app.use("/api/v1/communication", communicationRouter);
 app.use("/api/v1/payouts", payoutRouter);
 app.use('/api/v1/payments', paymentRouter);
+app.use('/api/v1/liquidate', liquidateRouter);
+app.use('/api/v1/sell', sellRouter);
+app.use("/api/v1/events", eventRouter);
 
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {

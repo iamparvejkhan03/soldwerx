@@ -11,12 +11,12 @@ const BuyerAgreement = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Buyer Agreement</h1>
-                    <p className="text-gray-600 mb-6">La-Bóveda | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
                         <p className="text-blue-700 text-sm">
-                            This Buyer Agreement governs all purchases made through La-Bóveda.
+                            This Buyer Agreement governs all purchases made through SoldWerX.
                             By placing a bid or confirming a direct purchase, you agree to be bound by this Agreement.
                         </p>
                     </div>
@@ -28,7 +28,7 @@ const BuyerAgreement = () => {
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
-                                <strong>La-Bóveda</strong> ("we", "our", "us") and you, the buyer ("Buyer"),
+                                <strong>SoldWerX</strong> ("we", "our", "us") and you, the buyer ("Buyer"),
                                 enter into this Buyer Agreement governing all purchases made through our collectibles marketplace platform.
                             </p>
                             <p className="text-gray-700">
@@ -40,7 +40,7 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>La-Bóveda is open to both collectors and private buyers</li>
+                                <li>SoldWerX is open to both collectors and private buyers</li>
                                 <li>All buyers must register and maintain accurate account information</li>
                                 <li>We reserve the right to verify identity and eligibility</li>
                                 <li>Buyers must be at least 18 years of age</li>
@@ -82,7 +82,7 @@ const BuyerAgreement = () => {
                             </ul>
                             <p className="text-gray-600 text-sm">
                                 Descriptions, photographs, and specifications are provided for guidance only and do not
-                                form part of any contractual warranty. La-Bóveda is a marketplace and does not guarantee
+                                form part of any contractual warranty. SoldWerX is a marketplace and does not guarantee
                                 condition beyond what is described by the seller.
                             </p>
                         </div>
@@ -118,7 +118,7 @@ const BuyerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Bank transfer in USD is the only accepted payment method</li>
                                 <li>Payment must be completed within 48 hours of winning an auction or confirming a direct purchase</li>
-                                <li>All payments must be made to the La-Bóveda collection account</li>
+                                <li>All payments must be made to the SoldWerX collection account</li>
                                 <li>Items will not be released until full payment clears</li>
                                 <li>Title and ownership pass only after full payment is received and confirmed</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
@@ -141,7 +141,7 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Communication Rules</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>All communication between buyers and sellers must go through the La-Bóveda platform</li>
+                                <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
                                 <li>Only tracking or shipping labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
@@ -164,7 +164,7 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Limitation of Liability</h2>
                             <p className="text-gray-700">
-                                To the extent permitted by law, La-Bóveda's total liability is limited to the
+                                To the extent permitted by law, SoldWerX's total liability is limited to the
                                 purchase price of the collectible in question. We are not liable for indirect or consequential
                                 losses including but not limited to lost profits or business interruption.
                                 This does not limit liability for fraud, death, or personal injury caused by negligence.
@@ -185,7 +185,7 @@ const BuyerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">13. Entire Agreement</h2>
                             <p className="text-gray-700">
                                 This Buyer Agreement, together with our Terms of Use and Privacy Policy, constitutes the
-                                entire agreement between you and La-Bóveda regarding your purchases on our platform.
+                                entire agreement between you and SoldWerX regarding your purchases on our platform.
                             </p>
                         </div>
 
@@ -193,10 +193,10 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Acceptance & Contact</h2>
                             <p className="text-gray-700 mb-4">
-                                By using La-Bóveda, you acknowledge that you have read, understood, and agree to this Buyer Agreement.
+                                By using SoldWerX, you acknowledge that you have read, understood, and agree to this Buyer Agreement.
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
-                                <p className="font-semibold text-gray-900 mb-2">La-Bóveda</p>
+                                <p className="font-semibold text-gray-900 mb-2">SoldWerX</p>
                                 <p className="text-gray-700 text-sm mb-1">
                                     Email: <a href={`mailto:${email}`} className="text-blue-600 hover:underline break-all">{email}</a>
                                 </p>
@@ -210,7 +210,7 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Buyer Agreement was last updated on August 9, 2026. It forms an integral part of
-                                the contract for every collectible purchase made through La-Bóveda.
+                                the contract for every collectible purchase made through SoldWerX.
                             </p>
                         </div>
                     </div>

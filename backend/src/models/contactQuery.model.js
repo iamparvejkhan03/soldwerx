@@ -1,4 +1,3 @@
-// models/contactQuery.model.js
 import { Schema, model } from 'mongoose';
 
 const contactQuerySchema = new Schema({

@@ -21,7 +21,7 @@ transporter.verify(function (error, success) {
 });
 
 // ============================================
-// LA-BOVEDA BRANDING CONFIGURATION
+// SoldWerX BRANDING CONFIGURATION
 // ============================================
 
 // Brand colors (Gold & Navy)
@@ -42,16 +42,16 @@ const BRAND_COLORS = {
 };
 
 // Brand text variables
-const BRAND_NAME = 'La-Boveda';
-const BRAND_TAGLINE = 'TU PASIÓN, NUESTRO TESORO.';
+const BRAND_NAME = 'SoldWerX';
+const BRAND_TAGLINE = 'Auction. Liquidation. Consignment.';
 
 // Contact/Support info
 const SUPPORT_EMAIL = process.env.EMAIL_USER;
 const SUPPORT_PHONE = '';
-const COMPANY_LOCATION = 'Venezuela';
+const COMPANY_LOCATION = 'United States';
 
 // URLs
-const FRONTEND_URL = 'https://la-boveda.com';
+const FRONTEND_URL = 'https://soldwerx.com';
 const ADMIN_URL = `${FRONTEND_URL}/admin`;
 
 // ============================================
@@ -229,7 +229,7 @@ const baseTemplate = (content, title = BRAND_NAME) => `
 <body>
     <div class="container">
         <div class="content">
-            <!-- La-Boveda Header -->
+            <!-- SoldWerX Header -->
             <div style="text-align: center; margin-bottom: 28px;">
                 <h1 style="color: ${BRAND_COLORS.secondary}; font-size: 32px; margin: 0; letter-spacing: -0.5px;">${BRAND_NAME}</h1>
                 <div style="width: 60px; height: 3px; background: ${BRAND_COLORS.primary}; margin: 12px auto 0;"></div>
@@ -252,7 +252,7 @@ const baseTemplate = (content, title = BRAND_NAME) => `
 `;
 
 // ============================================
-// EMAIL TEMPLATES (all updated to La-Boveda, USD only)
+// EMAIL TEMPLATES (all updated to SoldWerX, USD only)
 // ============================================
 
 // 1. Contact email for admin
@@ -2106,6 +2106,262 @@ const identityRejectedEmail = async (user, rejectionReason, allowReupload = true
     }
 };
 
+const liquidateConfirmationEmail = async (name, email) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">Thank You for Your Liquidation Request</h2>
+            <p style="text-align: center;">Dear ${name},</p>
+            
+            <p>Thank you for submitting your liquidation request with <strong>${BRAND_NAME}</strong>. We have received your details and our team will review them promptly.</p>
+            
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-weight: bold; color: ${BRAND_COLORS.secondary};">What Happens Next?</p>
+                <div style="margin: 12px 0 0 0;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📋</span>
+                        <span style="color: ${BRAND_COLORS.text};">Our team will review your request within 24 hours</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📞</span>
+                        <span style="color: ${BRAND_COLORS.text};">We'll contact you to discuss your specific needs</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📊</span>
+                        <span style="color: ${BRAND_COLORS.text};">We'll provide a customized liquidation plan</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+                        <span style="font-size: 18px;">✅</span>
+                        <span style="color: ${BRAND_COLORS.text};">There's never any obligation</span>
+                    </div>
+                </div>
+            `, 'default')}
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-size: 14px; border: 1px solid ${BRAND_COLORS.grayBorder};">
+                <p style="margin: 0 0 8px 0;"><strong style="color: ${BRAND_COLORS.secondary};">Phone Support:</strong> Available Monday-Friday, 9:00 AM - 6:00 PM</p>
+                <p style="margin: 0;"><strong style="color: ${BRAND_COLORS.secondary};">Email Support:</strong> <a href="mailto:${SUPPORT_EMAIL}" style="color: ${BRAND_COLORS.primary};">${SUPPORT_EMAIL}</a></p>
+            </div>
+            
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid ${BRAND_COLORS.grayBorder};">
+                <p style="margin: 5px 0;">Best regards,</p>
+                <p style="margin: 5px 0;"><strong>The ${BRAND_NAME} Team</strong></p>
+            </div>
+        `;
+        
+        const html = baseTemplate(content, 'Liquidation Request Received');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `Liquidation Request Received - ${BRAND_NAME}`,
+            html
+        });
+        console.log(`✅ Liquidation confirmation email sent to ${email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`❌ Failed to send liquidation confirmation email:`, error);
+        return false;
+    }
+};
+
+const liquidateAdminEmail = async (name, email, phone, location, description, itemCount, timeline, photos) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">New Liquidation Request</h2>
+            <p style="text-align: center;">A new liquidation request has been submitted.</p>
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.primary};">
+                <p style="margin: 0 0 12px 0;"><strong>Client Details</strong></p>
+                ${createSummaryRow('Name:', name)}
+                ${createSummaryRow('Email:', `<a href="mailto:${email}" style="color: ${BRAND_COLORS.primary};">${email}</a>`)}
+                ${createSummaryRow('Phone:', phone || 'Not provided')}
+                ${createSummaryRow('Location:', location || 'Not provided')}
+            </div>
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.secondary};">
+                <p style="margin: 0 0 12px 0;"><strong>Request Details</strong></p>
+                ${createSummaryRow('Approx. Items:', itemCount || 'Not specified')}
+                ${createSummaryRow('Timeline:', timeline || 'Not specified')}
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <strong style="color: ${BRAND_COLORS.secondary};">Item Description:</strong>
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 16px; border-radius: 8px; margin-top: 8px; border: 1px solid ${BRAND_COLORS.grayBorder};">
+                    ${description}
+                </div>
+            </div>
+            
+            ${photos && photos.length > 0 ? `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 12px 0;"><strong>Photos (${photos.length} uploaded)</strong></p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;">
+                        ${photos.map(photo => `
+                            <a href="${photo.url}" target="_blank" style="display: block; border: 1px solid ${BRAND_COLORS.grayBorder}; border-radius: 8px; overflow: hidden; text-decoration: none;">
+                                <img src="${photo.url}" alt="Item photo" style="width: 100%; height: 100px; object-fit: cover;" />
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; color: ${BRAND_COLORS.textLight};">
+                    <p style="margin: 0;">No photos uploaded</p>
+                </div>
+            `}
+            
+            <div style="background: ${BRAND_COLORS.secondary}; color: #ffffff; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+                <p style="margin: 0 0 12px 0;"><strong>Admin Action Required</strong></p>
+                <p style="margin: 0 0 16px 0;">Please review this liquidation request and assign it to the appropriate team member.</p>
+                ${createButton('View All Requests', `${ADMIN_URL}/liquidation-requests`, 'primary')}
+            </div>
+        `;
+        
+        const html = baseTemplate(content, 'New Liquidation Request');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER, // Admin email
+            subject: `New Liquidation Request - ${name}`,
+            html
+        });
+        console.log(`✅ Liquidation admin email sent to ${process.env.EMAIL_USER}`);
+        return !!info;
+    } catch (error) {
+        console.error(`❌ Failed to send liquidation admin email:`, error);
+        return false;
+    }
+};
+
+const sellConfirmationEmail = async (name, email) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">Thank You for Your Selling Request</h2>
+            <p style="text-align: center;">Dear ${name},</p>
+            
+            <p>Thank you for submitting your selling request with <strong>${BRAND_NAME}</strong>. We have received your details and our team will review them promptly.</p>
+            
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-weight: bold; color: ${BRAND_COLORS.secondary};">What Happens Next?</p>
+                <div style="margin: 12px 0 0 0;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📋</span>
+                        <span style="color: ${BRAND_COLORS.text};">Our team will review your request within 24 hours</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📞</span>
+                        <span style="color: ${BRAND_COLORS.text};">We'll contact you to discuss your items and pricing</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
+                        <span style="font-size: 18px;">📸</span>
+                        <span style="color: ${BRAND_COLORS.text};">Professional photography and listing creation</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
+                        <span style="font-size: 18px;">💰</span>
+                        <span style="color: ${BRAND_COLORS.text};">Get paid quickly once your item sells</span>
+                    </div>
+                </div>
+            `, 'default')}
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-size: 14px; border: 1px solid ${BRAND_COLORS.grayBorder};">
+                <p style="margin: 0 0 8px 0;"><strong style="color: ${BRAND_COLORS.secondary};">Phone Support:</strong> Available Monday-Friday, 9:00 AM - 6:00 PM</p>
+                <p style="margin: 0;"><strong style="color: ${BRAND_COLORS.secondary};">Email Support:</strong> <a href="mailto:${SUPPORT_EMAIL}" style="color: ${BRAND_COLORS.primary};">${SUPPORT_EMAIL}</a></p>
+            </div>
+            
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid ${BRAND_COLORS.grayBorder};">
+                <p style="margin: 5px 0;">Best regards,</p>
+                <p style="margin: 5px 0;"><strong>The ${BRAND_NAME} Team</strong></p>
+            </div>
+        `;
+        
+        const html = baseTemplate(content, 'Selling Request Received');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `Selling Request Received - ${BRAND_NAME}`,
+            html
+        });
+        console.log(`✅ Sell confirmation email sent to ${email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`❌ Failed to send sell confirmation email:`, error);
+        return false;
+    }
+};
+
+const sellAdminEmail = async (name, email, phone, location, itemType, description, preferredMethod, photos) => {
+    try {
+        const methodLabels = {
+            'auction': 'Auction',
+            'buy-it-now': 'Buy It Now',
+            'not-sure': 'Not Sure'
+        };
+
+        const content = `
+            <h2 style="text-align: center;">New Selling Request</h2>
+            <p style="text-align: center;">A new selling request has been submitted.</p>
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.primary};">
+                <p style="margin: 0 0 12px 0;"><strong>Client Details</strong></p>
+                ${createSummaryRow('Name:', name)}
+                ${createSummaryRow('Email:', `<a href="mailto:${email}" style="color: ${BRAND_COLORS.primary};">${email}</a>`)}
+                ${createSummaryRow('Phone:', phone || 'Not provided')}
+                ${createSummaryRow('Location:', location || 'Not provided')}
+            </div>
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.secondary};">
+                <p style="margin: 0 0 12px 0;"><strong>Item Details</strong></p>
+                ${createSummaryRow('Item Type:', itemType)}
+                ${createSummaryRow('Preferred Method:', methodLabels[preferredMethod] || 'Not Specified')}
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <strong style="color: ${BRAND_COLORS.secondary};">Description:</strong>
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 16px; border-radius: 8px; margin-top: 8px; border: 1px solid ${BRAND_COLORS.grayBorder};">
+                    ${description}
+                </div>
+            </div>
+            
+            ${photos && photos.length > 0 ? `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 12px 0;"><strong>Photos (${photos.length} uploaded)</strong></p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;">
+                        ${photos.map(photo => `
+                            <a href="${photo.url}" target="_blank" style="display: block; border: 1px solid ${BRAND_COLORS.grayBorder}; border-radius: 8px; overflow: hidden; text-decoration: none;">
+                                <img src="${photo.url}" alt="Item photo" style="width: 100%; height: 100px; object-fit: cover;" />
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; color: ${BRAND_COLORS.textLight};">
+                    <p style="margin: 0;">No photos uploaded</p>
+                </div>
+            `}
+            
+            <div style="background: ${BRAND_COLORS.secondary}; color: #ffffff; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+                <p style="margin: 0 0 12px 0;"><strong>Admin Action Required</strong></p>
+                <p style="margin: 0 0 16px 0;">Please review this selling request and contact the potential seller.</p>
+                ${createButton('View All Requests', `${ADMIN_URL}/sell-requests`, 'primary')}
+            </div>
+            
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px; border: 1px solid ${BRAND_COLORS.grayBorder};">
+                <p style="margin: 0; color: ${BRAND_COLORS.textLight};">
+                    <strong>Submitted:</strong> ${new Date().toLocaleString()}
+                </p>
+            </div>
+        `;
+        
+        const html = baseTemplate(content, 'New Selling Request');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER,
+            subject: `New Selling Request - ${itemType}`,
+            html
+        });
+        console.log(`✅ Sell admin email sent to ${process.env.EMAIL_USER}`);
+        return !!info;
+    } catch (error) {
+        console.error(`❌ Failed to send sell admin email:`, error);
+        return false;
+    }
+};
+
 // Export all
 export {
     contactEmail,
@@ -2149,4 +2405,8 @@ export {
     newMessageNotificationEmail,
     accountApprovedEmail,
     identityRejectedEmail,
+    liquidateConfirmationEmail,
+    liquidateAdminEmail,
+    sellConfirmationEmail,
+    sellAdminEmail,
 };
