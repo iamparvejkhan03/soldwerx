@@ -2362,6 +2362,71 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
     }
 };
 
+// ------------------------------------------------------------
+// Proxy Bid Email Templates
+// ------------------------------------------------------------
+
+const sendProxyBidPlacedEmail = async (userEmail, username, auction, proxyBid) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">🤖 Proxy Bid Placed</h2>
+            <p style="text-align: center;">Hello ${username},</p>
+            <p>Your proxy bid has been placed successfully for <strong>${auction.title}</strong>.</p>
+            ${createInfoCard(`
+                ${createSummaryRow('Your Maximum Bid:', formatCurrency(proxyBid.maxAmount))}
+                ${createSummaryRow('Current Bid Placed:', formatCurrency(proxyBid.currentBid))}
+                ${createSummaryRow('Auction:', auction.title)}
+                ${createSummaryRow('Bid Status:', 'Active')}
+            `)}
+            <p>The system will automatically increase your bid up to your maximum whenever you are outbid.</p>
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View Auction', `${FRONTEND_URL}/auction/${auction._id}`, 'primary')}
+            </div>
+        `;
+        const html = baseTemplate(content, 'Proxy Bid Confirmed');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: userEmail,
+            subject: `Proxy Bid Placed - ${auction.title}`,
+            html
+        });
+        return !!info;
+    } catch (error) {
+        console.error('Failed to send proxy bid placed email:', error);
+        return false;
+    }
+};
+
+const sendProxyBidOutbidEmail = async (userEmail, username, auction, newBidAmount) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">🔔 Your Proxy Bid Was Outbid</h2>
+            <p style="text-align: center;">Hello ${username},</p>
+            <p>Another bidder has placed a higher bid on <strong>${auction.title}</strong>. Your proxy bid has automatically placed a new bid on your behalf.</p>
+            ${createInfoCard(`
+                ${createSummaryRow('New Bid Placed:', formatCurrency(newBidAmount))}
+                ${createSummaryRow('Current Highest Bid:', formatCurrency(auction.currentPrice))}
+                ${createSummaryRow('Auction:', auction.title)}
+            `)}
+            <p>You are now the highest bidder again. If someone else outbids you, we will continue to bid up to your maximum.</p>
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View Auction', `${FRONTEND_URL}/auction/${auction._id}`, 'primary')}
+            </div>
+        `;
+        const html = baseTemplate(content, 'Proxy Bid Outbid');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: userEmail,
+            subject: `Proxy Bid Outbid - ${auction.title}`,
+            html
+        });
+        return !!info;
+    } catch (error) {
+        console.error('Failed to send proxy bid outbid email:', error);
+        return false;
+    }
+};
+
 // Export all
 export {
     contactEmail,
@@ -2409,4 +2474,6 @@ export {
     liquidateAdminEmail,
     sellConfirmationEmail,
     sellAdminEmail,
+    sendProxyBidPlacedEmail,
+    sendProxyBidOutbidEmail,
 };

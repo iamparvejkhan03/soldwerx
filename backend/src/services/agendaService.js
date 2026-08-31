@@ -18,6 +18,7 @@ import {
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
+import { processProxyBids } from "./proxyBidService.js";
 
 class AgendaService {
   constructor() {
@@ -124,6 +125,8 @@ class AgendaService {
           }
 
           console.log(`✅ Agenda: Ending auction ${auctionId}`);
+
+          await processProxyBids(auctionId);
 
           // Use the model's endAuction method to handle the business logic
           const result = await auction.endAuction();

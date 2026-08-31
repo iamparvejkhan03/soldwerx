@@ -1,5 +1,5 @@
 import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare } from "lucide-react";
-import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
+import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, ProxyBidSection, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import useAuctionCountdown from "../hooks/useAuctionCountDown";
@@ -946,6 +946,14 @@ function SingleAuction() {
                     )}
                 </div>
             </section>
+
+            {/* Proxy Bidding */}
+            {(auction.auctionType === 'standard' || auction.auctionType === 'reserve') && (
+                <ProxyBidSection
+                    auction={auction}
+                    onAuctionUpdate={updateAuctionState}
+                />
+            )}
         </Container>
     );
 }

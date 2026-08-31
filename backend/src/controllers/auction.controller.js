@@ -18,6 +18,8 @@ import {
 } from "../utils/nodemailer.js";
 import Category from "../models/category.model.js";
 import Commission from "../models/commission.model.js";
+import { processProxyBids } from "../services/proxyBidService.js";
+// import { sendProxyBidPlacedEmail, sendProxyBidOutbidEmail } from "../utils/nodemailer.js";
 
 // Create New Auction
 export const createAuction = async (req, res) => {
@@ -1577,6 +1579,13 @@ export const placeBid = async (req, res) => {
       });
     }
 
+    if (auction.currentBidder && auction.currentBidder.toString() === bidder._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You are already the highest bidder. You cannot outbid yourself."
+      });
+    }
+
     // Store previous highest bidder before placing new bid
     const previousHighestBidder = auction.currentBidder;
     const previousBidders = [
@@ -1585,6 +1594,9 @@ export const placeBid = async (req, res) => {
 
     // Place bid using the model method
     await auction.placeBid(bidder._id, bidder.username, parseFloat(amount));
+
+    // Trigger proxy bid processing
+    await processProxyBids(auction._id);
 
     // Populate the updated auction
     await auction.populate("currentBidder", "username firstName email");
@@ -2646,6 +2658,501 @@ export const getHotListing = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error while fetching hot listing",
+    });
+  }
+};
+
+
+// Place a proxy bid
+export const placeProxyBid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { maxAmount } = req.body;
+    const bidder = req.user;
+
+    // --- Validation ---
+    if (!bidder?.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "Account is inactive. Can't place a proxy bid.",
+      });
+    }
+
+    if (!bidder?.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Account is not verified. Can't place a proxy bid.",
+      });
+    }
+
+    const auction = await Auction.findById(id);
+
+    if (!auction) {
+      return res.status(404).json({
+        success: false,
+        message: "Auction not found",
+      });
+    }
+
+    // Check auction state
+    if (auction.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message: "Auction is not active",
+      });
+    }
+
+    if (new Date() >= auction.endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Auction has ended",
+      });
+    }
+
+    if (auction.seller.toString() === bidder._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You can't place a proxy bid on your own auction",
+      });
+    }
+
+    // Check if user already has an active proxy bid
+    const existingProxyBid = auction.proxyBids.find(
+      (pb) => pb.bidder.toString() === bidder._id.toString() && pb.isActive
+    );
+
+    if (existingProxyBid) {
+      return res.status(400).json({
+        success: false,
+        message: "You already have an active proxy bid on this auction",
+      });
+    }
+
+    // Validate maxAmount
+    const minBid = auction.bidCount === 0
+      ? auction.startPrice
+      : auction.currentPrice + auction.bidIncrement;
+
+    if (parseFloat(maxAmount) < minBid) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum bid must be at least $${minBid.toFixed(2)}`,
+      });
+    }
+
+    // --- Create proxy bid ---
+    const proxyBid = {
+      bidder: bidder._id,
+      bidderUsername: bidder.username,
+      maxAmount: parseFloat(maxAmount),
+      currentBid: minBid,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    auction.proxyBids.push(proxyBid);
+    await auction.save();
+
+    // --- Immediately place the initial bid if needed ---
+    // Check if this proxy bid can become the current highest bid
+    const currentHighest = auction.currentBidder
+      ? auction.currentPrice
+      : auction.startPrice - auction.bidIncrement; // simulate no bid
+
+    let nextBid = auction.bidCount === 0
+      ? auction.startPrice
+      : auction.currentPrice + auction.bidIncrement;
+
+    if (proxyBid.maxAmount >= nextBid) {
+      // Place the bid using the service function
+      await placeBidDirect(auction._id, bidder._id, bidder.username, nextBid, proxyBid._id);
+    }
+
+    // --- Trigger processing of all proxy bids ---
+    await processProxyBids(auction._id);
+
+    // --- Fetch updated auction ---
+    const updatedAuction = await Auction.findById(id)
+      .populate("seller", "username firstName lastName email")
+      .populate("currentBidder", "username firstName lastName email")
+      .populate("bids.bidder", "username firstName lastName email");
+
+    res.status(200).json({
+      success: true,
+      message: "Proxy bid placed successfully",
+      data: {
+        auction: updatedAuction,
+        proxyBid,
+      },
+    });
+
+    // --- Send notification to bidder (optional) ---
+    // sendProxyBidPlacedEmail(bidder.email, bidder.username, auction, proxyBid);
+
+  } catch (error) {
+    console.error("Place proxy bid error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while placing proxy bid",
+    });
+  }
+};
+
+// Helper function to place a bid directly (used by proxy system)
+export const placeBidDirect = async (
+  auctionId,
+  bidderId,
+  bidderUsername,
+  amount,
+  proxyBidId = null,
+  maxRetries = 3
+) => {
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxRetries) {
+    try {
+      // 1. Fetch current auction state (for validation and to know old values)
+      const auction = await Auction.findById(auctionId).select(
+        "status currentPrice currentBidder bidCount bidIncrement startPrice autoExtend endDate proxyBids"
+      );
+
+      if (!auction || auction.status !== "active") {
+        throw new Error("Auction not active or not found");
+      }
+
+      // 2. Prevent self‑outbidding
+      if (
+        auction.currentBidder &&
+        auction.currentBidder.toString() === bidderId.toString()
+      ) {
+        // Already highest, nothing to do
+        return auction;
+      }
+
+      // 3. Validate bid amount
+      const minBid =
+        auction.bidCount === 0
+          ? auction.startPrice
+          : auction.currentPrice + auction.bidIncrement;
+      if (amount < minBid) {
+        throw new Error(`Bid must be at least ${minBid}`);
+      }
+
+      // 4. Prepare update object
+      const now = new Date();
+      const update = {
+        $inc: { bidCount: 1 },
+        $set: {
+          currentPrice: amount,
+          currentBidder: bidderId,
+          lastBidTime: now,
+        },
+        $push: {
+          bids: {
+            bidder: bidderId,
+            bidderUsername,
+            amount,
+            timestamp: now,
+            isProxyBid: true,
+            proxyBidId,
+          },
+        },
+      };
+
+      // 5. Update proxy bid's currentBid and updatedAt (if proxyBidId provided)
+      const arrayFilters = [];
+      if (proxyBidId) {
+        // Use array filters to update the specific proxy bid
+        update.$set = {
+          ...update.$set,
+          "proxyBids.$[elem].currentBid": amount,
+          "proxyBids.$[elem].updatedAt": now,
+        };
+        arrayFilters.push({ "elem._id": proxyBidId });
+      }
+
+      // 6. Auto‑extension logic (same as model's placeBid)
+      let extended = false;
+      if (auction.autoExtend) {
+        const timeRemaining = auction.endDate - now;
+        if (timeRemaining < 2 * 60 * 1000) {
+          const newEndDate = new Date(auction.endDate.getTime() + 2 * 60 * 1000);
+          update.$set.endDate = newEndDate;
+          extended = true;
+        }
+      }
+
+      // 7. Build the query condition to prevent race conditions
+      // Only update if the auction is still active and the currentPrice and currentBidder
+      // have not changed since we fetched them.
+      const query = {
+        _id: auctionId,
+        status: "active",
+        currentPrice: auction.currentPrice,
+      };
+      if (auction.currentBidder) {
+        query.currentBidder = auction.currentBidder;
+      } else {
+        // If currentBidder is null, we still want to match that (MongoDB null equality)
+        query.currentBidder = null;
+      }
+
+      // 8. Perform atomic update
+      const options = {
+        new: true,
+        runValidators: true,
+        arrayFilters,
+      };
+
+      const updatedAuction = await Auction.findOneAndUpdate(
+        query,
+        update,
+        options
+      );
+
+      if (!updatedAuction) {
+        // The condition failed – someone else modified the auction.
+        // Throw a specific error to trigger a retry.
+        throw new Error("Auction state changed, retrying...");
+      }
+
+      // 9. If we extended, cancel old job and schedule new one
+      if (extended) {
+        await agendaService.cancelAuctionJobs(auctionId);
+        await agendaService.scheduleAuctionEnd(auctionId, updatedAuction.endDate);
+      }
+
+      // Success
+      return updatedAuction;
+    } catch (error) {
+      lastError = error;
+      attempt++;
+
+      // If the error is a retryable race condition, wait and retry
+      if (
+        error.message === "Auction state changed, retrying..." &&
+        attempt < maxRetries
+      ) {
+        console.warn(
+          `Retry ${attempt}/${maxRetries} for auction ${auctionId} due to race condition`
+        );
+        await new Promise((resolve) => setTimeout(resolve, 50 * attempt)); // backoff
+        continue;
+      }
+
+      // Otherwise, throw the error immediately
+      throw error;
+    }
+  }
+
+  // If we exhausted retries, throw the last error
+  throw lastError || new Error("Failed to place direct bid after retries");
+};
+
+// Cancel a proxy bid
+export const cancelProxyBid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const auction = await Auction.findById(id);
+
+    if (!auction) {
+      return res.status(404).json({
+        success: false,
+        message: "Auction not found",
+      });
+    }
+
+    const proxyBid = auction.proxyBids.find(
+      (pb) => pb.bidder.toString() === userId.toString() && pb.isActive
+    );
+
+    if (!proxyBid) {
+      return res.status(404).json({
+        success: false,
+        message: "No active proxy bid found for this user",
+      });
+    }
+
+    // Deactivate
+    proxyBid.isActive = false;
+    proxyBid.updatedAt = new Date();
+    await auction.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Proxy bid cancelled successfully",
+      data: { auction },
+    });
+
+  } catch (error) {
+    console.error("Cancel proxy bid error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while cancelling proxy bid",
+    });
+  }
+};
+
+// Get proxy bid status for current user
+export const getProxyBidStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const auction = await Auction.findById(id).select("proxyBids");
+
+    if (!auction) {
+      return res.status(404).json({
+        success: false,
+        message: "Auction not found",
+      });
+    }
+
+    const proxyBid = auction.proxyBids.find(
+      (pb) => pb.bidder.toString() === userId.toString()
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        hasProxyBid: !!proxyBid,
+        isActive: proxyBid?.isActive || false,
+        maxAmount: proxyBid?.maxAmount || 0,
+        currentBid: proxyBid?.currentBid || 0,
+        createdAt: proxyBid?.createdAt || null,
+        updatedAt: proxyBid?.updatedAt || null,
+      },
+    });
+
+  } catch (error) {
+    console.error("Get proxy bid status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching proxy bid status",
+    });
+  }
+};
+
+/**
+ * Update an existing proxy bid (max amount).
+ * - If the proxy bid is inactive, it reactivates it.
+ * - If active, updates the max amount.
+ * - Then re‑processes all proxy bids to see if a higher bid should be placed.
+ */
+export const updateProxyBid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { maxAmount } = req.body;
+    const userId = req.user._id;
+
+    // Basic validation
+    if (!maxAmount || parseFloat(maxAmount) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid maximum bid amount is required.",
+      });
+    }
+
+    const auction = await Auction.findById(id);
+    if (!auction) {
+      return res.status(404).json({
+        success: false,
+        message: "Auction not found",
+      });
+    }
+
+    // Check auction state
+    if (auction.status !== "active") {
+      return res.status(400).json({
+        success: false,
+        message: "Auction is not active",
+      });
+    }
+
+    if (new Date() >= auction.endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Auction has ended",
+      });
+    }
+
+    if (auction.seller.toString() === userId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You can't have a proxy bid on your own auction",
+      });
+    }
+
+    // Find existing proxy bid for this user
+    const proxyBid = auction.proxyBids.find(
+      (pb) => pb.bidder.toString() === userId.toString()
+    );
+
+    if (!proxyBid) {
+      return res.status(404).json({
+        success: false,
+        message: "You don't have a proxy bid on this auction.",
+      });
+    }
+
+    // Compute minimum bid required to be competitive
+    const minBid = auction.bidCount === 0
+      ? auction.startPrice
+      : auction.currentPrice + auction.bidIncrement;
+
+    const newMax = parseFloat(maxAmount);
+
+    // Validate new max
+    if (newMax < minBid) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum bid must be at least $${minBid.toFixed(2)}`,
+      });
+    }
+
+    // Optional: if proxy bid is active and currentBid is already higher than newMax, reject
+    if (proxyBid.isActive && proxyBid.currentBid > newMax) {
+      return res.status(400).json({
+        success: false,
+        message: `New max cannot be lower than your current proxy bid (${proxyBid.currentBid}).`,
+      });
+    }
+
+    // Update the proxy bid
+    proxyBid.maxAmount = newMax;
+    proxyBid.isActive = true; // ensure active (in case it was cancelled)
+    proxyBid.updatedAt = new Date();
+
+    // If the new max is higher and the user is not currently the highest, we might need to place a bid.
+    await auction.save();
+
+    // Trigger proxy bid processing to potentially place a higher bid immediately
+    await processProxyBids(auction._id);
+
+    // Fetch updated auction with populated fields for response
+    const updatedAuction = await Auction.findById(id)
+      .populate("seller", "username firstName lastName email")
+      .populate("currentBidder", "username firstName lastName email")
+      .populate("bids.bidder", "username firstName lastName email");
+
+    res.status(200).json({
+      success: true,
+      message: "Proxy bid updated successfully.",
+      data: {
+        auction: updatedAuction,
+        proxyBid: proxyBid,
+      },
+    });
+
+  } catch (error) {
+    console.error("Update proxy bid error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while updating proxy bid.",
     });
   }
 };

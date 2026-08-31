@@ -214,12 +214,72 @@ const auctionSchema = new Schema(
           default: Date.now,
         },
         isBuyNow: {
-          // NEW: Flag for buy now purchases
           type: Boolean,
           default: false,
         },
+        isProxyBid: {  // NEW
+          type: Boolean,
+          default: false,
+        },
+        proxyBidId: {
+          type: Schema.Types.ObjectId,
+        },
       },
     ],
+
+    // Proxy Bidding
+    proxyBids: [
+      {
+        bidder: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        bidderUsername: {
+          type: String,
+          required: true,
+        },
+        maxAmount: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        currentBid: {
+          type: Number,
+          default: 0,
+        },
+        isActive: {
+          type: Boolean,
+          default: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // Optional: auction-level toggle
+    allowProxyBidding: {
+      type: Boolean,
+      default: true,
+    },
+
+    // Optional: configuration limits
+    proxyBidConfig: {
+      maxBidPerUser: {
+        type: Number,
+        default: 1,
+      },
+      autoIncrease: {
+        type: Boolean,
+        default: true,
+      },
+    },
     currentBidder: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -343,8 +403,10 @@ auctionSchema.index({ status: 1, endDate: 1 });
 auctionSchema.index({ seller: 1, createdAt: -1 });
 auctionSchema.index({ category: 1, status: 1 });
 auctionSchema.index({ startDate: 1, endDate: 1 });
-auctionSchema.index({ "offers.status": 1 }); // NEW: Index for offer status
-auctionSchema.index({ "offers.expiresAt": 1 }); // NEW: Index for offer expiry
+auctionSchema.index({ "offers.status": 1 });
+auctionSchema.index({ "offers.expiresAt": 1 });
+auctionSchema.index({ "proxyBids.bidder": 1, "proxyBids.isActive": 1 });
+auctionSchema.index({ "proxyBids.maxAmount": -1 });
 
 // Virtual for time remaining
 auctionSchema.virtual("timeRemaining").get(function () {
@@ -802,11 +864,9 @@ auctionSchema.methods.reactivateAndAcceptOffer = async function (
   // Reactivate and accept the offer
   const previousResponse = offer.sellerResponse || "";
   offer.status = "accepted";
-  offer.sellerResponse = `${
-    previousResponse ? previousResponse + " | " : ""
-  }Reactivated and accepted by ${
-    isAdmin ? "admin" : "seller"
-  } on ${new Date().toLocaleDateString()}`;
+  offer.sellerResponse = `${previousResponse ? previousResponse + " | " : ""
+    }Reactivated and accepted by ${isAdmin ? "admin" : "seller"
+    } on ${new Date().toLocaleDateString()}`;
   offer.reactivatedAt = new Date();
 
   // Update auction details

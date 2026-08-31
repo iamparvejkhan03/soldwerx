@@ -71,6 +71,7 @@ const BidderNotifications = lazy(() => import('./pages/bidder/Notifications'));
 const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
 const BidderCommunication = lazy(() => import('./pages/bidder/Communication'));
 const BidderPayments = lazy(() => import('./pages/bidder/Payments'));
+const ActiveEvents = lazy(() => import('./pages/bidder/ActiveEvents'));
 
 {/* Admin Pages */ }
 const AdminLayout = lazy(() => import('./pages/admin/Layout'));
@@ -500,6 +501,16 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             /> */}
+
+                        {/* Bidder Watchlist */}
+                        <Route
+                            path='/bidder/events/active'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <ActiveEvents />
+                                </Suspense>
+                            }
+                        />
                     </Route>
 
                     {/* Admin Layout */}

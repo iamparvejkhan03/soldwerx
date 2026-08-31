@@ -61,6 +61,7 @@ import TestimonialSection from "./TestimonialSection";
 import LanguageSwitcher from "./LanguageSwitcher";
 import LiquidateForm from "./LiquidateForm";
 import EventCard from "./EventCard";
+import ProxyBidSection from "./ProxyBidSection";
 
 export {
     Container,
@@ -126,4 +127,5 @@ export {
     LanguageSwitcher,
     LiquidateForm,
     EventCard,
+    ProxyBidSection,
 }

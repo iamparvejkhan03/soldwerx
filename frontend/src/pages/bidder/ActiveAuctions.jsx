@@ -213,45 +213,6 @@ function ActiveAuctions() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Quick Filters with Status */}
-                        <div className="flex flex-wrap gap-3">
-                            <button
-                                onClick={() => setFilter("all")}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                            >
-                                All
-                            </button>
-                            <button
-                                onClick={() => setFilter("ending_soon")}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "ending_soon" ? "bg-red-100 text-red-800 border border-red-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                            >
-                                Ending Soon
-                            </button>
-                            <button
-                                onClick={() => setFilter("active")}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "active" ? "bg-green-100 text-green-800 border border-green-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                            >
-                                Active This Week
-                            </button>
-                            {/* View Mode Toggle */}
-                            {/* <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                                <button
-                                    onClick={() => setViewMode("grid")}
-                                    className={`p-2 rounded transition-colors ${viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-                                    title="Grid View"
-                                >
-                                    <Grid size={18} className={viewMode === "grid" ? "text-blue-600" : "text-gray-500"} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("list")}
-                                    className={`p-2 rounded transition-colors ${viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-                                    title="List View"
-                                >
-                                    <List size={18} className={viewMode === "list" ? "text-blue-600" : "text-gray-500"} />
-                                </button>
-                            </div> */}
-                        </div>
                     </div>
 
                     {/* Auction Cards Grid or List */}

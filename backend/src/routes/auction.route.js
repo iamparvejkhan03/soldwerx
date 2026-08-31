@@ -13,7 +13,11 @@ import {
     getTopLiveAuctions,
     lowerReservePrice,
     getAuctionCommission,
-    getHotListing
+    getHotListing,
+    placeProxyBid,
+    cancelProxyBid,
+    getProxyBidStatus,
+    updateProxyBid
 } from '../controllers/auction.controller.js';
 import upload from '../middlewares/multer.middleware.js';
 import { auth, authBidder, authSeller } from '../middlewares/auth.middleware.js';
@@ -40,6 +44,12 @@ auctionRouter.get('/won-auctions', auth, getWonAuctions);
 auctionRouter.get('/sold-auctions', authSeller, getSoldAuctions);
 auctionRouter.get('/top', getTopLiveAuctions);
 auctionRouter.patch('/:id/lower-reserve', authSeller, lowerReservePrice);
+
+// Proxy Bidding
+auctionRouter.post("/:id/proxy-bid", authBidder, placeProxyBid);
+auctionRouter.delete("/:id/proxy-bid", authBidder, cancelProxyBid);
+auctionRouter.get("/:id/proxy-bid/status", auth, getProxyBidStatus);
+auctionRouter.put('/:id/proxy-bid', authBidder, updateProxyBid);
 
 // Public routes
 auctionRouter.get('/', getAuctions);

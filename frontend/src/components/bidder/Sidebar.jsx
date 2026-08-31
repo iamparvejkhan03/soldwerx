@@ -11,7 +11,8 @@ import {
     Bookmark,
     CreditCard,
     Hand,
-    DollarSign
+    DollarSign,
+    CalendarDaysIcon
 } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { logo } from "../../assets";
@@ -21,6 +22,7 @@ import { useAuth } from "../../contexts/AuthContext";
 const navigation = [
     { name: 'Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Active Auctions', path: '/bidder/auctions/active', icon: <Gavel size={20} /> },
+    { name: 'Active Events', path: '/bidder/events/active', icon: <CalendarDaysIcon size={20} /> },
     { name: 'Watchlist', path: '/bidder/watchlist', icon: <Bookmark size={20} /> },
     { name: 'My Offers', path: '/bidder/offers', icon: <Hand size={20} /> },
     { name: 'My Bids', path: '/bidder/bids', icon: <TrendingUp size={20} /> },
