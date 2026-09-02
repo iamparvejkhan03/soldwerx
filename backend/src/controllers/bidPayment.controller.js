@@ -5,6 +5,8 @@ import User from '../models/user.model.js';
 import { StripeService } from '../services/stripeService.js';
 import { calculateCommissions } from '../utils/commissionCalculator.js';
 import Stripe from 'stripe';
+import { paymentCompletedEmail, paymentCompletedSellerEmail } from '../utils/nodemailer.js';
+import agendaService from '../services/agendaService.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createBidPaymentIntent = async (req, res) => {
@@ -375,156 +377,161 @@ export async function cancelAllBidderAuthorizations(auctionId) {
 
 // It charges the entire payment whereas the above controllers are for bid authorization hold and payments
 export const createWinnerPaymentIntent = async (req, res) => {
-  try {
-    const { auctionId } = req.body;
-    const userId = req.user._id;
+    try {
+        const { auctionId } = req.body;
+        const userId = req.user._id;
 
-    const auction = await Auction.findById(auctionId);
-    if (!auction) {
-      return res.status(404).json({ success: false, message: 'Auction not found' });
+        const auction = await Auction.findById(auctionId);
+        if (!auction) {
+            return res.status(404).json({ success: false, message: 'Auction not found' });
+        }
+
+        // Ensure the logged-in user is the winner
+        if (!auction.winner || auction.winner.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'You are not the winner of this auction' });
+        }
+
+        // Check if already paid (via card or bank)
+        if (auction.paymentStatus === 'completed') {
+            return res.status(400).json({ success: false, message: 'This auction has already been paid for' });
+        }
+
+        // Check if there's already a successful winner_payment for this auction
+        const existingPayment = await BidPayment.findOne({
+            auction: auctionId,
+            bidder: userId,
+            type: 'winner_payment',
+            status: 'succeeded'
+        });
+        if (existingPayment) {
+            return res.status(400).json({ success: false, message: 'You have already paid for this auction' });
+        }
+
+        // Calculate total amount (finalPrice + buyer fee)
+        const total = (auction.finalPrice || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0);
+
+        if (total <= 0) {
+            return res.status(400).json({ success: false, message: 'Total amount is zero – no payment required' });
+        }
+
+        // Get or create Stripe customer
+        const user = await User.findById(userId);
+        let customerId = user.stripeCustomerId;
+        if (!customerId) {
+            const customer = await StripeService.createCustomer(user.email, user.firstName + ' ' + user.lastName);
+            customerId = customer.id;
+            user.stripeCustomerId = customerId;
+            await user.save();
+        }
+
+        // Create PaymentIntent
+        const paymentIntent = await StripeService.createPaymentIntent({
+            amount: Math.round(total * 100), // cents
+            currency: 'usd',
+            customer: customerId,
+            payment_method_types: ['card'],
+            capture_method: 'automatic',
+            confirm: false, // we confirm on client side
+            metadata: {
+                auctionId: auctionId.toString(),
+                type: 'winner_payment',
+                userId: userId.toString()
+            },
+            description: `Payment for auction: ${auction.title}`,
+        });
+
+        // Save BidPayment record
+        const bidPayment = await BidPayment.create({
+            auction: auctionId,
+            bidder: userId,
+            bidAmount: auction.finalPrice || 0,
+            commissionAmount: auction.buyerFeeAmount || 0,
+            taxAmount: auction.taxAmount || 0,
+            totalAmount: total,
+            paymentIntentId: paymentIntent.id,
+            clientSecret: paymentIntent.client_secret,
+            status: paymentIntent.status, // 'created' or 'requires_action'
+            type: 'winner_payment',
+            chargeAttempted: false,
+            chargeSucceeded: false
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                clientSecret: paymentIntent.client_secret,
+                paymentIntentId: paymentIntent.id,
+                bidPaymentId: bidPayment._id,
+                amount: total
+            }
+        });
+    } catch (error) {
+        console.error('Create winner payment intent error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
-
-    // Ensure the logged-in user is the winner
-    if (!auction.winner || auction.winner.toString() !== userId.toString()) {
-      return res.status(403).json({ success: false, message: 'You are not the winner of this auction' });
-    }
-
-    // Check if already paid (via card or bank)
-    if (auction.paymentStatus === 'completed') {
-      return res.status(400).json({ success: false, message: 'This auction has already been paid for' });
-    }
-
-    // Check if there's already a successful winner_payment for this auction
-    const existingPayment = await BidPayment.findOne({
-      auction: auctionId,
-      bidder: userId,
-      type: 'winner_payment',
-      status: 'succeeded'
-    });
-    if (existingPayment) {
-      return res.status(400).json({ success: false, message: 'You have already paid for this auction' });
-    }
-
-    // Calculate total amount (finalPrice + buyer fee)
-    const total = (auction.finalPrice || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0);
-
-    if (total <= 0) {
-      return res.status(400).json({ success: false, message: 'Total amount is zero – no payment required' });
-    }
-
-    // Get or create Stripe customer
-    const user = await User.findById(userId);
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await StripeService.createCustomer(user.email, user.firstName + ' ' + user.lastName);
-      customerId = customer.id;
-      user.stripeCustomerId = customerId;
-      await user.save();
-    }
-
-    // Create PaymentIntent
-    const paymentIntent = await StripeService.createPaymentIntent({
-      amount: Math.round(total * 100), // cents
-      currency: 'usd',
-      customer: customerId,
-      payment_method_types: ['card'],
-      capture_method: 'automatic',
-      confirm: false, // we confirm on client side
-      metadata: {
-        auctionId: auctionId.toString(),
-        type: 'winner_payment',
-        userId: userId.toString()
-      },
-      description: `Payment for auction: ${auction.title}`,
-    });
-
-    // Save BidPayment record
-    const bidPayment = await BidPayment.create({
-      auction: auctionId,
-      bidder: userId,
-      bidAmount: auction.finalPrice || 0,
-      commissionAmount: auction.buyerFeeAmount || 0,
-      taxAmount: auction.taxAmount || 0,
-      totalAmount: total,
-      paymentIntentId: paymentIntent.id,
-      clientSecret: paymentIntent.client_secret,
-      status: paymentIntent.status, // 'created' or 'requires_action'
-      type: 'winner_payment',
-      chargeAttempted: false,
-      chargeSucceeded: false
-    });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
-        bidPaymentId: bidPayment._id,
-        amount: total
-      }
-    });
-  } catch (error) {
-    console.error('Create winner payment intent error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
-  }
 };
 
 // Confirm winner payment after Stripe success on client
 export const confirmWinnerPayment = async (req, res) => {
-  try {
-    const { paymentIntentId } = req.body;
-    const userId = req.user._id;
+    try {
+        const { paymentIntentId } = req.body;
+        const userId = req.user._id;
 
-    // Find the bid payment record
-    const bidPayment = await BidPayment.findOne({
-      paymentIntentId,
-      bidder: userId,
-      type: 'winner_payment'
-    }).populate('auction');
+        // Find the bid payment record
+        const bidPayment = await BidPayment.findOne({
+            paymentIntentId,
+            bidder: userId,
+            type: 'winner_payment'
+        }).populate('auction');
 
-    if (!bidPayment) {
-      return res.status(404).json({ success: false, message: 'Payment record not found' });
+        if (!bidPayment) {
+            return res.status(404).json({ success: false, message: 'Payment record not found' });
+        }
+
+        // Retrieve payment intent from Stripe to confirm status
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status === 'succeeded') {
+            // Update BidPayment
+            bidPayment.status = 'succeeded';
+            bidPayment.chargeAttempted = true;
+            bidPayment.chargeSucceeded = true;
+            await bidPayment.save();
+
+            // Update auction
+            const auction = await Auction.findById(bidPayment.auction).populate('winner').populate('seller');
+            auction.paymentStatus = 'completed';
+            auction.paymentMethod = 'credit_card';
+            auction.transactionId = paymentIntentId;
+            auction.paymentDate = new Date();
+            await auction.save();
+
+            // payment completed emails will be sent from here
+            agendaService.scheduleInvoiceUpdate(auction._id, userId).catch(err =>
+                console.error('Failed to schedule invoice update job:', err)
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: 'Payment confirmed successfully',
+                data: { auctionId: auction._id }
+            });
+        } else if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'canceled') {
+            // Payment failed or was canceled
+            bidPayment.status = 'canceled';
+            await bidPayment.save();
+            return res.status(400).json({
+                success: false,
+                message: 'Payment was not completed. Please try again.'
+            });
+        } else {
+            // Still pending – wait or redirect
+            return res.status(202).json({
+                success: false,
+                message: 'Payment is still being processed. Please check later.'
+            });
+        }
+    } catch (error) {
+        console.error('Confirm winner payment error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
-
-    // Retrieve payment intent from Stripe to confirm status
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (paymentIntent.status === 'succeeded') {
-      // Update BidPayment
-      bidPayment.status = 'succeeded';
-      bidPayment.chargeAttempted = true;
-      bidPayment.chargeSucceeded = true;
-      await bidPayment.save();
-
-      // Update auction
-      const auction = bidPayment.auction;
-      auction.paymentStatus = 'completed';
-      auction.paymentMethod = 'credit_card';
-      auction.transactionId = paymentIntentId;
-      auction.paymentDate = new Date();
-      await auction.save();
-
-      return res.status(200).json({
-        success: true,
-        message: 'Payment confirmed successfully',
-        data: { auctionId: auction._id }
-      });
-    } else if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'canceled') {
-      // Payment failed or was canceled
-      bidPayment.status = 'canceled';
-      await bidPayment.save();
-      return res.status(400).json({
-        success: false,
-        message: 'Payment was not completed. Please try again.'
-      });
-    } else {
-      // Still pending – wait or redirect
-      return res.status(202).json({
-        success: false,
-        message: 'Payment is still being processed. Please check later.'
-      });
-    }
-  } catch (error) {
-    console.error('Confirm winner payment error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
-  }
 };

@@ -633,7 +633,14 @@ auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
   // Cancel any scheduled jobs
   await agendaService.cancelAuctionJobs(this._id);
 
-  return this.save();
+  await this.save();
+
+  // Fire invoice generation (non-blocking)
+  agendaService.scheduleInvoiceGeneration(this._id).catch(err =>
+    console.error('Failed to schedule invoice job:', err)
+  );
+
+  return this;
 };
 
 // Method to make an offer
@@ -716,6 +723,7 @@ auctionSchema.methods.respondToOffer = async function (
       this.finalPrice = offer.amount;
       this.status = "sold";
       this.endDate = new Date(); // End auction immediately
+      this.paymentStatus = 'pending';
 
       // Calculate and store commission
       const {
@@ -749,6 +757,7 @@ auctionSchema.methods.respondToOffer = async function (
 
       // Cancel any scheduled jobs
       await agendaService.cancelAuctionJobs(this._id);
+
       break;
 
     case "reject":
@@ -771,7 +780,16 @@ auctionSchema.methods.respondToOffer = async function (
       throw new Error("Invalid response type");
   }
 
-  return this.save();
+  await this.save();
+
+  if (response === "accept") {
+    // Fire invoice generation (non-blocking)
+    agendaService.scheduleInvoiceGeneration(this._id).catch(err =>
+      console.error('Failed to schedule invoice job:', err)
+    );
+  }
+
+  return this;
 };
 
 // NEW: Method for buyer to respond to counter offer
@@ -800,6 +818,7 @@ auctionSchema.methods.respondToCounterOffer = async function (offerId, accept) {
     this.finalPrice = offer.counterOffer.amount;
     this.status = "sold";
     this.endDate = new Date();
+    this.paymentStatus = 'pending';
 
     // Calculate and store commission
     const {
@@ -839,7 +858,14 @@ auctionSchema.methods.respondToCounterOffer = async function (offerId, accept) {
     offer.sellerResponse = "Counter offer rejected by buyer";
   }
 
-  return this.save();
+  await this.save();
+
+  if (accept) {
+    agendaService.scheduleInvoiceGeneration(this._id).catch(err =>
+      console.error('Failed to schedule invoice job:', err)
+    );
+  }
+  return this;
 };
 
 // NEW: Method to withdraw an offer
@@ -909,6 +935,7 @@ auctionSchema.methods.reactivateAndAcceptOffer = async function (
   this.finalPrice = offer.amount;
   this.status = "sold";
   this.endDate = new Date();
+  this.paymentStatus = 'pending';
 
   // Calculate and store commission
   const {
@@ -944,7 +971,14 @@ auctionSchema.methods.reactivateAndAcceptOffer = async function (
   // Cancel any scheduled jobs
   await agendaService.cancelAuctionJobs(this._id);
 
-  return this.save();
+  await this.save();
+
+  // Fire invoice generation (non-blocking)
+  agendaService.scheduleInvoiceGeneration(this._id).catch(err =>
+    console.error('Failed to schedule invoice job:', err)
+  );
+
+  return this;
 };
 
 // Suggested model methods:
@@ -1015,16 +1049,14 @@ auctionSchema.methods.endAuction = async function () {
   const now = new Date();
   let wasSold = false;
 
-  // For standard auctions OR reserve auctions that met reserve
   if (this.bidCount > 0) {
     if (this.auctionType === "standard") {
-      // Standard auction with bids - sold
       this.status = "sold";
       this.winner = this.currentBidder;
       this.finalPrice = this.currentPrice;
       wasSold = true;
+      this.paymentStatus = 'pending';
 
-      // Calculate and store commission
       const {
         buyerFeeAmount,
         sellerFeeAmount,
@@ -1045,15 +1077,15 @@ auctionSchema.methods.endAuction = async function () {
       this.taxAmount = taxAmount;
       this.taxType = taxType;
       this.taxValue = taxValue;
+
     } else if (this.auctionType === "reserve") {
-      // Reserve auction - check if reserve is met
       if (this.isReserveMet()) {
         this.status = "sold";
         this.winner = this.currentBidder;
         this.finalPrice = this.currentPrice;
         wasSold = true;
+        this.paymentStatus = 'pending';
 
-        // Calculate and store commission
         const {
           buyerFeeAmount,
           sellerFeeAmount,
@@ -1074,19 +1106,18 @@ auctionSchema.methods.endAuction = async function () {
         this.taxAmount = taxAmount;
         this.taxType = taxType;
         this.taxValue = taxValue;
+
       } else {
         this.status = "reserve_not_met";
       }
     } else if (this.auctionType === "buy_now") {
-      // Buy Now auction that ended normally (not via Buy Now)
       if (this.bidCount > 0) {
         this.status = "sold";
         this.winner = this.currentBidder;
         this.finalPrice = this.currentPrice;
         wasSold = true;
-        this.paymentStatus = this.auctionType === 'giveaway' ? 'completed' : 'pending';
+        this.paymentStatus = 'pending';
 
-        // Calculate and store commission
         const {
           buyerFeeAmount,
           sellerFeeAmount,
@@ -1107,19 +1138,17 @@ auctionSchema.methods.endAuction = async function () {
         this.taxAmount = taxAmount;
         this.taxType = taxType;
         this.taxValue = taxValue;
+
       } else {
         this.status = "ended";
       }
     }
   } else {
-    // No bids - just end it
     this.status = "ended";
   }
 
-  // Set actual end time
   this.endDate = now;
 
-  // Also reject any pending offers when auction ends
   this.offers.forEach((offer) => {
     if (offer.status === "pending") {
       offer.status = "expired";
@@ -1129,7 +1158,13 @@ auctionSchema.methods.endAuction = async function () {
 
   await this.save();
 
-  // Return result object
+  // Only generate invoice if auction was sold
+  if (wasSold) {
+    agendaService.scheduleInvoiceGeneration(this._id).catch(err =>
+      console.error('Failed to schedule invoice job:', err)
+    );
+  }
+
   return {
     wasSold,
     winner: this.winner,

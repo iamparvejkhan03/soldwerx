@@ -251,6 +251,40 @@ const baseTemplate = (content, title = BRAND_NAME) => `
 </html>
 `;
 
+// build invoice table with pdf make
+const buildInvoiceTable = (invoiceData) => {
+    const rows = [
+        ['Description', 'Amount'],
+        [`Hammer Price: `, `$${invoiceData.hammerPrice.toFixed(2)}`],
+    ];
+    if (invoiceData.buyerPremium > 0) {
+        rows.push([`Buyer Premium: `, `$${invoiceData.buyerPremium.toFixed(2)}`]);
+    }
+    if (invoiceData.taxAmount > 0) {
+        rows.push([`Tax: `, `$${invoiceData.taxAmount.toFixed(2)}`]);
+    }
+    rows.push(['Total', `$${invoiceData.total.toFixed(2)}`]);
+    rows.push(['Payment Status', invoiceData.paymentStatus.toUpperCase()]);
+    if (invoiceData.paymentMethod && invoiceData.paymentMethod !== 'N/A') {
+        rows.push(['Payment Method', invoiceData.paymentMethod.replace('_', ' ').toUpperCase()]);
+    }
+
+    let html = `<table style="width:100%; border-collapse: collapse; margin: 20px 0; font-family: sans-serif;">`;
+    rows.forEach((row, index) => {
+        const isHeader = index === 0;
+        const color = isHeader ? '#EDEDED' : (index % 2 === 0 ? '#f9f9f9' : '#ffffff');
+        html += `<tr style="background-color: ${color};">`;
+        row.forEach((cell, cellIndex) => {
+            const style = isHeader ? 'font-weight: bold; border-bottom: 2px solid #ccc;' : 'border-bottom: 1px solid #eee;';
+            const align = cellIndex === 1 ? 'text-align: right;' : 'text-align: left;';
+            html += `<td style="padding: 8px 12px; ${style} ${align}">${cell}</td>`;
+        });
+        html += `</tr>`;
+    });
+    html += `</table>`;
+    return html;
+};
+
 // ============================================
 // EMAIL TEMPLATES (all updated to SoldWerX, USD only)
 // ============================================
@@ -767,16 +801,13 @@ const newBidNotificationEmail = async (seller, listing, bidAmount, bidder) => {
 };
 
 // 13. Offer confirmation email for bidder
-const offerConfirmationEmail = async (userEmail, userName, listing, offerAmount, listingPrice, offerId) => {
+const offerConfirmationEmail = async (userEmail, listing, offerAmount, listingPrice) => {
     try {
         const content = `
             <h2 style="text-align: center;">Your Offer Has Been Submitted</h2>
             ${createInfoCard(`
                 <p style="margin: 0 0 12px 0; font-size: 20px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing.title}</p>
                 <p style="margin: 15px 0; font-size: 28px; font-weight: bold; color: ${BRAND_COLORS.secondary}; text-align: center;">${formatCurrency(offerAmount)}</p>
-                <div style="background: ${BRAND_COLORS.secondary}; color: #ffffff; padding: 8px 15px; border-radius: 20px; display: inline-block; font-size: 14px; margin: 10px 0;">
-                    Offer ID: ${offerId}
-                </div>
                 ${createSummaryRow('Your Offer Amount:', formatCurrency(offerAmount))}
                 ${createSummaryRow('Listing Price:', formatCurrency(listingPrice))}
                 ${createSummaryRow('Offer Difference:', formatCurrency(offerAmount - listingPrice))}
@@ -1053,21 +1084,25 @@ const sendAuctionWonEmail = async (listing) => {
             return false;
         }
         const finalPrice = listing?.finalPrice || listing?.currentPrice || 0;
+
+        const invoiceData = {
+            hammerPrice: finalPrice,
+            buyerPremium: listing.buyerFeeAmount || 0,
+            taxAmount: listing.taxAmount || 0,
+            total: finalPrice + (listing.buyerFeeAmount || 0) + (listing.taxAmount || 0),
+            paymentStatus: listing.paymentStatus || 'pending',
+            paymentMethod: listing.paymentMethod || 'N/A',
+        };
+        const invoiceTableHTML = buildInvoiceTable(invoiceData);
+
         const content = `
             <h2 style="text-align: center;">Congratulations! You Won the Listing</h2>
             <p style="text-align: center;">You are the winning bidder for this item.</p>
             ${createInfoCard(`
                 <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing.title}</p>
                 ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
-                <p style="margin: 15px 0; font-size: 24px; font-weight: bold; color: ${BRAND_COLORS.secondary}; text-align: center;">${formatCurrency(finalPrice)}</p>
-                ${listing.specifications && listing.specifications.size > 0 ? `
-                    <div style="margin: 16px 0 0 0;">
-                        <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
-                        ${renderSpecifications(listing.specifications)}
-                    </div>
-                ` : ''}
-                ${createSummaryRow('Invoice Number:', listing?.transactionId || `INV-${listing?._id?.toString()?.toUpperCase()}`)}
-                ${createSummaryRow('Total Amount Due:', formatCurrency(finalPrice))}
+                ${invoiceTableHTML}
+    ${listing.invoice?.url ? `<p><a href="${listing.invoice.url}" target="_blank">📄 Download Invoice PDF</a></p>` : ''}
             `)}
             <div style="text-align: center; margin: 25px 0;">
                 ${createButton('Confirm Payment', `mailto:${SUPPORT_EMAIL}?subject=Payment%20Confirmation%20-%20${listing?.title}`, 'primary')}
@@ -1200,7 +1235,7 @@ const auctionEndedAdminEmail = async (adminEmail, listing) => {
 };
 
 // 22. Offer accepted notification for bidder
-const offerAcceptedEmail = async (buyerEmail, buyerName, seller, listing, offerAmount, offerId) => {
+const offerAcceptedEmail = async (buyerEmail, listing, offerAmount) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Accepted</h2>
@@ -1215,7 +1250,7 @@ const offerAcceptedEmail = async (buyerEmail, buyerName, seller, listing, offerA
                     </div>
                 ` : ''}
                 ${createSummaryRow('Original Price:', formatCurrency(listing?.buyNowPrice || listing?.startPrice || 0))}
-                ${createSummaryRow('Offer ID:', offerId)}
+                ${createSummaryRow('Offer Amount:', formatCurrency(offerAmount))}
             `)}
             <div style="text-align: center; margin: 25px 0;">
                 ${createButton('View Purchase', `${FRONTEND_URL}/bidder/offers`, 'primary')}
@@ -1237,7 +1272,7 @@ const offerAcceptedEmail = async (buyerEmail, buyerName, seller, listing, offerA
 };
 
 // 23. Offer rejected notification for bidder
-const offerRejectedEmail = async (buyerEmail, buyerName, seller, listing, offerAmount, offerId, reason) => {
+const offerRejectedEmail = async (buyerEmail, listing, offerAmount, reason) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Declined</h2>
@@ -1257,7 +1292,7 @@ const offerRejectedEmail = async (buyerEmail, buyerName, seller, listing, offerA
                         ${renderSpecifications(listing.specifications)}
                     </div>
                 ` : ''}
-                ${createSummaryRow('Offer ID:', offerId)}
+                ${createSummaryRow('Offer Amount:', formatCurrency(offerAmount))}
             `)}
             <div style="text-align: center; margin: 25px 0;">
                 ${createButton('Browse Other Listings', `${FRONTEND_URL}/auctions`, 'primary')}
@@ -1283,7 +1318,7 @@ const offerRejectedEmail = async (buyerEmail, buyerName, seller, listing, offerA
 };
 
 // 24. Offer canceled notification for bidder
-const offerCanceledEmail = async (buyerEmail, buyerName, seller, listing, offerAmount, offerId) => {
+const offerCanceledEmail = async (buyerEmail, listing, offerAmount) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Canceled</h2>
@@ -1297,7 +1332,7 @@ const offerCanceledEmail = async (buyerEmail, buyerName, seller, listing, offerA
                         ${renderSpecifications(listing.specifications)}
                     </div>
                 ` : ''}
-                ${createSummaryRow('Offer ID:', offerId)}
+                ${createSummaryRow('Offer Amount:', formatCurrency(offerAmount))}
             `)}
             <div style="text-align: center; margin: 25px 0;">
                 ${createButton('Browse Other Listings', `${FRONTEND_URL}/auctions`, 'primary')}
@@ -1324,18 +1359,24 @@ const offerCanceledEmail = async (buyerEmail, buyerName, seller, listing, offerA
 // 25. Payment completed notification for bidder
 const paymentCompletedEmail = async (user, listing) => {
     try {
+        const invoiceData = {
+            hammerPrice: listing.finalPrice,
+            buyerPremium: listing.buyerFeeAmount || 0,
+            taxAmount: listing.taxAmount || 0,
+            total: listing.finalPrice + (listing.buyerFeeAmount || 0) + (listing.taxAmount || 0),
+            paymentStatus: listing.paymentStatus || 'completed',
+            paymentMethod: listing.paymentMethod || 'N/A',
+        };
+        const invoiceTableHTML = buildInvoiceTable(invoiceData);
+
         const content = `
             <h2 style="text-align: center;">Payment Confirmed</h2>
             <p style="text-align: center;">Thank you for your payment, ${user?.firstName || user?.companyName || user?.username}!</p>
             ${createInfoCard(`
                 <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing?.title}</p>
                 ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
-                ${listing.specifications && listing.specifications.size > 0 ? `
-                    <div style="margin: 16px 0 0 0;">
-                        <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
-                        ${renderSpecifications(listing.specifications)}
-                    </div>
-                ` : ''}
+                ${invoiceTableHTML}
+    ${listing.invoice?.url ? `<p><a href="${listing.invoice.url}" target="_blank">📄 Download Invoice PDF</a></p>` : ''}
             `)}
             <p>Great news! Your payment has been successfully processed and confirmed.</p>
             <div style="text-align: center; margin: 25px 0;">
@@ -1360,18 +1401,24 @@ const paymentCompletedEmail = async (user, listing) => {
 // 26. Payment success (duplicate of 25, can be merged)
 const paymentSuccessEmail = async (user, listing) => {
     try {
+        const invoiceData = {
+            hammerPrice: listing.finalPrice,
+            buyerPremium: listing.buyerFeeAmount || 0,
+            taxAmount: listing.taxAmount || 0,
+            total: listing.finalPrice + (listing.buyerFeeAmount || 0) + (listing.taxAmount || 0),
+            paymentStatus: listing.paymentStatus || 'completed',
+            paymentMethod: listing.paymentMethod || 'N/A',
+        };
+        const invoiceTableHTML = buildInvoiceTable(invoiceData);
+
         const content = `
             <h2 style="text-align: center;">Payment Successful</h2>
             <p style="text-align: center;">Your payment has been processed successfully, ${user.firstName || user?.companyName || user.username}!</p>
             ${createInfoCard(`
                 <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing.title}</p>
                 ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
-                ${listing.specifications && listing.specifications.size > 0 ? `
-                    <div style="margin: 16px 0 0 0;">
-                        <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
-                        ${renderSpecifications(listing.specifications)}
-                    </div>
-                ` : ''}
+                ${invoiceTableHTML}
+    ${listing.invoice?.url ? `<p><a href="${listing.invoice.url}" target="_blank">📄 Download Invoice PDF</a></p>` : ''}
             `)}
             <p>You can check your order details from your dashboard.</p>
             <div style="text-align: center; margin: 25px 0;">
@@ -1400,7 +1447,7 @@ const paymentCompletedSellerEmail = async (seller, listing, buyer) => {
             <h2 style="text-align: center;">Payment Received</h2>
             <p style="text-align: center;">Great news, ${seller?.firstName || seller?.companyName || seller?.username}!</p>
             ${createInfoCard(`
-                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing?.title}</p>
+                <p style="margin: 0 0 12px 0; text-align: center; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing?.title}</p>
                 ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
                 ${listing.specifications && listing.specifications.size > 0 ? `
                     <div style="margin: 16px 0 0 0;">
@@ -2029,7 +2076,7 @@ const accountApprovedEmail = async (user) => {
         `;
 
         const html = baseTemplate(content, 'Account Approved');
-        
+
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
             to: user.email,
@@ -2090,7 +2137,7 @@ const identityRejectedEmail = async (user, rejectionReason, allowReupload = true
         `;
 
         const html = baseTemplate(content, 'Identity Verification Rejected');
-        
+
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
             to: user.email,
@@ -2146,7 +2193,7 @@ const liquidateConfirmationEmail = async (name, email) => {
                 <p style="margin: 5px 0;"><strong>The ${BRAND_NAME} Team</strong></p>
             </div>
         `;
-        
+
         const html = baseTemplate(content, 'Liquidation Request Received');
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
@@ -2212,7 +2259,7 @@ const liquidateAdminEmail = async (name, email, phone, location, description, it
                 ${createButton('View All Requests', `${ADMIN_URL}/liquidation-requests`, 'primary')}
             </div>
         `;
-        
+
         const html = baseTemplate(content, 'New Liquidation Request');
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
@@ -2268,7 +2315,7 @@ const sellConfirmationEmail = async (name, email) => {
                 <p style="margin: 5px 0;"><strong>The ${BRAND_NAME} Team</strong></p>
             </div>
         `;
-        
+
         const html = baseTemplate(content, 'Selling Request Received');
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
@@ -2346,7 +2393,7 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
                 </p>
             </div>
         `;
-        
+
         const html = baseTemplate(content, 'New Selling Request');
         const info = await transporter.sendMail({
             from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,

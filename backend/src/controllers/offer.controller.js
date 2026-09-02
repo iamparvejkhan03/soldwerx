@@ -1,11 +1,5 @@
 import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";
-import //   offerMadeEmail,
-//   offerAcceptedEmail,
-//   offerRejectedEmail,
-//   offerCounteredEmail,
-//   offerWithdrawnEmail,
-"../utils/nodemailer.js";
 import {
   auctionWonAdminEmail,
   newOfferNotificationEmail,
@@ -158,7 +152,7 @@ export const makeOffer = async (req, res) => {
       },
     });
 
-    offerConfirmationEmail(buyer?.email, buyer?.firstName || buyer?.username, updatedAuction, offerAmount, updatedAuction?.buyNowPrice || updatedAuction?.startPrice, updatedAuction?._id).catch((error) => console.error("Failed to send buyer email:", error));
+    offerConfirmationEmail(buyer?.email, updatedAuction, offerAmount, updatedAuction?.buyNowPrice || updatedAuction?.startPrice).catch((error) => console.error("Failed to send buyer email:", error));
 
     newOfferNotificationEmail(
       updatedAuction?.seller,
@@ -393,41 +387,25 @@ export const respondToOffer = async (req, res) => {
       .populate("winner", "username firstName lastName");
 
     // Send email notification to buyer
-    // try {
-    //   if (response === "accept") {
-    //     await offerAcceptedEmail(
-    //       offer.buyer.email,
-    //       offer.buyer.firstName || offer.buyer.username,
-    //       offer.amount,
-    //       auction.title,
-    //       auction._id,
-    //       auction.seller.username
-    //     );
-    //   } else if (response === "reject") {
-    //     await offerRejectedEmail(
-    //       offer.buyer.email,
-    //       offer.buyer.firstName || offer.buyer.username,
-    //       offer.amount,
-    //       auction.title,
-    //       auction._id,
-    //       auction.seller.username
-    //     );
-    //   } else if (response === "counter") {
-    //     await offerCounteredEmail(
-    //       offer.buyer.email,
-    //       offer.buyer.firstName || offer.buyer.username,
-    //       offer.amount,
-    //       parseFloat(counterAmount),
-    //       auction.title,
-    //       auction._id,
-    //       auction.seller.username,
-    //       counterMessage || ""
-    //     );
-    //   }
-    // } catch (emailError) {
-    //   console.error("Failed to send response notification email:", emailError);
-    //   // Don't fail the request if email fails
-    // }
+    try {
+      if (response === "accept") {
+        await offerAcceptedEmail(
+          offer.buyer.email,
+          updatedAuction,
+          offer.amount
+        );
+      } else if (response === "reject") {
+        await offerRejectedEmail(
+          offer.buyer.email,
+          updatedAuction,
+          offer.amount,
+          offer?.sellerResponse || "Offer rejected by seller",
+        );
+      }
+    } catch (emailError) {
+      console.error("Failed to send response notification email:", emailError);
+      // Don't fail the request if email fails
+    }
 
     res.status(200).json({
       success: true,
@@ -509,27 +487,24 @@ export const acceptCounterOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName")
-      .populate("seller", "username firstName lastName")
-      .populate("winner", "username firstName lastName");
+      .populate("offers.buyer", "username firstName lastName email")
+      .populate("seller", "username firstName lastName email")
+      .populate("winner", "username firstName lastName email");
 
     // Send email notification to seller
-    // try {
-    //   await offerAcceptedEmail(
-    //     auction.seller.email,
-    //     auction.seller.firstName || auction.seller.username,
-    //     offer.counterOffer.amount,
-    //     auction.title,
-    //     auction._id,
-    //     offer.buyer.username
-    //   );
-    // } catch (emailError) {
-    //   console.error(
-    //     "Failed to send acceptance notification email:",
-    //     emailError
-    //   );
-    //   // Don't fail the request if email fails
-    // }
+    try {
+      await offerAcceptedEmail(
+        updatedAuction.winner.email,
+        updatedAuction,
+        offer.counterOffer.amount,
+      );
+    } catch (emailError) {
+      console.error(
+        "Failed to send acceptance notification email:",
+        emailError
+      );
+      // Don't fail the request if email fails
+    }
 
     res.status(200).json({
       success: true,
@@ -967,7 +942,7 @@ export const getAdminAllOffers = async (req, res) => {
       avgOfferAmount:
         allOffers.length > 0
           ? allOffers.reduce((sum, offer) => sum + offer.amount, 0) /
-            allOffers.length
+          allOffers.length
           : 0,
     };
 
@@ -1168,11 +1143,8 @@ export const adminRespondToOffer = async (req, res) => {
     if (response === "accept") {
       offerAcceptedEmail(
         offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        updatedAuction.seller,
         updatedAuction,
-        offer.amount,
-        offerId
+        offer.amount
       ).catch((error) =>
         console.error("Failed to send offer accepted email:", error)
       );
@@ -1181,25 +1153,23 @@ export const adminRespondToOffer = async (req, res) => {
         console.error("Failed to send seller ended auction email:", error)
       );
 
-      sendAuctionWonEmail(updatedAuction).catch((error) =>
-        console.error("Failed to send buyer won auction email:", error)
-      );
+      // since it is being sent by the agenda job after invoice creation
+      // sendAuctionWonEmail(updatedAuction).catch((error) =>
+      //   console.error("Failed to send buyer won auction email:", error)
+      // );
 
       auctionWonAdminEmail(admin?.email, updatedAuction, offer?.buyer).catch(
         (error) =>
           console.error("Failed to send admin auction won email:", error)
       );
     } else {
-      offerRejectedEmail(
+      await offerRejectedEmail(
         offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        auction.seller,
-        auction,
+        updatedAuction,
         offer.amount,
-        offerId,
-        offer.sellerResponse || "No reason provided"
+        offer?.sellerResponse || "Offer rejected by seller",
       ).catch((error) =>
-        console.error("Failed to send offer accepted email:", error)
+        console.error("Failed to send offer rejected email:", error)
       );
     }
   } catch (error) {
@@ -1245,9 +1215,8 @@ export const adminCancelOffer = async (req, res) => {
 
     // Cancel the offer
     offer.status = "withdrawn";
-    offer.sellerResponse = `Offer cancelled by administrator: ${
-      reason || "Violation of terms"
-    }`;
+    offer.sellerResponse = `Offer cancelled by administrator: ${reason || "Violation of terms"
+      }`;
     offer.updatedAt = new Date();
 
     await auction.save();
@@ -1265,11 +1234,8 @@ export const adminCancelOffer = async (req, res) => {
     // Send email to buyer in background
     offerCanceledEmail(
       offer.buyer.email,
-      offer.buyer.firstName || offer.buyer.username,
-      auction.seller,
       auction,
-      offer.amount,
-      offerId
+      offer.amount
     ).catch((error) =>
       console.error("Failed to send offer canceled email:", error)
     );
@@ -1608,11 +1574,8 @@ export const reactivateOffer = async (req, res) => {
       // Notify buyer
       offerAcceptedEmail(
         offer.buyer.email,
-        offer.buyer.firstName || offer.buyer.username,
-        updatedAuction.seller,
         updatedAuction,
         offer.amount,
-        offerId
       ).catch((error) =>
         console.error("Failed to send offer accepted email:", error)
       );
@@ -1624,9 +1587,10 @@ export const reactivateOffer = async (req, res) => {
         );
       }
 
-      sendAuctionWonEmail(updatedAuction).catch((error) =>
-        console.error("Failed to send buyer won auction email:", error)
-      );
+      // since it is being sent by the agenda job after invoice creation
+      // sendAuctionWonEmail(updatedAuction).catch((error) =>
+      //   console.error("Failed to send buyer won auction email:", error)
+      // );
 
       // Notify admin (if seller did it)
       if (!isAdmin) {
@@ -1661,7 +1625,7 @@ export const getSellerOfferStats = async (req, res) => {
     const sellerId = req.user._id;
 
     // Find all auctions where user is seller
-    const auctions = await Auction.find({ 
+    const auctions = await Auction.find({
       seller: sellerId,
       "offers.0": { $exists: true } // Only auctions with offers
     });
@@ -1688,7 +1652,7 @@ export const getSellerOfferStats = async (req, res) => {
       countered: allOffers.filter(o => o.status === 'countered').length,
       expired: allOffers.filter(o => o.status === 'expired').length,
       withdrawn: allOffers.filter(o => o.status === 'withdrawn').length,
-      
+
       // Total value calculations
       totalValue: allOffers.reduce((sum, offer) => sum + offer.amount, 0),
       acceptedValue: allOffers
@@ -1697,15 +1661,15 @@ export const getSellerOfferStats = async (req, res) => {
       pendingValue: allOffers
         .filter(o => o.status === 'pending')
         .reduce((sum, offer) => sum + offer.amount, 0),
-      
+
       // Average offer amount
-      avgOfferAmount: allOffers.length > 0 
-        ? Math.round(allOffers.reduce((sum, offer) => sum + offer.amount, 0) / allOffers.length) 
+      avgOfferAmount: allOffers.length > 0
+        ? Math.round(allOffers.reduce((sum, offer) => sum + offer.amount, 0) / allOffers.length)
         : 0,
-      
+
       // Success rate (accepted vs total responded)
       successRate: (() => {
-        const responded = allOffers.filter(o => 
+        const responded = allOffers.filter(o =>
           ['accepted', 'rejected'].includes(o.status)
         ).length;
         const accepted = allOffers.filter(o => o.status === 'accepted').length;
@@ -1726,8 +1690,8 @@ export const getSellerOfferStats = async (req, res) => {
         rejected: auction.offers.filter(o => o.status === 'rejected').length,
         countered: auction.offers.filter(o => o.status === 'countered').length,
         totalValue: auction.offers.reduce((sum, offer) => sum + offer.amount, 0),
-        highestOffer: auction.offers.length > 0 
-          ? Math.max(...auction.offers.map(o => o.amount)) 
+        highestOffer: auction.offers.length > 0
+          ? Math.max(...auction.offers.map(o => o.amount))
           : 0
       })),
 
@@ -1735,9 +1699,9 @@ export const getSellerOfferStats = async (req, res) => {
       last30Days: (() => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
+
         const recentOffers = allOffers.filter(o => new Date(o.createdAt) >= thirtyDaysAgo);
-        
+
         return {
           total: recentOffers.length,
           pending: recentOffers.filter(o => o.status === 'pending').length,

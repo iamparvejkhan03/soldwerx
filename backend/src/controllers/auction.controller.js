@@ -11,7 +11,6 @@ import {
   auctionWonAdminEmail,
   bidConfirmationEmail,
   newBidNotificationEmail,
-  outbidNotificationEmail,
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
   sendOutbidNotifications,
@@ -2470,9 +2469,10 @@ export const buyNow = async (req, res) => {
       console.error("Failed to send seller ended auction email:", error),
     );
 
-    sendAuctionWonEmail(updatedAuction).catch((error) =>
-      console.error("Failed to send buyer won auction email:", error),
-    );
+    // Commented it since it is being sent by the agenda service after invoice generation
+    // sendAuctionWonEmail(updatedAuction).catch((error) =>
+    //   console.error("Failed to send buyer won auction email:", error),
+    // );
 
     // Send admin emails to all admin users
     try {

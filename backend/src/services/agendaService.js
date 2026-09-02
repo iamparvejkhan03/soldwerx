@@ -12,6 +12,8 @@ import {
   auctionEndingSoonEmail,
   auctionListedEmail,
   auctionWonAdminEmail,
+  paymentCompletedEmail,
+  paymentCompletedSellerEmail,
   paymentSuccessEmail,
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
@@ -19,6 +21,7 @@ import {
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
 import { processProxyBids } from "./proxyBidService.js";
+import { generateAndAttachInvoice } from "./invoiceService.js";
 
 class AgendaService {
   constructor() {
@@ -141,8 +144,7 @@ class AgendaService {
           // Send appropriate emails based on the result
           if (result.wasSold) {
             console.log(
-              `✅ Agenda: Auction ${auctionId} was SOLD to ${
-                auction.winner ? auction.winner.username : "unknown"
+              `✅ Agenda: Auction ${auctionId} was SOLD to ${auction.winner ? auction.winner.username : "unknown"
               }`,
             );
 
@@ -154,6 +156,9 @@ class AgendaService {
             for (const admin of adminUsers) {
               await auctionWonAdminEmail(admin.email, auction, auction.winner);
             }
+
+            // Send seller email (auction ended without sale)
+            await sendAuctionEndedSellerEmail(auction);
 
             console.log(`✅ Agenda: Sent SOLD emails for auction ${auctionId}`);
           } else {
@@ -309,6 +314,42 @@ class AgendaService {
         console.error("Agenda job error (ending soon notifications):", error);
       }
     });
+
+    this.agenda.define("generate invoice and email", async (job) => {
+      const { auctionId } = job.attrs.data;
+      const auction = await Auction.findById(auctionId)
+        .populate('seller')
+        .populate('winner');
+      await generateAndAttachInvoice(auctionId);
+      await sendAuctionWonEmail(auction);
+    });
+
+    // In defineJobs()
+    this.agenda.define("update invoice on payment complete", async (job) => {
+      const { auctionId, updatedBy } = job.attrs.data;
+
+      const auction = await Auction.findById(auctionId)
+        .populate('seller')
+        .populate('winner');
+
+      if (!auction) return;
+
+      // Generate updated invoice (replaces old one)
+      await generateAndAttachInvoice(auctionId, {
+        updated: true,
+        oldPublicId: auction.invoice?.publicId,
+        updatedBy,
+      });
+
+      // Re-fetch auction to get updated invoice URL
+      const updatedAuction = await Auction.findById(auctionId)
+        .populate('seller')
+        .populate('winner');
+
+      // Send emails with the updated invoice
+      await paymentCompletedEmail(updatedAuction.winner, updatedAuction);
+      await paymentCompletedSellerEmail(updatedAuction.seller, updatedAuction, updatedAuction.winner);
+    });
   }
 
   // Schedule auction activation job
@@ -329,6 +370,14 @@ class AgendaService {
       "data.auctionId": auctionId,
     });
     console.log(`🗑️ Cancelled jobs for auction ${auctionId}`);
+  }
+
+  async scheduleInvoiceGeneration(auctionId) {
+    await this.agenda.now("generate invoice and email", { auctionId });
+  }
+
+  async scheduleInvoiceUpdate(auctionId, updatedBy) {
+    await this.agenda.now("update invoice on payment complete", { auctionId, updatedBy });
   }
 
   // Start Agenda

@@ -18,6 +18,7 @@ import {
   identityRejectedEmail,
   paymentCompletedEmail,
   paymentCompletedSellerEmail,
+  paymentSuccessEmail,
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import Payment from "../models/payment.model.js";
@@ -1903,8 +1904,8 @@ export const updatePaymentStatus = async (req, res) => {
 
     // Find auction with populated data
     const auction = await Auction.findById(id)
-      .populate("seller", "email username firstName lastName")
-      .populate("winner", "email username firstName lastName");
+      .populate("seller")
+      .populate("winner");
 
     if (!auction) {
       return res.status(404).json({
@@ -1999,6 +2000,13 @@ export const updatePaymentStatus = async (req, res) => {
 
     const updatedPayment = await Payment.findOneAndUpdate({ auction: updatedAuction?._id }, { status: paymentStatus, processedBy: admin })
 
+    if (paymentStatus === 'completed') {
+      // payment completed emails will be sent from here
+      agendaService.scheduleInvoiceUpdate(auction._id, userId).catch(err =>
+        console.error('Failed to schedule invoice update job:', err)
+      );
+    }
+
     res.status(200).json({
       success: true,
       message: `Payment status updated to ${paymentStatus}`,
@@ -2006,29 +2014,6 @@ export const updatePaymentStatus = async (req, res) => {
         auction: updatedAuction,
       },
     });
-
-    if (paymentStatus === "completed" && updatedAuction.winner) {
-      // Send payment success email to winner
-      paymentCompletedEmail(
-        updatedAuction?.winner,
-        updatedAuction,
-        updatedAuction?.finalPrice,
-      ).catch((error) =>
-        console.error("Failed to send payment success email:", error),
-      );
-
-      // Send payment received email to seller
-      paymentCompletedSellerEmail(
-        updatedAuction?.seller,
-        updatedAuction,
-        updatedAuction?.winner,
-      ).catch((error) =>
-        console.error(
-          "Failed to send seller payment notification email:",
-          error,
-        ),
-      );
-    }
   } catch (error) {
     console.error("Update payment status error:", error);
     res.status(500).json({
