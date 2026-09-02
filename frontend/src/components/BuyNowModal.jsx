@@ -16,31 +16,25 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
 
         if (!isOpen || !auction?.buyNowPrice) return;
 
-        const getCommission = async () => {
+        const fetchCommission = async () => {
             try {
-                const { data } = await axiosInstance.get("/api/v1/commissions");
-                const commission = data?.data?.commission;
-
-                if (!commission) return;
-
-                setCommissionType(commission.commissionType);
-                setCommissionValue(commission.commissionValue);
-
-                const price = Number(auction.buyNowPrice);
-
-                if (commission.commissionType === "fixed") {
-                    setServiceFee(Number(commission.commissionValue));
+                const { data } = await axiosInstance.get('/api/v1/commissions');
+                const commission = data.data.commission;
+                if (commission.buyerEnabled) {
+                    const fee = commission.buyerType === 'fixed'
+                        ? commission.buyerValue
+                        : (Number(auction?.buyNowPrice) * commission.buyerValue) / 100;
+                    setServiceFee(fee);
+                    setCommissionType(commission.buyerType);
+                    setCommissionValue(commission.buyerValue);
                 } else {
-                    setServiceFee(
-                        (price * Number(commission.commissionValue)) / 100
-                    );
+                    setServiceFee(0);
                 }
             } catch (error) {
-                console.error("Error fetching commission:", error);
+                console.error('Failed to fetch commission', error);
             }
         };
-
-        getCommission();
+        fetchCommission();
     }, [isOpen, auction?.buyNowPrice, isGiveaway]);
 
     if (!isOpen) return null;
@@ -154,8 +148,8 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
                             onClick={onConfirm}
                             disabled={loading}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg transition-colors disabled:opacity-50 ${isGiveaway
-                                    ? 'bg-purple-600 hover:bg-purple-700'
-                                    : 'bg-green-600 hover:bg-green-700'
+                                ? 'bg-purple-600 hover:bg-purple-700'
+                                : 'bg-green-600 hover:bg-green-700'
                                 }`}
                         >
                             {loading ? (

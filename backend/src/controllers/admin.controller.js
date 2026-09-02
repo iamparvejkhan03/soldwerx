@@ -1141,6 +1141,7 @@ export const updateAuction = async (req, res) => {
       const resetData = {
         // Reset all bidding/offers/winner data
         bids: [],
+        proxyBids: [],
         offers: [],
         currentPrice: parseFloat(startPrice),
         currentBidder: null,
@@ -1174,10 +1175,15 @@ export const updateAuction = async (req, res) => {
         // watchlistCount: 0,
 
         // Reset commission
-        commissionAmount: 0,
-        commissionType: null,
-        commissionValue: 0,
+        // Reset commission (new fields)
+        buyerFeeAmount: 0,
+        sellerFeeAmount: 0,
+        buyerFeeType: null,
+        buyerFeeValue: 0,
+        sellerFeeType: null,
+        sellerFeeValue: 0,
         bidPaymentRequired: true,
+        taxAmount: 0,
 
         // Set status based on new dates
         status: "draft", // Start as draft since it's being re-listed
@@ -1804,6 +1810,7 @@ export const updateAuction = async (req, res) => {
     // Add reset fields for sold auctions
     if (isSoldAuction) {
       updateData.bids = [];
+      updateData.proxyBids = [];
       updateData.offers = [];
       updateData.currentPrice = parseFloat(startPrice);
       updateData.currentBidder = null;
@@ -1826,8 +1833,15 @@ export const updateAuction = async (req, res) => {
         offerExpiring: false,
       };
       updateData.lastBidTime = null;
-      updateData.commissionAmount = 0;
+      // Reset commission (new fields)
+      updateData.buyerFeeAmount = 0;
+      updateData.sellerFeeAmount = 0;
+      updateData.buyerFeeType = null;
+      updateData.buyerFeeValue = 0;
+      updateData.sellerFeeType = null;
+      updateData.sellerFeeValue = 0;
       updateData.bidPaymentRequired = true;
+      updateData.taxAmount = 0;
     }
 
     const updatedAuction = await Auction.findByIdAndUpdate(id, updateData, {

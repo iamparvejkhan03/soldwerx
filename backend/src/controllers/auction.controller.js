@@ -832,6 +832,7 @@ export const updateAuction = async (req, res) => {
       const resetData = {
         // Reset all bidding/offers/winner data
         bids: [],
+        proxyBids: [],
         offers: [],
         currentPrice: parseFloat(startPrice),
         currentBidder: null,
@@ -861,8 +862,14 @@ export const updateAuction = async (req, res) => {
         lastBidTime: null,
 
         // Reset commission
-        commissionAmount: 0,
+        buyerFeeAmount: 0,
+        sellerFeeAmount: 0,
+        buyerFeeType: null,
+        buyerFeeValue: 0,
+        sellerFeeType: null,
+        sellerFeeValue: 0,
         bidPaymentRequired: true,
+        taxAmount: 0,
       };
 
       // Apply reset data to auction object
@@ -1415,6 +1422,7 @@ export const updateAuction = async (req, res) => {
     // Add reset fields for ended auctions
     if (isEndedAuction) {
       updateData.bids = [];
+      updateData.proxyBids = [];
       updateData.offers = [];
       updateData.currentPrice = parseFloat(startPrice);
       updateData.currentBidder = null;
@@ -1437,8 +1445,14 @@ export const updateAuction = async (req, res) => {
         offerExpiring: false,
       };
       updateData.lastBidTime = null;
-      updateData.commissionAmount = 0;
+      updateData.buyerFeeAmount = 0;
+      updateData.sellerFeeAmount = 0;
+      updateData.buyerFeeType = null;
+      updateData.buyerFeeValue = 0;
+      updateData.sellerFeeType = null;
+      updateData.sellerFeeValue = 0;
       updateData.bidPaymentRequired = true;
+      updateData.taxAmount = 0;
     }
 
     const updatedAuction = await Auction.findByIdAndUpdate(id, updateData, {
@@ -1884,7 +1898,15 @@ export const getWonAuctions = async (req, res) => {
       yourMaxBid: getMaxBidForUser(auction.bids, userId),
       winningBid: auction.finalPrice || auction.currentPrice,
       bids: auction.bidCount,
-      commissionAmount: auction.commissionAmount,
+      // commissionAmount: auction.commissionAmount,
+      buyerFeeAmount: auction.buyerFeeAmount,
+      sellerFeeAmount: auction.sellerFeeAmount,
+      buyerFeeType: auction.buyerFeeType,
+      buyerFeeValue: auction.buyerFeeValue,
+      sellerFeeType: auction.sellerFeeType,
+      sellerFeeValue: auction.sellerFeeValue,
+
+      taxAmount: auction.taxAmount || 0,
 
       // Buy Now Info
       buyNowPrice: auction.buyNowPrice,
@@ -2545,14 +2567,9 @@ export const checkBuyNowAvailability = async (req, res) => {
 export const getAuctionCommission = async (req, res) => {
   try {
     const { id } = req.params;
-
     const auction = await Auction.findById(id);
-
     if (!auction) {
-      return res.status(404).json({
-        success: false,
-        message: "Auction not found",
-      });
+      return res.status(404).json({ success: false, message: 'Auction not found' });
     }
 
     // Get global commission settings
@@ -2563,18 +2580,18 @@ export const getAuctionCommission = async (req, res) => {
       data: {
         auctionId: auction._id,
         finalPrice: auction.finalPrice,
-        commissionAmount: auction.commissionAmount,
-        commissionType: auction.commissionType,
-        commissionValue: auction.commissionValue,
+        buyerFeeAmount: auction.buyerFeeAmount,
+        sellerFeeAmount: auction.sellerFeeAmount,
+        buyerFeeType: auction.buyerFeeType,
+        buyerFeeValue: auction.buyerFeeValue,
+        sellerFeeType: auction.sellerFeeType,
+        sellerFeeValue: auction.sellerFeeValue,
         globalSettings: commission,
       },
     });
   } catch (error) {
-    console.error("Get auction commission error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch commission info",
-    });
+    console.error('Get auction commission error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch commission info' });
   }
 };
 

@@ -1,46 +1,47 @@
-import Commission from "../models/commission.model.js";
+import Commission from '../models/commission.model.js';
 
 /**
- * Calculate commission based on global commission settings
- * @param {number} finalPrice - The final sale price
- * @returns {Promise<Object>} Commission details
+ * Calculate both buyer and seller commissions based on global settings.
+ * @param {number} finalPrice - The final sale price (or bid amount for authorization)
+ * @param {boolean} forAuthorization - If true, only buyer fee is computed (used for Stripe auth)
+ * @returns {Object} buyerFeeAmount, sellerFeeAmount, and the type/value used.
  */
-
-export const calculateCommission = async (finalPrice) => {
-  try {
-    // Get global commission settings
-    const commission = await Commission.findOne();
-
-    if (!commission) {
-      // Default to 5% if no commission set
-      return {
-        commissionType: "percentage",
-        commissionValue: 5,
-        commissionAmount: (finalPrice * 5) / 100,
-      };
-    }
-
-    let commissionAmount = 0;
-
-    if (commission.commissionType === "fixed") {
-      commissionAmount = commission.commissionValue;
-    } else {
-      // Percentage
-      commissionAmount = (finalPrice * commission.commissionValue) / 100;
-    }
-
+export const calculateCommissions = async (finalPrice, forAuthorization = false) => {
+  const settings = await Commission.findOne();
+  if (!settings) {
+    // Fallback: zero fees
     return {
-      commissionType: commission.commissionType,
-      commissionValue: commission.commissionValue,
-      commissionAmount: Math.round(commissionAmount * 100) / 100, // Round to 2 decimals
-    };
-  } catch (error) {
-    console.error("Error calculating commission:", error);
-    // Fallback to 5% if error
-    return {
-      commissionType: "percentage",
-      commissionValue: 5,
-      commissionAmount: (finalPrice * 5) / 100,
+      buyerFeeAmount: 0,
+      sellerFeeAmount: 0,
+      buyerFeeType: null,
+      buyerFeeValue: 0,
+      sellerFeeType: null,
+      sellerFeeValue: 0,
     };
   }
+
+  let buyerFee = 0;
+  let sellerFee = 0;
+
+  if (settings.buyerEnabled) {
+    buyerFee = settings.buyerType === 'fixed'
+      ? settings.buyerValue
+      : (finalPrice * settings.buyerValue) / 100;
+  }
+
+  // Only compute seller fee when not for authorization (i.e., when ending auction)
+  if (!forAuthorization && settings.sellerEnabled) {
+    sellerFee = settings.sellerType === 'fixed'
+      ? settings.sellerValue
+      : (finalPrice * settings.sellerValue) / 100;
+  }
+
+  return {
+    buyerFeeAmount: Math.round(buyerFee * 100) / 100,
+    sellerFeeAmount: Math.round(sellerFee * 100) / 100,
+    buyerFeeType: settings.buyerType,
+    buyerFeeValue: settings.buyerValue,
+    sellerFeeType: settings.sellerType,
+    sellerFeeValue: settings.sellerValue,
+  };
 };

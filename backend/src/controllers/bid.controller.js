@@ -127,8 +127,8 @@ export const getMyBids = async (req, res) => {
             .populate('currentBidder', 'username firstName')
             .populate('winner', 'username firstName lastName')
             .sort({ 'bids.timestamp': -1 })
-            // .limit(limit * 1)
-            // .skip((page - 1) * limit);
+        // .limit(limit * 1)
+        // .skip((page - 1) * limit);
 
         // CALCULATE STATISTICS USING AGGREGATION PIPELINE
         const statsPipeline = [
@@ -141,11 +141,11 @@ export const getMyBids = async (req, res) => {
                     ],
                     // Active bids (winning + outbid)
                     activeBids: [
-                        { 
-                            $match: { 
+                        {
+                            $match: {
                                 status: 'active',
-                                'bids.bidder': userId 
-                            } 
+                                'bids.bidder': userId
+                            }
                         },
                         {
                             $project: {
@@ -168,11 +168,11 @@ export const getMyBids = async (req, res) => {
                     ],
                     // Won auctions and their total amount
                     wonAuctions: [
-                        { 
-                            $match: { 
+                        {
+                            $match: {
                                 winner: userId,
                                 status: { $in: ['sold', 'ended'] }
-                            } 
+                            }
                         },
                         {
                             $group: {
@@ -184,12 +184,12 @@ export const getMyBids = async (req, res) => {
                     ],
                     // Lost auctions count
                     lostAuctions: [
-                        { 
-                            $match: { 
+                        {
+                            $match: {
                                 winner: { $ne: userId },
                                 status: { $in: ['sold', 'ended', 'reserve_not_met'] },
                                 'bids.bidder': userId
-                            } 
+                            }
                         },
                         { $count: 'count' }
                     ]
@@ -210,21 +210,21 @@ export const getMyBids = async (req, res) => {
 
         // Success rate
         const completedAuctions = totalWon + totalLost;
-        const successRate = completedAuctions > 0 ? 
+        const successRate = completedAuctions > 0 ?
             Math.round((totalWon / completedAuctions) * 100) : 0;
 
         // Transform paginated data for response
         const transformedBids = auctions.map(auction => {
-            const userBids = auction.bids.filter(bid => 
+            const userBids = auction.bids.filter(bid =>
                 bid.bidder.toString() === userId.toString()
             );
-            const latestUserBid = userBids.reduce((latest, bid) => 
+            const latestUserBid = userBids.reduce((latest, bid) =>
                 bid.timestamp > latest.timestamp ? bid : latest, userBids[0]
             );
 
             // Determine bid status
             let status = 'outbid';
-            
+
             if (auction.status === 'sold' || auction.status === 'ended') {
                 if (auction.winner && auction.winner?._id.toString() === userId.toString()) {
                     status = 'won';
@@ -241,7 +241,7 @@ export const getMyBids = async (req, res) => {
                 status = 'lost';
             }
 
-            const nextMinBid = auction.status === 'active' ? 
+            const nextMinBid = auction.status === 'active' ?
                 auction.currentPrice + auction.bidIncrement : null;
 
             return {
@@ -272,21 +272,22 @@ export const getMyBids = async (req, res) => {
                 currentBidderInfo: auction.currentBidder ? {
                     id: auction.currentBidder._id.toString(),
                     name: auction.currentBidder.firstName
-                } : null
+                } : null,
+                isProxyBid: latestUserBid?.isProxyBid || false,
             };
         });
 
         // Apply filtering and sorting to paginated results
         let filteredBids = transformedBids.filter(bid => {
             const matchesStatus = !status || status === 'all' || bid.status === status;
-            const matchesSearch = !search || 
+            const matchesSearch = !search ||
                 bid.title.toLowerCase().includes(search.toLowerCase()) ||
                 bid.description.toLowerCase().includes(search.toLowerCase());
             return matchesStatus && matchesSearch;
         });
 
         filteredBids.sort((a, b) => {
-            switch(sortBy) {
+            switch (sortBy) {
                 case 'recent':
                     return new Date(b.bidTime) - new Date(a.bidTime);
                 case 'ending_soon':
@@ -442,7 +443,7 @@ export const getSellerBidHistory = async (req, res) => {
         const { auctionId, page = 1, limit = 50 } = req.query;
 
         let filter = { seller: sellerId };
-        
+
         // Filter by specific auction if provided
         if (auctionId) {
             filter._id = auctionId;
@@ -452,8 +453,8 @@ export const getSellerBidHistory = async (req, res) => {
             .populate('bids.bidder', 'username firstName lastName email company')
             .populate('winner', 'username firstName lastName email company')
             .sort({ endDate: -1 })
-            // .limit(limit * 1)
-            // .skip((page - 1) * limit);
+        // .limit(limit * 1)
+        // .skip((page - 1) * limit);
 
         res.status(200).json({
             success: true,
@@ -475,22 +476,22 @@ export const getAdminBidHistory = async (req, res) => {
 
         // Build filter object
         const filter = {};
-        
+
         // Status filter
         if (status && status !== 'all') {
             filter.status = status;
         }
-        
+
         // Category filter
         if (category && category !== 'all') {
             filter.category = category;
         }
-        
+
         // Seller filter
         if (seller && seller !== 'all') {
             filter.seller = seller;
         }
-        
+
         // Search filter
         if (search) {
             filter.$or = [
@@ -505,11 +506,11 @@ export const getAdminBidHistory = async (req, res) => {
             ...filter,
             'bids.0': { $exists: true } // Only auctions with at least one bid
         })
-        .populate('seller', 'username firstName lastName email company')
-        .populate('currentBidder', 'username firstName lastName email')
-        .populate('winner', 'username firstName lastName email')
-        .populate('bids.bidder', 'username firstName lastName email company')
-        .sort({ createdAt: -1 })
+            .populate('seller', 'username firstName lastName email company')
+            .populate('currentBidder', 'username firstName lastName email')
+            .populate('winner', 'username firstName lastName email')
+            .populate('bids.bidder', 'username firstName lastName email company')
+            .sort({ createdAt: -1 })
         // .limit(limit * 1)
         // .skip((page - 1) * limit);
 
@@ -525,7 +526,7 @@ export const getAdminBidHistory = async (req, res) => {
 
             const bidsWithStatus = sortedBids.map((bid, index) => {
                 let status = "Outbid";
-                
+
                 if (auction.status === 'active') {
                     if (index === 0) {
                         status = "Winning";
@@ -550,7 +551,8 @@ export const getAdminBidHistory = async (req, res) => {
                     amount: bid.amount,
                     time: bid.timestamp,
                     status: status,
-                    isHighest: index === 0
+                    isHighest: index === 0,
+                    isProxyBid: bid.isProxyBid || false
                 };
             });
 
@@ -583,7 +585,10 @@ export const getAdminBidHistory = async (req, res) => {
                 totalBids: auction.bidCount,
                 uniqueBidders: new Set(auction.bids.map(bid => bid.bidder?._id.toString())).size,
                 bids: bidsWithStatus,
-                commissionAmount: auction.commissionAmount || 0,
+                // commissionAmount: auction.commissionAmount || 0,
+                sellerFeeAmount: auction.sellerFeeAmount || 0,
+                buyerFeeAmount: auction.buyerFeeAmount || 0,
+                buyerFeeType: auction.buyerFeeType || null,
                 finalPrice: auction.finalPrice || 0,
                 createdAt: auction.createdAt
             };
@@ -591,7 +596,7 @@ export const getAdminBidHistory = async (req, res) => {
 
         // Apply additional sorting
         transformedAuctions.sort((a, b) => {
-            switch(sortBy) {
+            switch (sortBy) {
                 case 'recent':
                     return new Date(b.createdAt) - new Date(a.createdAt);
                 case 'ending_soon':
@@ -621,7 +626,7 @@ export const getAdminBidHistory = async (req, res) => {
 
         const totalRevenue = await Auction.aggregate([
             { $match: { status: 'sold' } },
-            { $group: { _id: null, total: { $sum: '$commissionAmount' } } }
+            { $group: { _id: null, total: { $sum: { $add: ['$buyerFeeAmount', '$sellerFeeAmount'] } } } }
         ]);
 
         const activeAuctionsWithBids = await Auction.countDocuments({
@@ -634,14 +639,14 @@ export const getAdminBidHistory = async (req, res) => {
             totalBids: totalBidsAll[0]?.totalBids || 0,
             totalRevenue: totalRevenue[0]?.total || 0,
             activeAuctionsWithBids,
-            averageBidsPerAuction: totalAuctionsWithBids > 0 ? 
+            averageBidsPerAuction: totalAuctionsWithBids > 0 ?
                 Math.round((totalBidsAll[0]?.totalBids || 0) / totalAuctionsWithBids) : 0
         };
 
         // Get unique categories and sellers for filters
         const categories = await Auction.distinct('category', { 'bids.0': { $exists: true } });
         const sellers = await Auction.distinct('seller', { 'bids.0': { $exists: true } });
-        
+
         const sellersPopulated = await Auction.populate(sellers.map(sellerId => ({ _id: sellerId })), {
             path: 'seller',
             select: 'username firstName lastName'
@@ -704,14 +709,20 @@ export const getAdminBidStats = async (req, res) => {
         // Revenue statistics
         const revenueStats = await Auction.aggregate([
             { $match: { status: 'sold' } },
-            { 
+            {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: '$commissionAmount' },
+                    totalRevenue: { $sum: { $add: ['$buyerFeeAmount', '$sellerFeeAmount'] } },
                     averageSalePrice: { $avg: '$finalPrice' },
                     totalSales: { $sum: 1 }
                 }
             }
+        ]);
+
+        // Total tax
+        const totalTax = await Auction.aggregate([
+            { $match: { status: 'sold' } },
+            { $group: { _id: null, totalTax: { $sum: '$taxAmount' } } }
         ]);
 
         // Bid activity by category

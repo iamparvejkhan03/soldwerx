@@ -906,12 +906,12 @@ function AllAuctions() {
                                                 </div>
 
                                                 {/* Buy Now Price (for buy_now auctions) */}
-                                                {/* {selectedAuction.auctionType === 'buy_now' && selectedAuction.buyNowPrice && (
+                                                {selectedAuction.auctionType === 'buy_now' && selectedAuction.buyNowPrice && (
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-500">Buy Now Price</span>
                                                         <span className="font-bold text-blue-600">{formatCurrency(selectedAuction.buyNowPrice)}</span>
                                                     </div>
-                                                )} */}
+                                                )}
 
                                                 {/* Reserve Price (for reserve auctions) */}
                                                 {selectedAuction.auctionType === 'reserve' && selectedAuction.reservePrice && (
@@ -1039,6 +1039,27 @@ function AllAuctions() {
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-500">Final Price</span>
                                                         <span className="font-bold text-green-600">{formatCurrency(selectedAuction.finalPrice)}</span>
+                                                    </div>
+                                                )}
+
+                                                {selectedAuction.buyerFeeAmount && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Buyer Fee</span>
+                                                        <span className="font-bold text-green-600">{formatCurrency(selectedAuction.buyerFeeAmount)}</span>
+                                                    </div>
+                                                )}
+
+                                                {selectedAuction.sellerFeeAmount && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Seller Fee</span>
+                                                        <span className="font-bold text-green-600">{formatCurrency(selectedAuction.sellerFeeAmount)}</span>
+                                                    </div>
+                                                )}
+
+                                                {selectedAuction.taxAmount > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Tax</span>
+                                                        <span className="font-bold text-green-600">{formatCurrency(selectedAuction.taxAmount)}</span>
                                                     </div>
                                                 )}
 

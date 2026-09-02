@@ -24,18 +24,19 @@ const MakeOfferModal = ({
             try {
                 const { data } = await axiosInstance.get("/api/v1/commissions");
                 const commission = data?.data?.commission;
+
                 if (!commission) return;
 
                 setCommissionType(commission.commissionType);
                 setCommissionValue(commission.commissionValue);
 
-                const amount = Number(offerAmount);
+                const price = Number(offerAmount);
 
                 if (commission.commissionType === "fixed") {
                     setServiceFee(Number(commission.commissionValue));
                 } else {
                     setServiceFee(
-                        (amount * Number(commission.commissionValue)) / 100
+                        (price * Number(commission.commissionValue)) / 100
                     );
                 }
             } catch (error) {
@@ -44,7 +45,7 @@ const MakeOfferModal = ({
         };
 
         getCommission();
-    }, [offerAmount, isOpen]);
+    }, [isOpen, offerAmount]);
 
     if (!isOpen) return null;
 

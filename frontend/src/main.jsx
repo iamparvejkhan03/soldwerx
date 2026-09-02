@@ -98,6 +98,7 @@ const AdminPayoutMethods = lazy(() => import('./pages/admin/PayoutMethods'));
 const AdminAllEvents = lazy(() => import('./pages/admin/AllEvents'));
 const AdminCreateEvent = lazy(() => import('./pages/admin/CreateEvent'));
 const AdminEditEvent = lazy(() => import('./pages/admin/EditEvent'));
+const AdminTaxSettings = lazy(() => import('./pages/admin/TaxSettings'));
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>
@@ -184,14 +185,14 @@ createRoot(document.getElementById('root')).render(
                             }
                         />
                         {/* Seller All Offers */}
-                        {/* <Route
+                        <Route
                             path='/seller/offers/all'
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <SellerAllOffers />
                                 </Suspense>
                             }
-                        /> */}
+                        />
                         {/* Seller Won Auctions */}
                         <Route
                             path='/seller/auctions/sold'
@@ -436,14 +437,14 @@ createRoot(document.getElementById('root')).render(
                         />
 
                         {/* Bidder My Offers */}
-                        {/* <Route
+                        <Route
                             path='/bidder/offers'
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <MyOffers />
                                 </Suspense>
                             }
-                        /> */}
+                        />
 
                         {/* Bidder My Bids */}
                         <Route
@@ -707,14 +708,14 @@ createRoot(document.getElementById('root')).render(
                         />
 
                         {/* Admin Transactions */}
-                        {/* <Route
+                        <Route
                                 path='/admin/transactions'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <Transactions />
                                     </Suspense>
                                 }
-                            /> */}
+                            />
 
                         {/* Admin All Events */}
                         <Route
@@ -742,6 +743,16 @@ createRoot(document.getElementById('root')).render(
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <AdminEditEvent />
+                                </Suspense>
+                            }
+                        />
+
+                        {/* Admin Tax Settings */}
+                        <Route
+                            path='/admin/tax-settings'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <AdminTaxSettings />
                                 </Suspense>
                             }
                         />

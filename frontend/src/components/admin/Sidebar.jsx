@@ -28,7 +28,8 @@ import {
     BanknoteArrowUp,
     Store,
     Briefcase,
-    CalendarDaysIcon
+    CalendarDaysIcon,
+    PercentCircleIcon
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
@@ -86,11 +87,11 @@ const navigation = [
         path: '/admin/categories',
         icon: <Tags size={20} />
     },
-    // {
-    //     name: 'Transactions',
-    //     path: '/admin/transactions',
-    //     icon: <PoundSterling size={20} />
-    // },
+    {
+        name: 'Transactions',
+        path: '/admin/transactions',
+        icon: <DollarSign size={20} />
+    },
     {
         name: 'Comments',
         path: '/admin/comments',
@@ -115,6 +116,11 @@ const navigation = [
         name: 'Commissions',
         path: '/admin/commissions',
         icon: <Settings size={20} />,
+    },
+    {
+        name: 'Tax Settings',
+        path: '/admin/tax-settings',
+        icon: <PercentCircleIcon size={20} />,
     },
     // {
     //     name: 'Notifications',

@@ -1,7 +1,8 @@
 import { model, Schema } from "mongoose";
 import mongoose from "mongoose";
 import agendaService from "../services/agendaService.js";
-import { calculateCommission } from "../utils/commissionCalculator.js";
+import { calculateCommissions } from "../utils/commissionCalculator.js";
+import { calculateTax } from "../utils/taxCalculator.js";
 
 // Create a separate schema for offers
 
@@ -311,25 +312,57 @@ const auctionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+
+    // Pricing & Commission
     finalPrice: {
       type: Number,
     },
-    commissionAmount: {
+
+    // New commission fields
+    buyerFeeAmount: {
       type: Number,
       default: 0,
     },
-    commissionType: {
+    sellerFeeAmount: {
+      type: Number,
+      default: 0,
+    },
+    buyerFeeType: {
       type: String,
-      enum: ["fixed", "percentage", null],
+      enum: ['fixed', 'percentage', null],
       default: null,
     },
-    commissionValue: {
+    buyerFeeValue: {
       type: Number,
       default: 0,
     },
+    sellerFeeType: {
+      type: String,
+      enum: ['fixed', 'percentage', null],
+      default: null,
+    },
+    sellerFeeValue: {
+      type: Number,
+      default: 0,
+    },
+
     bidPaymentRequired: {
       type: Boolean,
       default: true,
+    },
+
+    taxAmount: {
+      type: Number,
+      default: 0,
+    },
+    taxType: {
+      type: String,
+      enum: ['fixed', 'percentage', null],
+      default: null,
+    },
+    taxValue: {
+      type: Number,
+      default: 0,
     },
 
     // Metadata
@@ -526,56 +559,7 @@ auctionSchema.methods.placeBid = async function (
   return this.save();
 };
 
-// NEW: Method to buy now
-// auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
-//   const now = new Date();
-
-//   if (this.status !== "active") {
-//     throw new Error("Auction is not active");
-//   }
-
-//   if (!this.buyNowPrice) {
-//     throw new Error("Buy Now is not available for this auction");
-//   }
-
-//   if (now >= this.endDate) {
-//     throw new Error("Auction has ended");
-//   }
-
-//   // Add buy now as a bid with special flag
-//   this.bids.push({
-//     bidder: buyerId,
-//     bidderUsername: buyerUsername,
-//     amount: this.buyNowPrice,
-//     timestamp: now,
-//     isBuyNow: true,
-//   });
-
-//   // Set auction as sold
-//   this.currentPrice = this.buyNowPrice;
-//   this.currentBidder = buyerId;
-//   // this.bidCount += 1;
-//   this.winner = buyerId;
-//   this.finalPrice = this.buyNowPrice;
-//   this.status = "sold";
-//   this.endDate = now; // End auction immediately
-
-//   // Reject all pending offers (if any)
-//   this.offers.forEach((offer) => {
-//     if (offer.status === "pending") {
-//       offer.status = "rejected";
-//       offer.sellerResponse = "Offer rejected - item purchased via Buy Now";
-//     }
-//   });
-
-//   // Cancel any scheduled jobs
-//   await agendaService.cancelAuctionJobs(this._id);
-
-//   return this.save();
-// };
-
-// In auction.model.js - find the buyNow method and update it
-
+// Method to buy now
 auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
   const now = new Date();
 
@@ -612,13 +596,30 @@ auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
   this.finalPrice = this.auctionType === "giveaway" ? 0 : this.buyNowPrice;
   this.status = "sold";
   this.endDate = now; // End auction immediately
+  this.paymentStatus = this.auctionType === 'giveaway' ? 'completed' : 'pending';
 
   // Calculate and store commission (only for non-giveaway)
   if (this.auctionType !== "giveaway") {
-    const commissionData = await calculateCommission(this.finalPrice);
-    this.commissionAmount = commissionData.commissionAmount;
-    this.commissionType = commissionData.commissionType;
-    this.commissionValue = commissionData.commissionValue;
+    const {
+      buyerFeeAmount,
+      sellerFeeAmount,
+      buyerFeeType,
+      buyerFeeValue,
+      sellerFeeType,
+      sellerFeeValue,
+    } = await calculateCommissions(this.finalPrice);
+
+    this.buyerFeeAmount = buyerFeeAmount;
+    this.sellerFeeAmount = sellerFeeAmount;
+    this.buyerFeeType = buyerFeeType;
+    this.buyerFeeValue = buyerFeeValue;
+    this.sellerFeeType = sellerFeeType;
+    this.sellerFeeValue = sellerFeeValue;
+
+    const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+    this.taxAmount = taxAmount;
+    this.taxType = taxType;
+    this.taxValue = taxValue;
   }
 
   // Reject all pending offers (if any)
@@ -635,7 +636,7 @@ auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
   return this.save();
 };
 
-// NEW: Method to make an offer
+// Method to make an offer
 auctionSchema.methods.makeOffer = async function (
   buyerId,
   buyerUsername,
@@ -717,10 +718,26 @@ auctionSchema.methods.respondToOffer = async function (
       this.endDate = new Date(); // End auction immediately
 
       // Calculate and store commission
-      const commissionData = await calculateCommission(this.finalPrice);
-      this.commissionAmount = commissionData.commissionAmount;
-      this.commissionType = commissionData.commissionType;
-      this.commissionValue = commissionData.commissionValue;
+      const {
+        buyerFeeAmount,
+        sellerFeeAmount,
+        buyerFeeType,
+        buyerFeeValue,
+        sellerFeeType,
+        sellerFeeValue,
+      } = await calculateCommissions(this.finalPrice);
+
+      this.buyerFeeAmount = buyerFeeAmount;
+      this.sellerFeeAmount = sellerFeeAmount;
+      this.buyerFeeType = buyerFeeType;
+      this.buyerFeeValue = buyerFeeValue;
+      this.sellerFeeType = sellerFeeType;
+      this.sellerFeeValue = sellerFeeValue;
+
+      const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+      this.taxAmount = taxAmount;
+      this.taxType = taxType;
+      this.taxValue = taxValue;
 
       // Reject all other pending offers
       this.offers.forEach((o) => {
@@ -785,10 +802,26 @@ auctionSchema.methods.respondToCounterOffer = async function (offerId, accept) {
     this.endDate = new Date();
 
     // Calculate and store commission
-    const commissionData = await calculateCommission(this.finalPrice);
-    this.commissionAmount = commissionData.commissionAmount;
-    this.commissionType = commissionData.commissionType;
-    this.commissionValue = commissionData.commissionValue;
+    const {
+      buyerFeeAmount,
+      sellerFeeAmount,
+      buyerFeeType,
+      buyerFeeValue,
+      sellerFeeType,
+      sellerFeeValue,
+    } = await calculateCommissions(this.finalPrice);
+
+    this.buyerFeeAmount = buyerFeeAmount;
+    this.sellerFeeAmount = sellerFeeAmount;
+    this.buyerFeeType = buyerFeeType;
+    this.buyerFeeValue = buyerFeeValue;
+    this.sellerFeeType = sellerFeeType;
+    this.sellerFeeValue = sellerFeeValue;
+
+    const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+    this.taxAmount = taxAmount;
+    this.taxType = taxType;
+    this.taxValue = taxValue;
 
     // Reject all other pending offers
     this.offers.forEach((o) => {
@@ -878,10 +911,27 @@ auctionSchema.methods.reactivateAndAcceptOffer = async function (
   this.endDate = new Date();
 
   // Calculate and store commission
-  const commissionData = await calculateCommission(this.finalPrice);
-  this.commissionAmount = commissionData.commissionAmount;
-  this.commissionType = commissionData.commissionType;
-  this.commissionValue = commissionData.commissionValue;
+  const {
+    buyerFeeAmount,
+    sellerFeeAmount,
+    buyerFeeType,
+    buyerFeeValue,
+    sellerFeeType,
+    sellerFeeValue,
+  } = await calculateCommissions(this.finalPrice);
+
+  this.buyerFeeAmount = buyerFeeAmount;
+  this.sellerFeeAmount = sellerFeeAmount;
+  this.buyerFeeType = buyerFeeType;
+  this.buyerFeeValue = buyerFeeValue;
+  this.sellerFeeType = sellerFeeType;
+  this.sellerFeeValue = sellerFeeValue;
+
+  // Calculate and store tax
+  const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+  this.taxAmount = taxAmount;
+  this.taxType = taxType;
+  this.taxValue = taxValue;
 
   // Reject all other pending offers
   this.offers.forEach((o) => {
@@ -959,68 +1009,6 @@ auctionSchema.methods.isReserveMet = function () {
 };
 
 // Method to end auction
-// auctionSchema.methods.endAuction = async function () {
-//   if (this.status !== "active") return this;
-
-//   const now = new Date();
-//   let wasSold = false;
-
-//   // For standard auctions OR reserve auctions that met reserve
-//   if (this.bidCount > 0) {
-//     if (this.auctionType === "standard") {
-//       // Standard auction with bids - sold
-//       this.status = "sold";
-//       this.winner = this.currentBidder;
-//       this.finalPrice = this.currentPrice;
-//       wasSold = true;
-//     } else if (this.auctionType === "reserve") {
-//       // Reserve auction - check if reserve is met
-//       if (this.isReserveMet()) {
-//         this.status = "sold";
-//         this.winner = this.currentBidder;
-//         this.finalPrice = this.currentPrice;
-//         wasSold = true;
-//       } else {
-//         this.status = "reserve_not_met";
-//       }
-//     } else if (this.auctionType === "buy_now") {
-//       // Buy Now auction that ended normally (not via Buy Now)
-//       if (this.bidCount > 0) {
-//         this.status = "sold";
-//         this.winner = this.currentBidder;
-//         this.finalPrice = this.currentPrice;
-//         wasSold = true;
-//       } else {
-//         this.status = "ended";
-//       }
-//     }
-//   } else {
-//     // No bids - just end it
-//     this.status = "ended";
-//   }
-
-//   // Set actual end time
-//   this.endDate = now;
-
-//   // Also reject any pending offers when auction ends
-//   this.offers.forEach((offer) => {
-//     if (offer.status === "pending") {
-//       offer.status = "expired";
-//       offer.sellerResponse = "Offer expired - auction ended";
-//     }
-//   });
-
-//   await this.save();
-
-//   // Return result object
-//   return {
-//     wasSold,
-//     winner: this.winner,
-//     finalPrice: this.finalPrice,
-//     newStatus: this.status,
-//   };
-// };
-
 auctionSchema.methods.endAuction = async function () {
   if (this.status !== "active") return this;
 
@@ -1037,10 +1025,26 @@ auctionSchema.methods.endAuction = async function () {
       wasSold = true;
 
       // Calculate and store commission
-      const commissionData = await calculateCommission(this.finalPrice);
-      this.commissionAmount = commissionData.commissionAmount;
-      this.commissionType = commissionData.commissionType;
-      this.commissionValue = commissionData.commissionValue;
+      const {
+        buyerFeeAmount,
+        sellerFeeAmount,
+        buyerFeeType,
+        buyerFeeValue,
+        sellerFeeType,
+        sellerFeeValue,
+      } = await calculateCommissions(this.finalPrice);
+
+      this.buyerFeeAmount = buyerFeeAmount;
+      this.sellerFeeAmount = sellerFeeAmount;
+      this.buyerFeeType = buyerFeeType;
+      this.buyerFeeValue = buyerFeeValue;
+      this.sellerFeeType = sellerFeeType;
+      this.sellerFeeValue = sellerFeeValue;
+
+      const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+      this.taxAmount = taxAmount;
+      this.taxType = taxType;
+      this.taxValue = taxValue;
     } else if (this.auctionType === "reserve") {
       // Reserve auction - check if reserve is met
       if (this.isReserveMet()) {
@@ -1050,10 +1054,26 @@ auctionSchema.methods.endAuction = async function () {
         wasSold = true;
 
         // Calculate and store commission
-        const commissionData = await calculateCommission(this.finalPrice);
-        this.commissionAmount = commissionData.commissionAmount;
-        this.commissionType = commissionData.commissionType;
-        this.commissionValue = commissionData.commissionValue;
+        const {
+          buyerFeeAmount,
+          sellerFeeAmount,
+          buyerFeeType,
+          buyerFeeValue,
+          sellerFeeType,
+          sellerFeeValue,
+        } = await calculateCommissions(this.finalPrice);
+
+        this.buyerFeeAmount = buyerFeeAmount;
+        this.sellerFeeAmount = sellerFeeAmount;
+        this.buyerFeeType = buyerFeeType;
+        this.buyerFeeValue = buyerFeeValue;
+        this.sellerFeeType = sellerFeeType;
+        this.sellerFeeValue = sellerFeeValue;
+
+        const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+        this.taxAmount = taxAmount;
+        this.taxType = taxType;
+        this.taxValue = taxValue;
       } else {
         this.status = "reserve_not_met";
       }
@@ -1064,12 +1084,29 @@ auctionSchema.methods.endAuction = async function () {
         this.winner = this.currentBidder;
         this.finalPrice = this.currentPrice;
         wasSold = true;
+        this.paymentStatus = this.auctionType === 'giveaway' ? 'completed' : 'pending';
 
         // Calculate and store commission
-        const commissionData = await calculateCommission(this.finalPrice);
-        this.commissionAmount = commissionData.commissionAmount;
-        this.commissionType = commissionData.commissionType;
-        this.commissionValue = commissionData.commissionValue;
+        const {
+          buyerFeeAmount,
+          sellerFeeAmount,
+          buyerFeeType,
+          buyerFeeValue,
+          sellerFeeType,
+          sellerFeeValue,
+        } = await calculateCommissions(this.finalPrice);
+
+        this.buyerFeeAmount = buyerFeeAmount;
+        this.sellerFeeAmount = sellerFeeAmount;
+        this.buyerFeeType = buyerFeeType;
+        this.buyerFeeValue = buyerFeeValue;
+        this.sellerFeeType = sellerFeeType;
+        this.sellerFeeValue = sellerFeeValue;
+
+        const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
+        this.taxAmount = taxAmount;
+        this.taxType = taxType;
+        this.taxValue = taxValue;
       } else {
         this.status = "ended";
       }
@@ -1098,7 +1135,8 @@ auctionSchema.methods.endAuction = async function () {
     winner: this.winner,
     finalPrice: this.finalPrice,
     newStatus: this.status,
-    commissionAmount: this.commissionAmount,
+    buyerFeeAmount: this.buyerFeeAmount,
+    sellerFeeAmount: this.sellerFeeAmount,
   };
 };
 

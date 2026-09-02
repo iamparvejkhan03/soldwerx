@@ -81,7 +81,8 @@ function BidHistory() {
                     amount: bid.amount,
                     time: bid.timestamp,
                     status: status,
-                    ip: "Not Available"
+                    ip: "Not Available",
+                    isProxyBid: bid.isProxyBid || false,
                 };
             });
 
@@ -412,7 +413,9 @@ function BidHistory() {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6">
-                                                <div className="font-medium text-gray-900">{formatCurrency(bid.amount)}</div>
+                                                <div className="font-medium text-gray-900">{formatCurrency(bid.amount)}
+                                                    <span className="block text-xs">({bid.isProxyBid ? 'Proxy Bid' : 'Manual Bid'})</span>
+                                                </div>
                                             </td>
                                             <td className="py-4 px-6">
                                                 <div className="text-sm text-gray-900">

@@ -35,8 +35,9 @@ export const createBankTransferPayment = async (req, res) => {
 
         // Calculate total
         const bidAmount = auction.finalPrice || auction.currentPrice;
-        const commissionAmount = auction.commissionAmount || 0;
-        const totalAmount = bidAmount + commissionAmount;
+        const commissionAmount = auction.buyerFeeAmount || 0;
+        const taxAmount = auction.taxAmount || 0;
+        const totalAmount = bidAmount + commissionAmount + taxAmount;
 
         // Update auction status to processing (bank transfer)
         auction.paymentStatus = "processing";
@@ -182,7 +183,7 @@ export const getAuctionPaymentStatus = async (req, res) => {
         const userId = req.user.id;
 
         const auction = await Auction.findById(auctionId).select(
-            "paymentStatus paymentMethod paymentDate transactionId finalPrice commissionAmount",
+            "paymentStatus paymentMethod paymentDate transactionId finalPrice buyerFeeAmount sellerFeeAmount",
         );
 
         if (!auction) {
@@ -206,9 +207,10 @@ export const getAuctionPaymentStatus = async (req, res) => {
                     paymentDate: auction.paymentDate,
                     transactionId: auction.transactionId,
                     finalPrice: auction.finalPrice,
-                    commissionAmount: auction.commissionAmount,
+                    buyerFeeAmount: auction.buyerFeeAmount,
+                    sellerFeeAmount: auction.sellerFeeAmount,
                     totalAmount:
-                        (auction.finalPrice || 0) + (auction.commissionAmount || 0),
+                        (auction.finalPrice || 0) + (auction.buyerFeeAmount || 0),
                 },
                 Payment: Payment,
             },

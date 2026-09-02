@@ -62,6 +62,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import LiquidateForm from "./LiquidateForm";
 import EventCard from "./EventCard";
 import ProxyBidSection from "./ProxyBidSection";
+import CardPaymentModal from "./CardPaymentModal";
 
 export {
     Container,
@@ -128,4 +129,5 @@ export {
     LiquidateForm,
     EventCard,
     ProxyBidSection,
+    CardPaymentModal,
 }

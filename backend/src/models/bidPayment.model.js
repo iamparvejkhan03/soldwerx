@@ -21,6 +21,11 @@ const bidPaymentSchema = new Schema({
         type: Number,
         required: true
     },
+    taxAmount: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     totalAmount: {
         type: Number,
         required: true
@@ -35,7 +40,16 @@ const bidPaymentSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['created', 'succeeded', 'requires_capture', 'canceled', 'processing_failed'],
+        enum: [
+            'created',
+            'requires_payment_method',
+            'requires_action',
+            'processing',
+            'succeeded',
+            'requires_capture',
+            'canceled',
+            'processing_failed'
+        ],
         default: 'created'
     },
     chargeAttempted: {
@@ -48,7 +62,7 @@ const bidPaymentSchema = new Schema({
     },
     type: {
         type: String,
-        enum: ['bid_authorization', 'final_commission', 'bid_deposit'],
+        enum: ['bid_authorization', 'final_commission', 'bid_deposit', 'winner_payment'],
         default: 'bid_authorization'
     },
     commissionRate: {

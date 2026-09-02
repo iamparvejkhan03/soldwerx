@@ -14,33 +14,29 @@ const BidConfirmationModal = forwardRef((props, ref) => {
     const [commissionValue, setCommissionValue] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
 
+    // Inside component
     useEffect(() => {
         if (!isOpen) return;
-
-        const getCommission = async () => {
+        const fetchCommission = async () => {
             try {
-                const { data } = await axiosInstance.get("/api/v1/commissions");
-                const commission = data?.data?.commission;
-
-                if (!commission) return;
-
-                setCommissionType(commission.commissionType);
-                setCommissionValue(commission.commissionValue);
-
-                if (commission.commissionType === "fixed") {
-                    setServiceFee(Number(commission.commissionValue));
+                const { data } = await axiosInstance.get('/api/v1/commissions');
+                const commission = data.data.commission;
+                if (commission.buyerEnabled) {
+                    const fee = commission.buyerType === 'fixed'
+                        ? commission.buyerValue
+                        : (Number(bidAmount) * commission.buyerValue) / 100;
+                    setServiceFee(fee);
+                    setCommissionType(commission.buyerType);
+                    setCommissionValue(commission.buyerValue);
                 } else {
-                    setServiceFee(
-                        (Number(bidAmount) * Number(commission.commissionValue)) / 100
-                    );
+                    setServiceFee(0);
                 }
             } catch (error) {
-                console.error("Error fetching commission:", error);
+                console.error('Failed to fetch commission', error);
             }
         };
-
-        getCommission();
-    }, [bidAmount, isOpen]);
+        fetchCommission();
+    }, [isOpen, bidAmount]);
 
     if (!isOpen) return null;
 

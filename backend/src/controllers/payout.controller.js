@@ -386,7 +386,7 @@ export const getAdminPayouts = async (req, res) => {
             )
             .populate(
                 "auction",
-                "title finalPrice currentPrice commissionAmount endDate",
+                "title finalPrice currentPrice sellerFeeAmount buyerFeeAmount endDate",
             )
             .populate("initiatedBy", "firstName lastName email username")
             .sort({ createdAt: -1 })
@@ -432,6 +432,8 @@ export const getAdminPayouts = async (req, res) => {
                 },
                 totalAmount: payout.totalAmount,
                 commissionAmount: payout.commissionAmount,
+                buyerFeeAmount: auction.buyerFeeAmount || 0,
+                sellerFeeAmount: auction.sellerFeeAmount || 0,
                 sellerAmount: payout.sellerAmount,
                 payoutMethod: payoutMethodDisplay,
                 status: payout.status,
@@ -537,8 +539,8 @@ export const getPendingPayouts = async (req, res) => {
             .filter((auction) => !processedAuctionIds.has(auction._id.toString()))
             .map((auction) => {
                 const totalAmount = auction.finalPrice || auction.currentPrice || 0;
-                const commissionAmount = auction.commissionAmount || 0;
-                const sellerAmount = totalAmount - commissionAmount;
+                const sellerFee = auction.sellerFeeAmount || 0;
+                const sellerAmount = totalAmount - sellerFee;
 
                 // Get seller's default payout method
                 const seller = auction.seller || {};
@@ -579,7 +581,9 @@ export const getPendingPayouts = async (req, res) => {
                         : null,
                     financials: {
                         totalAmount,
-                        commissionAmount,
+                        sellerFee: auction.sellerFeeAmount || 0,
+                        buyerFee: auction.buyerFeeAmount || 0,
+                        commissionAmount: sellerFee,
                         sellerAmount,
                         formattedTotal: new Intl.NumberFormat("en-US", {
                             style: "currency",
@@ -588,7 +592,7 @@ export const getPendingPayouts = async (req, res) => {
                         formattedCommission: new Intl.NumberFormat("en-US", {
                             style: "currency",
                             currency: "USD",
-                        }).format(commissionAmount),
+                        }).format(sellerFee),
                         formattedSeller: new Intl.NumberFormat("en-US", {
                             style: "currency",
                             currency: "USD",
@@ -676,15 +680,16 @@ export const initiatePayout = async (req, res) => {
 
         // Calculate amounts
         const totalAmount = auction.finalPrice || auction.currentPrice || 0;
-        const commissionAmount = auction.commissionAmount || 0;
-        const sellerAmount = totalAmount - commissionAmount;
+        const sellerFee = auction.sellerFeeAmount || 0;
+        const sellerAmount = totalAmount - sellerFee;
 
         // Create payout record
         const payout = await Payout.create({
             seller: seller._id,
             auction: auction._id,
             totalAmount,
-            commissionAmount,
+            commissionAmount: sellerFee, // seller fee
+            sellerFeeAmount: sellerFee,
             sellerAmount,
             payoutMethod,
             payoutDetails: seller.payoutMethods[payoutMethod],
@@ -861,8 +866,8 @@ export const getAuctionPayoutInfo = async (req, res) => {
 
         const seller = auction.seller;
         const totalAmount = auction.finalPrice || auction.currentPrice || 0;
-        const commissionAmount = auction.commissionAmount || 0;
-        const sellerAmount = totalAmount - commissionAmount;
+        const sellerFee = auction.sellerFeeAmount || 0;
+        const sellerAmount = totalAmount - sellerFee;
 
         // Check existing payout
         const existingPayout = await Payout.findOne({ auction: auctionId });
@@ -890,7 +895,9 @@ export const getAuctionPayoutInfo = async (req, res) => {
                 },
                 financials: {
                     totalAmount,
-                    commissionAmount,
+                    sellerFee: auction.sellerFeeAmount || 0,
+                    buyerFee: auction.buyerFeeAmount || 0,
+                    commissionAmount: sellerFee,
                     sellerAmount,
                     formattedTotal: new Intl.NumberFormat("en-US", {
                         style: "currency",
@@ -929,7 +936,7 @@ export const getPayoutById = async (req, res) => {
             )
             .populate(
                 "auction",
-                "title finalPrice currentPrice commissionAmount endDate",
+                "title finalPrice currentPrice sellerFeeAmount buyerFeeAmount endDate",
             )
             .populate("initiatedBy", "firstName lastName email username");
 
@@ -961,7 +968,7 @@ export const getSellerPayouts = async (req, res) => {
         const payouts = await Payout.find({ seller: sellerId })
             .populate({
                 path: "auction",
-                select: "title finalPrice currentPrice commissionAmount endDate photos"
+                select: "title finalPrice currentPrice sellerFeeAmount buyerFeeAmount endDate photos"
             })
             .sort({ createdAt: -1 });
 
@@ -1063,7 +1070,7 @@ export const getSellerPayoutById = async (req, res) => {
         })
             .populate({
                 path: "auction",
-                select: "title description finalPrice currentPrice commissionAmount endDate photos"
+                select: "title description finalPrice currentPrice sellerFeeAmount buyerFeeAmount endDate photos"
             });
 
         if (!payout) {

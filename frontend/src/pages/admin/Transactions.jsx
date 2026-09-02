@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Filter, Calendar, Download, BarChart3, User, Banknote, TrendingUp, CreditCard, Shield, AlertCircle, CheckCircle, Cloc, XCircle } from "lucide-react";
+import { Search, Filter, Calendar, Download, BarChart3, User, Banknote, TrendingUp, CreditCard, Shield, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance.js";
 import { toast } from "react-hot-toast";
 import { AdminContainer, AdminHeader, AdminSidebar, LoadingSpinner } from "../../components/index.js";
@@ -505,10 +505,14 @@ function Transactions() {
                                         {/* Payment Details */}
                                         <div className="mt-6 bg-blue-50 rounded-lg p-4">
                                             <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div>
                                                     <div className="text-sm text-gray-600">Commission</div>
                                                     <div className="font-medium">{formatCurrency(selectedTransaction.commissionAmount)}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-gray-600">Tax</div>
+                                                    <div className="font-medium">{formatCurrency(selectedTransaction?.taxAmount)}</div>
                                                 </div>
                                                 <div>
                                                     <div className="text-sm text-gray-600">Total Amount</div>

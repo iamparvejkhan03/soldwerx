@@ -17,10 +17,14 @@ import {
     Copy,
     Check,
     X,
+    CreditCard,
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import CardPaymentModal from '../../components/CardPaymentModal';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 // Bank Transfer Details Component
 const BankTransferDetails = ({ bankDetails, onCopy, handleBankTransfer, onClose, selectedAuction }) => {
@@ -189,6 +193,14 @@ function WonAuctions() {
         recentWins: 0,
     });
 
+    const [showCardModal, setShowCardModal] = useState(false);
+    const [selectedCardAuction, setSelectedCardAuction] = useState(null);
+    const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+    const [cardClientSecret, setCardClientSecret] = useState(null);
+    const [cardPaymentIntentId, setCardPaymentIntentId] = useState(null);
+    const [cardLoading, setCardLoading] = useState(false);
+
     useEffect(() => {
         fetchWonAuctions();
     }, []);
@@ -269,6 +281,30 @@ function WonAuctions() {
         }
     };
 
+    const handleCardPayment = async (auction) => {
+        const loadingToast = toast.loading('Preparing payment...');
+        setCardLoading(true);
+        try {
+            const { data } = await axiosInstance.post('/api/v1/payments/create-winner-payment-intent', {
+                auctionId: auction._id
+            });
+            toast.dismiss(loadingToast);
+            if (data.success) {
+                setCardClientSecret(data.data.clientSecret);
+                setCardPaymentIntentId(data.data.paymentIntentId);
+                setSelectedCardAuction(auction);
+                setShowCardModal(true);
+            } else {
+                toast.error(data.message || 'Failed to initiate payment');
+            }
+        } catch (err) {
+            toast.dismiss(loadingToast);
+            toast.error(err.response?.data?.message || 'Error starting payment');
+        } finally {
+            setCardLoading(false);
+        }
+    };
+
     const fetchBankDetails = async () => {
         const loadingToast = toast.loading('Fetching bank details...');
 
@@ -289,11 +325,10 @@ function WonAuctions() {
     // Calculate total
     const calculateTotal = (auction) => {
         if (!auction) return 0;
-
         const winningBid = auction.finalPrice || auction.currentPrice || auction.finalBid || 0;
-        const commission = auction.commissionAmount || 0;
-
-        return winningBid + commission;
+        const buyerFee = auction.buyerFeeAmount || 0;
+        const tax = auction.taxAmount || 0;
+        return winningBid + buyerFee + tax;
     };
 
     const formatCurrency = (amount) => {
@@ -374,7 +409,7 @@ function WonAuctions() {
                                 bankDetails={bankDetailsData}
                                 onCopy={(field) => setCopiedField(field)}
                                 handleBankTransfer={() => handleBankTransfer(selectedAuction)}
-                                onClose={() => {setShowBankDetailsModal(false); setProcessing(false)}}
+                                onClose={() => { setShowBankDetailsModal(false); setProcessing(false) }}
                                 selectedAuction={selectedAuction}
                             />
                         </div>
@@ -502,11 +537,17 @@ function WonAuctions() {
                                             </h3>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xl font-bold text-green-600">
-                                                {formatCurrency(auction.finalBid)}
+                                            <div className="">
+                                                <span className="text-2xl font-bold text-green-600">{formatCurrency(auction.finalBid)}</span>
+                                                {auction?.buyerFeeAmount && (
+                                                    <span className="text-sm font-semibold text-green-600"> (+ {formatCurrency(auction.buyerFeeAmount)})</span>
+                                                )}
+                                                {auction?.taxAmount > 0 && (
+                                                    <span className="text-sm font-semibold text-green-600"> (+ {formatCurrency(auction.taxAmount)})</span>
+                                                )}
                                             </div>
                                             {/* <div className="text-sm text-gray-500">Winning Bid</div> */}
-                                            <div className="text-sm text-gray-500">Winning Amount</div>
+                                            <div className="text-sm text-gray-500">Winning Amount + Fee + Tax</div>
                                         </div>
                                     </div>
 
@@ -563,7 +604,7 @@ function WonAuctions() {
                                                 <div>
                                                     {/* <p className="text-sm text-gray-500">Your Max Bid</p> */}
                                                     <p className="text-sm text-gray-500">Payment Status</p>
-                                                    <p className="font-semibold capitalize text-blue-600">{auction?.paymentStatus === 'completed' ? 'Payment Received By Admin' : auction?.paymentStatus}</p>
+                                                    <p className="font-semibold capitalize text-blue-600">{auction?.paymentStatus === 'completed' ? 'Payment Completed' : auction?.paymentStatus}</p>
                                                 </div>
                                             )
                                         }
@@ -621,28 +662,40 @@ function WonAuctions() {
                                         </Link>
 
                                         {/* Action Button - Single button that handles both payment methods */}
-                                        {auction?.paymentStatus == 'pending' && <button
-                                            onClick={() => {
-                                                setProcessing(true);
-                                                // setShowBankDetailsModal(true);
-                                                setSelectedAuction(auction)
-                                                fetchBankDetails();
-                                            }}
-                                            disabled={processing}
-                                            className="w-full bg-primary text-white hover:bg-primary/90 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                                        >
-                                            {processing ? (
-                                                <>
-                                                    <Loader size={18} className="animate-spin" />
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Banknote size={18} />
-                                                    Pay {formatCurrency(calculateTotal(auction))} via Bank Transfer
-                                                </>
-                                            )}
-                                        </button>}
+                                        {auction?.paymentStatus === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        handleCardPayment(auction);
+                                                    }}
+                                                    disabled={processing}
+                                                    className="w-full bg-blue-600 text-white hover:bg-blue-700 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    <CreditCard size={18} />
+                                                    Pay {formatCurrency(calculateTotal(auction))} with Card
+                                                </button>
+
+                                                {/* Existing bank transfer button */}
+                                                <button
+                                                    onClick={() => {
+                                                        setProcessing(true);
+                                                        setSelectedAuction(auction);
+                                                        fetchBankDetails();
+                                                    }}
+                                                    disabled={processing}
+                                                    className="w-full bg-primary text-white hover:bg-primary/90 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    {processing ? (
+                                                        <Loader size={18} className="animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Banknote size={18} />
+                                                            Pay {formatCurrency(calculateTotal(auction))} via Bank Transfer
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -699,6 +752,28 @@ function WonAuctions() {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {showCardModal && selectedCardAuction && cardClientSecret && (
+                        <Elements stripe={stripePromise} options={{ clientSecret: cardClientSecret }}>
+                            <CardPaymentModal
+                                isOpen={showCardModal}
+                                onClose={() => {
+                                    setShowCardModal(false);
+                                    setSelectedCardAuction(null);
+                                    setCardClientSecret(null);
+                                    setCardPaymentIntentId(null);
+                                }}
+                                auction={selectedCardAuction}
+                                clientSecret={cardClientSecret}
+                                paymentIntentId={cardPaymentIntentId}
+                                onSuccess={() => {
+                                    fetchWonAuctions();
+                                    setShowCardModal(false);
+                                    setCardClientSecret(null);
+                                }}
+                            />
+                        </Elements>
                     )}
                 </BidderContainer>
             </div>

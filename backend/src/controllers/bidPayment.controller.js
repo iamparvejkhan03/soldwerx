@@ -3,211 +3,75 @@ import Commission from '../models/commission.model.js';
 import Auction from '../models/auction.model.js';
 import User from '../models/user.model.js';
 import { StripeService } from '../services/stripeService.js';
-
-// Create payment intent when user places first bid
-// export const createBidPaymentIntent = async (req, res) => {
-//     try {
-//         const { auctionId, bidAmount } = req.body;
-//         const userId = req.user._id;
-
-//         // Validate auction
-//         const auction = await Auction.findById(auctionId);
-//         if (!auction) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: 'Auction not found'
-//             });
-//         }
-
-//         // Check if auction is active
-//         if (auction.status !== 'active') {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Auction is not active'
-//             });
-//         }
-
-//         // Get user with payment info
-//         const user = await User.findById(userId);
-//         if (!user || !user.stripeCustomerId || !user.isPaymentVerified) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'User payment method not verified'
-//             });
-//         }
-
-//         // Get commission amount for this category
-//         const commission = await Commission.findOne({ category: auction.category });
-//         if (!commission) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: 'Commission not set for this category'
-//             });
-//         }
-
-//         const commissionAmount = commission.commissionAmount;
-//         const totalAmount = commissionAmount; // Only charge commission amount for bidding
-
-//         // Check if user already has a payment intent for this auction
-//         const existingPayment = await BidPayment.findOne({
-//             auction: auctionId,
-//             bidder: userId,
-//             status: { $in: ['created', 'succeeded', 'requires_capture'] }
-//         });
-
-//         if (existingPayment) {
-//             return res.status(200).json({
-//                 success: true,
-//                 message: 'Payment intent already exists',
-//                 data: {
-//                     paymentIntentId: existingPayment.paymentIntentId,
-//                     clientSecret: existingPayment.clientSecret,
-//                     requiresAction: false
-//                 }
-//             });
-//         }
-
-//         // Create payment intent with Stripe
-//         const paymentIntent = await StripeService.createBidPaymentIntent(
-//             user.stripeCustomerId,
-//             totalAmount,
-//             `Bid commission for: ${auction.title}`
-//         );
-
-//         // Create bid payment record
-//         const bidPayment = await BidPayment.create({
-//             auction: auctionId,
-//             bidder: userId,
-//             bidAmount: bidAmount,
-//             commissionAmount: commissionAmount,
-//             totalAmount: totalAmount,
-//             paymentIntentId: paymentIntent.id,
-//             clientSecret: paymentIntent.client_secret,
-//             status: paymentIntent.status
-//         });
-
-//         res.status(200).json({
-//             success: true,
-//             message: 'Payment intent created successfully',
-//             data: {
-//                 paymentIntentId: paymentIntent.id,
-//                 clientSecret: paymentIntent.client_secret,
-//                 requiresAction: true,
-//                 bidPaymentId: bidPayment._id
-//             }
-//         });
-
-//     } catch (error) {
-//         console.error('Create bid payment intent error:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Internal server error while creating payment intent'
-//         });
-//     }
-// };
+import { calculateCommissions } from '../utils/commissionCalculator.js';
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createBidPaymentIntent = async (req, res) => {
     try {
         const { auctionId, bidAmount } = req.body;
         const userId = req.user._id;
 
-        // Validate auction
         const auction = await Auction.findById(auctionId);
-        if (!auction) {
-            return res.status(404).json({
-                success: false,
-                message: 'Auction not found'
-            });
-        }
+        if (!auction) return res.status(404).json({ success: false, message: 'Auction not found' });
 
-        // Check if auction is active
-        if (auction.status !== 'active') {
+        // Get global commission settings and compute buyer fee
+        const { buyerFeeAmount, buyerFeeType, buyerFeeValue } = await calculateCommissions(
+            parseFloat(bidAmount),
+            true // forAuthorization
+        );
+
+        if (buyerFeeAmount <= 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Auction is not active'
+                message: 'Buyer commission is disabled or zero. No authorization needed.',
             });
         }
 
-        // Get user with payment info
+        const authorizationAmount = Math.round(buyerFeeAmount * 100); // cents
+
+        // Get user's Stripe customer and payment method
         const user = await User.findById(userId);
-        if (!user || !user.stripeCustomerId || !user.paymentMethodId) {
-            return res.status(400).json({
-                success: false,
-                message: 'User payment method not setup'
-            });
+        if (!user?.stripeCustomerId || !user?.paymentMethodId) {
+            return res.status(400).json({ success: false, message: 'User payment method not set up.' });
         }
 
-        // ✅ ONLY CHANGE: Get commission amount from category (from first function)
-        const commission = await Commission.findOne({ category: auction.category });
-        if (!commission) {
-            return res.status(400).json({
-                success: false,
-                message: 'Commission not set for this category'
-            });
-        }
-
-        const commissionAmount = commission.commissionAmount;
-        const authorizationAmount = Math.round(commissionAmount * 100); // Convert to cents
-
-        // ✅ EVERYTHING ELSE REMAINS EXACTLY LIKE SECOND FUNCTION:
-        // Check if user already has an authorization for this auction
-        const existingPayment = await BidPayment.findOne({
-            auction: auctionId,
-            bidder: userId,
-            type: 'bid_authorization',
-            status: { $in: ['requires_capture', 'succeeded'] }
-        });
-
-        if (existingPayment) {
-            return res.status(200).json({
-                success: true,
-                message: 'Payment authorization already exists',
-                data: {
-                    paymentIntentId: existingPayment.paymentIntentId,
-                    clientSecret: existingPayment.clientSecret,
-                    requiresAction: false
-                }
-            });
-        }
-
-        // Create authorization payment intent (manual capture)
+        // Create authorization intent
         const paymentIntent = await StripeService.createBidAuthorizationIntent(
             user.stripeCustomerId,
             user.paymentMethodId,
             authorizationAmount,
-            `Bid authorization for: ${auction.title}`
+            `Bid authorization for auction: ${auction.title}`
         );
 
-        // Create bid payment record for authorization (EXACTLY like second function)
+        // Save bid payment record
         const bidPayment = await BidPayment.create({
             auction: auctionId,
             bidder: userId,
-            bidAmount: bidAmount,
-            commissionAmount: 0, // Will calculate later - KEEP AS 0 like second function
-            totalAmount: authorizationAmount / 100, // Store in dollars - KEEP authorization amount
+            bidAmount: parseFloat(bidAmount),
+            commissionAmount: buyerFeeAmount,
+            totalAmount: buyerFeeAmount,
             paymentIntentId: paymentIntent.id,
             clientSecret: paymentIntent.client_secret,
             status: paymentIntent.status,
-            type: 'bid_authorization'
+            type: 'bid_authorization',
+            commissionRate: buyerFeeType === 'percentage' ? buyerFeeValue / 100 : null,
+            commissionType: buyerFeeType === 'percentage' ? `${buyerFeeValue}%` : 'fixed',
         });
 
         res.status(200).json({
             success: true,
-            message: 'Payment authorization created successfully',
+            message: 'Payment authorization created',
             data: {
                 paymentIntentId: paymentIntent.id,
                 clientSecret: paymentIntent.client_secret,
                 requiresAction: paymentIntent.status === 'requires_action',
-                bidPaymentId: bidPayment._id
-            }
+                bidPaymentId: bidPayment._id,
+            },
         });
-
     } catch (error) {
         console.error('Create bid payment intent error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error while creating payment authorization'
-        });
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
@@ -358,335 +222,84 @@ export const getUserBidPayments = async (req, res) => {
     }
 };
 
-// export async function chargeWinningBidderDirect(auctionId) {
-//     try {
-//         console.log('1. Starting chargeWinningBidderDirect for auction:', auctionId);
-
-//         const auction = await Auction.findById(auctionId).populate('winner');
-//         console.log('2. Auction found:', auction?._id, 'Winner:', auction?.winner?._id);
-
-//         if (!auction || !auction.winner) {
-//             console.log('3. No auction or winner - exiting');
-//             return;
-//         }
-
-//         const commission = await Commission.findOne({ category: auction.category });
-//         console.log('4. Commission found:', commission?.commissionAmount);
-
-//         if (!commission) {
-//             console.log('5. No commission found - exiting');
-//             return;
-//         }
-
-//         const commissionAmount = commission.commissionAmount;
-//         // const winningBidPayment = await BidPayment.findOne({
-//         //     auction: auctionId,
-//         //     bidder: auction.winner._id,
-//         //     status: 'succeeded'
-//         // });
-//         const winningBidPayment = await BidPayment.findOne({
-//             auction: auctionId,
-//             bidder: auction.winner._id,
-//             status: { $in: ['succeeded', 'requires_capture', 'created'] }
-//         });
-
-//         console.log('6. Winning bid payment found:', winningBidPayment?._id, 'Status:', winningBidPayment?.status);
-
-//         if (!winningBidPayment) {
-//             console.log('7. No winning bid payment found - exiting');
-//             return;
-//         }
-
-//         console.log('8. Attempting to capture payment intent:', winningBidPayment.paymentIntentId);
-//         const paymentIntent = await StripeService.capturePaymentIntent(
-//             winningBidPayment.paymentIntentId
-//         );
-
-//         console.log('9. Capture result status:', paymentIntent.status);
-
-//         if (paymentIntent.status === 'succeeded') {
-//             winningBidPayment.chargeAttempted = true;
-//             winningBidPayment.chargeSucceeded = true;
-//             winningBidPayment.status = 'succeeded';
-//             await winningBidPayment.save();
-
-//             auction.commissionAmount = commissionAmount;
-//             auction.paymentStatus = 'paid';
-//             await auction.save();
-
-//             console.log(`✅ Charged winner for auction ${auctionId}`);
-//         } else {
-//             console.log(`❌ Capture failed with status: ${paymentIntent.status}`);
-//         }
-//     } catch (error) {
-//         console.error(`❌ Failed to charge winner for auction ${auctionId}:`, error.message);
-//     }
-// }
-
-
-
-// Add this helper function
-
-
-// export async function chargeWinningBidderDirect(auctionId) {
-//     try {
-//         console.log('1. Starting chargeWinningBidderDirect for auction:', auctionId);
-
-//         const auction = await Auction.findById(auctionId).populate('winner');
-//         if (!auction || !auction.winner) {
-//             console.log('3. No auction or winner - exiting');
-//             return;
-//         }
-
-//         console.log('4. Final auction price:', auction.finalPrice);
-
-//         // Calculate actual commission (5% with $10,000 cap for <$500k, 3% for >$500k)
-//         let commissionRate;
-//         let finalCommissionAmount;
-
-//         if (auction.finalPrice <= 500000) {
-//             commissionRate = 0.05;
-//             const calculatedCommission = auction.finalPrice * commissionRate;
-//             finalCommissionAmount = Math.min(calculatedCommission, 10000);
-//         } else {
-//             commissionRate = 0.03;
-//             finalCommissionAmount = auction.finalPrice * commissionRate;
-//         }
-
-//         console.log(`5. Commission calculated: ${commissionRate * 100}% = $${finalCommissionAmount}`);
-
-//         // Find the authorization payment
-//         const authorizationPayment = await BidPayment.findOne({
-//             auction: auctionId,
-//             bidder: auction.winner._id,
-//             type: 'bid_authorization',
-//             status: { $in: ['requires_capture', 'succeeded'] }
-//         });
-
-//         if (!authorizationPayment) {
-//             console.log('7. No authorization payment found - exiting');
-//             return;
-//         }
-
-//         // CANCEL the original $2500 authorization (IMPORTANT!)
-//         await StripeService.cancelPaymentIntent(authorizationPayment.paymentIntentId);
-//         console.log('8. Cancelled original $2500 authorization');
-
-//         // Update authorization payment status
-//         authorizationPayment.status = 'canceled';
-//         await authorizationPayment.save();
-
-//         // Get winner's payment method
-//         const winner = await User.findById(auction.winner._id);
-
-//         // CREATE NEW PAYMENT for the actual commission amount
-//         const paymentIntent = await StripeService.createPaymentIntent({
-//             amount: Math.round(finalCommissionAmount * 100), // Actual commission in cents
-//             currency: 'usd',
-//             customer: winner.stripeCustomerId,
-//             payment_method: winner.paymentMethodId,
-//             confirm: true, // This will charge immediately
-//             off_session: true,
-//             metadata: {
-//                 auctionId: auctionId.toString(),
-//                 type: 'final_commission',
-//                 finalPrice: auction.finalPrice,
-//                 commissionRate: commissionRate,
-//                 commissionType: auction.finalPrice <= 500000 ? '5%_capped' : '3%_uncapped'
-//             }
-//         });
-
-//         console.log('9. New payment intent status:', paymentIntent.status);
-
-//         if (paymentIntent.status === 'succeeded') {
-//             // Create final payment record for the commission
-//             const finalPayment = new BidPayment({
-//                 auction: auctionId,
-//                 bidder: auction.winner._id,
-//                 bidAmount: auction.finalPrice,
-//                 commissionAmount: finalCommissionAmount,
-//                 totalAmount: finalCommissionAmount,
-//                 paymentIntentId: paymentIntent.id,
-//                 clientSecret: paymentIntent.client_secret,
-//                 status: 'succeeded',
-//                 chargeAttempted: true,
-//                 chargeSucceeded: true,
-//                 type: 'final_commission',
-//                 commissionRate: commissionRate,
-//                 commissionType: auction.finalPrice <= 500000 ? '5%_capped' : '3%_uncapped'
-//             });
-//             await finalPayment.save();
-
-//             // Update auction
-//             auction.commissionAmount = finalCommissionAmount;
-//             auction.paymentStatus = 'paid';
-//             await auction.save();
-
-//             console.log(`✅ Charged actual commission $${finalCommissionAmount} for auction ${auctionId}`);
-
-//         } else if (paymentIntent.status === 'requires_action') {
-//             console.log('⚠️ Payment requires authentication - notifying winner');
-//             // Handle 3D Secure requirement
-//         }
-
-//     } catch (error) {
-//         console.error(`❌ Failed to charge winner for auction ${auctionId}:`, error.message);
-//     }
-// }
-
 export async function chargeWinningBidderDirect(auctionId) {
     try {
-        console.log('1. Starting chargeWinningBidderDirect for auction:', auctionId);
-
         const auction = await Auction.findById(auctionId).populate('winner');
-        if (!auction || !auction.winner) {
-            console.log('3. No auction or winner - exiting');
+        if (!auction || !auction.winner) return;
+
+        const buyerFee = auction.buyerFeeAmount || 0;
+        if (buyerFee <= 0) {
+            // No buyer fee – cancel any authorizations
+            await cancelAllBidderAuthorizations(auctionId);
             return;
         }
 
-        console.log('4. Final auction price:', auction.finalPrice);
-
-        // Calculate actual commission (5% with $10,000 cap for <$500k, 3% for >$500k)
-        let commissionRate;
-        let finalCommissionAmount;
-
-        if (auction.finalPrice <= 500000) {
-            commissionRate = 0.05;
-            const calculatedCommission = auction.finalPrice * commissionRate;
-            finalCommissionAmount = Math.min(calculatedCommission, 10000);
-        } else {
-            commissionRate = 0.03;
-            finalCommissionAmount = auction.finalPrice * commissionRate;
-        }
-
-        console.log(`5. Commission calculated: ${commissionRate * 100}% = $${finalCommissionAmount}`);
-
-        // Find the authorization payment
+        // Find the authorization payment for the winner
         const authorizationPayment = await BidPayment.findOne({
             auction: auctionId,
             bidder: auction.winner._id,
             type: 'bid_authorization',
-            status: { $in: ['requires_capture', 'succeeded'] }
+            status: { $in: ['requires_capture', 'succeeded'] },
         });
 
         if (!authorizationPayment) {
-            console.log('7. No authorization payment found - exiting');
+            console.log(`No authorization found for auction ${auctionId}. Attempting direct charge.`);
+            // Optionally create a new charge if no authorization (should not happen)
+            const winner = await User.findById(auction.winner._id);
+            if (!winner?.stripeCustomerId || !winner?.paymentMethodId) return;
+            // Create a new payment intent and capture immediately
+            const paymentIntent = await StripeService.createPaymentIntent({
+                amount: Math.round(buyerFee * 100),
+                currency: 'usd',
+                customer: winner.stripeCustomerId,
+                payment_method: winner.paymentMethodId,
+                confirm: true,
+                off_session: true,
+                metadata: { auctionId: auctionId.toString(), type: 'buyer_commission' },
+            });
+            if (paymentIntent.status === 'succeeded') {
+                // Save as final payment
+                await BidPayment.create({
+                    auction: auctionId,
+                    bidder: auction.winner._id,
+                    bidAmount: auction.finalPrice,
+                    commissionAmount: buyerFee,
+                    totalAmount: buyerFee,
+                    paymentIntentId: paymentIntent.id,
+                    clientSecret: paymentIntent.client_secret,
+                    status: 'succeeded',
+                    chargeAttempted: true,
+                    chargeSucceeded: true,
+                    type: 'final_commission',
+                });
+                auction.paymentStatus = 'paid';
+                await auction.save();
+            }
             return;
         }
 
-        // Get winner's payment method
-        const winner = await User.findById(auction.winner._id);
+        // Capture the existing authorization (amount should match buyerFee)
+        // Ensure the authorization amount matches buyerFee (in cents)
+        const capturedIntent = await StripeService.capturePaymentIntent(
+            authorizationPayment.paymentIntentId
+        );
 
-        // CREATE NEW PAYMENT for the actual commission amount
-        const paymentIntent = await StripeService.createPaymentIntent({
-            amount: Math.round(finalCommissionAmount * 100), // Actual commission in cents
-            currency: 'usd',
-            customer: winner.stripeCustomerId,
-            payment_method: winner.paymentMethodId,
-            confirm: true, // This will charge immediately
-            off_session: true,
-            metadata: {
-                auctionId: auctionId.toString(),
-                type: 'final_commission',
-                finalPrice: auction.finalPrice,
-                commissionRate: commissionRate,
-                commissionType: auction.finalPrice <= 500000 ? '5%_capped' : '3%_uncapped'
-            }
-        });
-
-        console.log('9. New payment intent status:', paymentIntent.status);
-
-        if (paymentIntent.status === 'succeeded') {
-            // ✅ ACTUAL COMMISSION SUCCEEDED - Cancel the $2500 authorization
-            await StripeService.cancelPaymentIntent(authorizationPayment.paymentIntentId);
-            console.log('✅ Actual commission charged - cancelled $2500 authorization');
-
-            // Update authorization payment status
-            authorizationPayment.status = 'canceled';
+        if (capturedIntent.status === 'succeeded') {
+            // Update the authorization record to succeeded
+            authorizationPayment.status = 'succeeded';
+            authorizationPayment.chargeAttempted = true;
+            authorizationPayment.chargeSucceeded = true;
             await authorizationPayment.save();
 
-            // Create final payment record for the commission
-            const finalPayment = new BidPayment({
-                auction: auctionId,
-                bidder: auction.winner._id,
-                bidAmount: auction.finalPrice,
-                commissionAmount: finalCommissionAmount,
-                totalAmount: finalCommissionAmount,
-                paymentIntentId: paymentIntent.id,
-                clientSecret: paymentIntent.client_secret,
-                status: 'succeeded',
-                chargeAttempted: true,
-                chargeSucceeded: true,
-                type: 'final_commission',
-                commissionRate: commissionRate,
-                commissionType: auction.finalPrice <= 500000 ? '5%_capped' : '3%_uncapped'
-            });
-            await finalPayment.save();
-
-            // Update auction
-            auction.commissionAmount = finalCommissionAmount;
             auction.paymentStatus = 'paid';
             await auction.save();
-
-            console.log(`✅ Charged actual commission $${finalCommissionAmount} for auction ${auctionId}`);
-
+            console.log(`✅ Captured buyer fee $${buyerFee} for auction ${auctionId}`);
         } else {
-            // ❌ ACTUAL COMMISSION FAILED - Capture the $2500 authorization instead
-            console.log('⚠️ Actual commission failed - capturing $2500 authorization instead');
-
-            try {
-                const capturedIntent = await StripeService.capturePaymentIntent(authorizationPayment.paymentIntentId);
-
-                if (capturedIntent.status === 'succeeded') {
-                    // Update authorization payment to show it was captured
-                    authorizationPayment.status = 'succeeded';
-                    authorizationPayment.chargeAttempted = true;
-                    authorizationPayment.chargeSucceeded = true;
-                    authorizationPayment.commissionAmount = 2500; // $2500 fallback
-                    authorizationPayment.totalAmount = 2500;
-                    await authorizationPayment.save();
-
-                    // Update auction with fallback commission
-                    auction.commissionAmount = 2500;
-                    auction.paymentStatus = 'paid';
-                    await auction.save();
-
-                    console.log(`✅ Captured $2500 authorization as fallback commission for auction ${auctionId}`);
-                }
-            } catch (captureError) {
-                console.error(`❌ Failed to capture $2500 authorization:`, captureError.message);
-            }
+            console.error(`Failed to capture buyer fee for auction ${auctionId}`);
         }
-
     } catch (error) {
-        console.error(`❌ Failed to charge winner for auction ${auctionId}:`, error.message);
+        console.error(`❌ Failed to charge buyer for auction ${auctionId}:`, error.message);
     }
-}
-
-function calculateBuyersPremium(finalPrice) {
-    let commissionRate;
-    let commissionAmount;
-    let commissionType;
-
-    if (finalPrice <= 500000) {
-        // 5% commission with $10,000 cap for sales under $500,000
-        commissionRate = 0.05;
-        const calculatedCommission = finalPrice * commissionRate;
-        commissionAmount = Math.min(calculatedCommission, 10000);
-        commissionType = '5%_capped';
-    } else {
-        // 3% commission for sales over $500,000 (no cap)
-        commissionRate = 0.03;
-        commissionAmount = finalPrice * commissionRate;
-        commissionType = '3%_uncapped';
-    }
-
-    return {
-        commissionRate,
-        commissionAmount,
-        commissionType,
-        finalPrice
-    };
 }
 
 // Add this function to your bidPayment.controller.js
@@ -759,3 +372,159 @@ export async function cancelAllBidderAuthorizations(auctionId) {
         return 0;
     }
 }
+
+// It charges the entire payment whereas the above controllers are for bid authorization hold and payments
+export const createWinnerPaymentIntent = async (req, res) => {
+  try {
+    const { auctionId } = req.body;
+    const userId = req.user._id;
+
+    const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      return res.status(404).json({ success: false, message: 'Auction not found' });
+    }
+
+    // Ensure the logged-in user is the winner
+    if (!auction.winner || auction.winner.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: 'You are not the winner of this auction' });
+    }
+
+    // Check if already paid (via card or bank)
+    if (auction.paymentStatus === 'completed') {
+      return res.status(400).json({ success: false, message: 'This auction has already been paid for' });
+    }
+
+    // Check if there's already a successful winner_payment for this auction
+    const existingPayment = await BidPayment.findOne({
+      auction: auctionId,
+      bidder: userId,
+      type: 'winner_payment',
+      status: 'succeeded'
+    });
+    if (existingPayment) {
+      return res.status(400).json({ success: false, message: 'You have already paid for this auction' });
+    }
+
+    // Calculate total amount (finalPrice + buyer fee)
+    const total = (auction.finalPrice || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0);
+
+    if (total <= 0) {
+      return res.status(400).json({ success: false, message: 'Total amount is zero – no payment required' });
+    }
+
+    // Get or create Stripe customer
+    const user = await User.findById(userId);
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await StripeService.createCustomer(user.email, user.firstName + ' ' + user.lastName);
+      customerId = customer.id;
+      user.stripeCustomerId = customerId;
+      await user.save();
+    }
+
+    // Create PaymentIntent
+    const paymentIntent = await StripeService.createPaymentIntent({
+      amount: Math.round(total * 100), // cents
+      currency: 'usd',
+      customer: customerId,
+      payment_method_types: ['card'],
+      capture_method: 'automatic',
+      confirm: false, // we confirm on client side
+      metadata: {
+        auctionId: auctionId.toString(),
+        type: 'winner_payment',
+        userId: userId.toString()
+      },
+      description: `Payment for auction: ${auction.title}`,
+    });
+
+    // Save BidPayment record
+    const bidPayment = await BidPayment.create({
+      auction: auctionId,
+      bidder: userId,
+      bidAmount: auction.finalPrice || 0,
+      commissionAmount: auction.buyerFeeAmount || 0,
+      taxAmount: auction.taxAmount || 0,
+      totalAmount: total,
+      paymentIntentId: paymentIntent.id,
+      clientSecret: paymentIntent.client_secret,
+      status: paymentIntent.status, // 'created' or 'requires_action'
+      type: 'winner_payment',
+      chargeAttempted: false,
+      chargeSucceeded: false
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        bidPaymentId: bidPayment._id,
+        amount: total
+      }
+    });
+  } catch (error) {
+    console.error('Create winner payment intent error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
+
+// Confirm winner payment after Stripe success on client
+export const confirmWinnerPayment = async (req, res) => {
+  try {
+    const { paymentIntentId } = req.body;
+    const userId = req.user._id;
+
+    // Find the bid payment record
+    const bidPayment = await BidPayment.findOne({
+      paymentIntentId,
+      bidder: userId,
+      type: 'winner_payment'
+    }).populate('auction');
+
+    if (!bidPayment) {
+      return res.status(404).json({ success: false, message: 'Payment record not found' });
+    }
+
+    // Retrieve payment intent from Stripe to confirm status
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (paymentIntent.status === 'succeeded') {
+      // Update BidPayment
+      bidPayment.status = 'succeeded';
+      bidPayment.chargeAttempted = true;
+      bidPayment.chargeSucceeded = true;
+      await bidPayment.save();
+
+      // Update auction
+      const auction = bidPayment.auction;
+      auction.paymentStatus = 'completed';
+      auction.paymentMethod = 'credit_card';
+      auction.transactionId = paymentIntentId;
+      auction.paymentDate = new Date();
+      await auction.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Payment confirmed successfully',
+        data: { auctionId: auction._id }
+      });
+    } else if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'canceled') {
+      // Payment failed or was canceled
+      bidPayment.status = 'canceled';
+      await bidPayment.save();
+      return res.status(400).json({
+        success: false,
+        message: 'Payment was not completed. Please try again.'
+      });
+    } else {
+      // Still pending – wait or redirect
+      return res.status(202).json({
+        success: false,
+        message: 'Payment is still being processed. Please check later.'
+      });
+    }
+  } catch (error) {
+    console.error('Confirm winner payment error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+  }
+};
