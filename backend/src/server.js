@@ -24,6 +24,7 @@ import liquidateRouter from "./routes/liquidateRequest.route.js";
 import sellRouter from "./routes/sellRequest.route.js";
 import eventRouter from "./routes/event.route.js";
 import taxRouter from "./routes/tax.route.js";
+import aiRouter from "./routes/ai.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,6 +83,7 @@ app.use('/api/v1/liquidate', liquidateRouter);
 app.use('/api/v1/sell', sellRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/tax", taxRouter);
+app.use('/api/v1/ai', aiRouter);
 
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {

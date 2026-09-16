@@ -31,17 +31,18 @@ import {
     Banknote,
     Zap
 } from "lucide-react";
-import { RTE, SellerContainer, SellerHeader, SellerSidebar } from '../../components';
+import { RTE, SellerContainer, SellerHeader, SellerSidebar, AiAuctionInputStep } from '../../components';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../utils/axiosInstance.js';
 import { useNavigate } from 'react-router-dom';
+import { useAiListingAssistant } from '../../hooks/useAiListingAssistant.jsx';
 
 // Drag and Drop item types
 const ItemTypes = {
     PHOTO: 'photo',
 };
 
-// Draggable Photo Component (keep your existing implementation)
+// Draggable Photo Component
 const DraggablePhoto = ({ photo, index, movePhoto, removePhoto }) => {
     const [, ref] = useDrag({
         type: ItemTypes.PHOTO,
@@ -104,28 +105,6 @@ const PhotoGallery = ({ photos, movePhoto, removePhoto }) => {
     );
 };
 
-// Service History Gallery Component
-const ServiceHistoryGallery = ({ serviceRecords, moveServiceRecord, removeServiceRecord }) => {
-    return (
-        <div className="mt-4">
-            <p className="text-sm text-secondary mb-3">
-                Drag and drop to reorder service history images.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {serviceRecords.map((record, index) => (
-                    <DraggablePhoto
-                        key={`record-${index}`}
-                        photo={record}
-                        index={index}
-                        movePhoto={moveServiceRecord}
-                        removePhoto={removeServiceRecord}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-};
-
 // UploadProgressModal Component
 const UploadProgressModal = ({ isOpen, fileCount }) => {
     if (!isOpen) return null;
@@ -163,19 +142,11 @@ const DynamicField = ({ field, register, errors, watch, setValue }) => {
     const fieldName = `specifications.${field.name}`;
     const error = errors.specifications?.[field.name];
 
-    // Ensure we have a label
     const fieldLabel = field.label || field.name || 'Field';
-
-    // Generate a sensible placeholder if not provided
     const fieldPlaceholder = field.placeholder || `Enter ${fieldLabel.toLowerCase()}`;
-
-    // Common input classes
     const inputClasses = `w-full p-3 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-black focus:border-transparent`;
-
-    // Helper text for units
     const unitText = field.unit ? ` (${field.unit})` : '';
 
-    // Add inheritance badge if needed
     const InheritanceBadge = field.source === 'inherited' ? (
         <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
             Inherited from {field.sourceCategory?.name}
@@ -318,7 +289,7 @@ const DynamicField = ({ field, register, errors, watch, setValue }) => {
                 </div>
             );
 
-        default: // text
+        default:
             return (
                 <div className="space-y-2">
                     <div className="flex items-center">
@@ -355,8 +326,28 @@ const DynamicField = ({ field, register, errors, watch, setValue }) => {
     }
 };
 
+const ConfidenceBadge = ({ score }) => {
+    if (score === undefined || score === null) return null;
+
+    if (score > 80) {
+        return (
+            <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                AI {score}%
+            </span>
+        );
+    }
+    if (score >= 50) {
+        return (
+            <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">
+                AI {score}% — verify
+            </span>
+        );
+    }
+    return null;
+};
+
 const CreateAuction = () => {
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(0);
     const [uploadedPhotos, setUploadedPhotos] = useState([]);
     const [uploadedDocuments, setUploadedDocuments] = useState([]);
     const [uploadedServiceRecords, setUploadedServiceRecords] = useState([]);
@@ -370,6 +361,10 @@ const CreateAuction = () => {
     const [categoryFields, setCategoryFields] = useState([]);
     const [loadingFields, setLoadingFields] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(true);
+
+    // AI state
+    const [aiStepCompleted, setAiStepCompleted] = useState(false);
+    const { isAnalyzing, aiResult, analyzeImages, clearResult } = useAiListingAssistant();
 
     const {
         register,
@@ -394,7 +389,7 @@ const CreateAuction = () => {
     const auctionType = watch('auctionType');
     const startDate = watch('startDate');
     const endDate = watch('endDate');
-    const selectedCategory = watch('category'); // This will be the subcategory slug
+    const selectedCategory = watch('category');
     const selectedParentSlug = watch('parentCategory');
 
     // Fetch parent categories on mount
@@ -406,7 +401,6 @@ const CreateAuction = () => {
     useEffect(() => {
         if (selectedParentSlug) {
             fetchSubCategories(selectedParentSlug);
-            // Clear previously selected subcategory
             setValue('category', '');
             setCategoryFields([]);
         }
@@ -417,12 +411,37 @@ const CreateAuction = () => {
         if (selectedCategory) {
             fetchCategoryFields(selectedCategory);
         } else {
-            // Clear fields when no category is selected
             setCategoryFields([]);
         }
     }, [selectedCategory]);
 
-    // Fetch parent categories (level 0)
+    const handleAiAnalyze = async (files, parentCat, subCat, prompt) => {
+        const result = await analyzeImages(files, parentCat, subCat, prompt);
+        if (result) {
+            setUploadedPhotos(files);
+            setValue('parentCategory', parentCat);
+
+            await fetchSubCategories(parentCat);
+            setValue('category', subCat);
+
+            await fetchCategoryFields(subCat);
+
+            setValue('title', result.title, { shouldValidate: true });
+            setValue('description', result.description, { shouldValidate: true });
+            if (result.location) setValue('location', result.location);
+
+            setTimeout(() => {
+                Object.entries(result.specifications).forEach(([key, value]) => {
+                    setValue(`specifications.${key}`, value, { shouldValidate: true });
+                });
+            }, 200);
+
+            setAiStepCompleted(true);
+            setStep(1);
+            toast.success('AI has populated the form. Please review all fields.');
+        }
+    };
+
     const fetchParentCategories = async () => {
         try {
             setLoadingCategories(true);
@@ -438,7 +457,6 @@ const CreateAuction = () => {
         }
     };
 
-    // Fetch subcategories by parent slug
     const fetchSubCategories = async (parentSlug) => {
         try {
             setLoadingCategories(true);
@@ -456,7 +474,6 @@ const CreateAuction = () => {
         }
     };
 
-    // Fetch category fields by slug
     const fetchCategoryFields = async (slug) => {
         try {
             setLoadingFields(true);
@@ -473,7 +490,6 @@ const CreateAuction = () => {
         }
     };
 
-    // Move photo function for drag and drop
     const movePhoto = (fromIndex, toIndex) => {
         const updatedPhotos = [...uploadedPhotos];
         const [movedPhoto] = updatedPhotos.splice(fromIndex, 1);
@@ -481,7 +497,6 @@ const CreateAuction = () => {
         setUploadedPhotos(updatedPhotos);
     };
 
-    // Move service record function for drag and drop
     const moveServiceRecord = (fromIndex, toIndex) => {
         const updatedRecords = [...uploadedServiceRecords];
         const [movedRecord] = updatedRecords.splice(fromIndex, 1);
@@ -489,7 +504,6 @@ const CreateAuction = () => {
         setUploadedServiceRecords(updatedRecords);
     };
 
-    // Group fields by their group property
     const groupedFields = categoryFields.reduce((acc, field) => {
         const group = field.group || 'General';
         if (!acc[group]) acc[group] = [];
@@ -497,7 +511,6 @@ const CreateAuction = () => {
         return acc;
     }, {});
 
-    // Render category-specific fields
     const renderCategoryFields = () => {
         if (loadingFields) {
             return (
@@ -532,9 +545,7 @@ const CreateAuction = () => {
                                 {fields
                                     .sort((a, b) => a.order - b.order)
                                     .map((field) => {
-                                        // Create a truly unique key
                                         const uniqueKey = `${field.source || 'own'}-${field._id || field.name}-${selectedCategory}`;
-
                                         return (
                                             <DynamicField
                                                 key={uniqueKey}
@@ -556,19 +567,24 @@ const CreateAuction = () => {
 
     const nextStep = async () => {
         let isValid = true;
-        scrollTo({top: 0, behavior: 'smooth'});
+        scrollTo({ top: 0, behavior: 'smooth' });
 
+        // Step 0: AI Assist — no validation, just advance
+        if (step === 0) {
+            setStep(1);
+            scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        // Step 1: Item Info + Category + Specs + Description + Photos
         if (step === 1) {
             const fieldsToValidate = [
                 'title',
                 'description',
-                'startDate',
-                'endDate',
                 'parentCategory',
                 'category'
             ];
 
-            // Add all required specification fields to validation
             categoryFields.forEach(field => {
                 if (field.required) {
                     fieldsToValidate.push(`specifications.${field.name}`);
@@ -581,7 +597,6 @@ const CreateAuction = () => {
                 isValid = false;
             }
 
-            // Check photos are uploaded
             if (uploadedPhotos.length === 0) {
                 setError('photos', {
                     type: 'manual',
@@ -593,8 +608,9 @@ const CreateAuction = () => {
             }
         }
 
+        // Step 2: Auction Type + Pricing + Dates + Location + Video
         if (step === 2) {
-            const fieldsToValidate = ['auctionType'];
+            const fieldsToValidate = ['auctionType', 'startDate', 'endDate'];
 
             if (auctionType === 'standard' || auctionType === 'reserve') {
                 fieldsToValidate.push('startPrice', 'bidIncrement');
@@ -624,7 +640,8 @@ const CreateAuction = () => {
 
     const prevStep = () => {
         setStep(step - 1);
-        scrollTo({top: 0, behavior: 'smooth'});
+        scrollTo({ top: 0, behavior: 'smooth' });
+        setAiStepCompleted(false);
     };
 
     const handlePhotoUpload = (e) => {
@@ -668,103 +685,61 @@ const CreateAuction = () => {
     const createAuctionHandler = async (auctionData) => {
         try {
             setIsLoading(true);
-            const accessToken = localStorage.getItem('accessToken');
 
             const formData = new FormData();
 
-            // Basic Info
             formData.append('title', auctionData.title);
             formData.append('description', auctionData.description);
             formData.append('location', auctionData.location || '');
             formData.append('videoLink', auctionData.video || '');
 
-            // Categories - Store BOTH parent and subcategory for better filtering
-            // Your auction model expects an array of strings
             const categoriesToStore = [];
-
-            // Add parent category slug
-            if (auctionData.parentCategory) {
-                categoriesToStore.push(auctionData.parentCategory);
-            }
-
-            // Add subcategory slug (this is the main category for the auction)
-            if (auctionData.category) {
-                categoriesToStore.push(auctionData.category);
-            }
-
-            // Append as JSON string or array - your controller handles both
+            if (auctionData.parentCategory) categoriesToStore.push(auctionData.parentCategory);
+            if (auctionData.category) categoriesToStore.push(auctionData.category);
             formData.append('categories', JSON.stringify(categoriesToStore));
 
-            // Auction settings
             formData.append('auctionType', auctionData.auctionType);
             formData.append('allowOffers', auctionData.allowOffers || false);
             formData.append('features', auctionData.features || '');
             formData.append('startDate', new Date(auctionData.startDate).toISOString());
             formData.append('endDate', new Date(auctionData.endDate).toISOString());
 
-            // Specifications - Convert to JSON string
             if (auctionData.specifications) {
                 formData.append('specifications', JSON.stringify(auctionData.specifications));
             }
 
-            // Pricing - only add if not giveaway or buy now (both are always available)
             if (auctionData.auctionType === 'giveaway' || auctionData.auctionType === 'buy_now') {
-                // For giveaways and buy now, set startPrice to 0
                 formData.append('startPrice', 0);
-
-                // For buy now, still need to send buyNowPrice
                 if (auctionData.auctionType === 'buy_now' && auctionData.buyNowPrice) {
                     formData.append('buyNowPrice', auctionData.buyNowPrice);
                 }
-
-                // Optional bid increment for buy now auctions (if you want to allow both)
                 if (auctionData.auctionType === 'buy_now' && auctionData.bidIncrement) {
                     formData.append('bidIncrement', auctionData.bidIncrement);
                 }
             } else {
-                // Regular auctions (standard/reserve)
-                if (auctionData.startPrice) {
-                    formData.append('startPrice', auctionData.startPrice);
-                }
-
+                if (auctionData.startPrice) formData.append('startPrice', auctionData.startPrice);
                 if (auctionData.auctionType === 'standard' || auctionData.auctionType === 'reserve') {
                     formData.append('bidIncrement', auctionData.bidIncrement);
                 }
-
                 if (auctionData.auctionType === 'reserve' && auctionData.reservePrice) {
                     formData.append('reservePrice', auctionData.reservePrice);
                 }
             }
 
-            // Append photos
-            uploadedPhotos.forEach((photo, index) => {
-                formData.append('photos', photo);
-            });
-
-            // Append documents
-            uploadedDocuments.forEach((doc, index) => {
-                formData.append('documents', doc);
-            });
-
-            // Append service records
-            uploadedServiceRecords.forEach((record, index) => {
-                formData.append('serviceRecords', record);
-            });
+            uploadedPhotos.forEach((photo) => formData.append('photos', photo));
+            uploadedDocuments.forEach((doc) => formData.append('documents', doc));
+            uploadedServiceRecords.forEach((record) => formData.append('serviceRecords', record));
 
             const { data } = await axiosInstance.post(
                 '/api/v1/auctions/create',
                 formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    }
-                }
+                { headers: { 'Content-Type': 'multipart/form-data' } }
             );
 
             if (data && data.success) {
                 toast.success(data.message);
-                // Reset form
-                setStep(1);
+                setStep(0);
+                setAiStepCompleted(false);
                 setUploadedPhotos([]);
                 setUploadedDocuments([]);
                 setUploadedServiceRecords([]);
@@ -802,12 +777,12 @@ const CreateAuction = () => {
                             {/* Progress Steps */}
                             <div className="mb-8">
                                 <div className="flex items-center justify-between mb-4">
-                                    {['Item Info', 'Pricing & Bidding', 'Review & Submit'].map((label, index) => (
+                                    {['AI Assist', 'Item Info', 'Auction Details', 'Review & Submit'].map((label, index) => (
                                         <div key={index} className="flex flex-col items-center">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > index + 1 ? 'bg-green-500 text-white' :
-                                                step === index + 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > index ? 'bg-green-500 text-white' :
+                                                step === index ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'
                                                 }`}>
-                                                {step > index + 1 ? <CheckCircle size={20} /> : index + 1}
+                                                {step > index ? <CheckCircle size={20} /> : index + 1}
                                             </div>
                                             <span className="text-sm mt-2 hidden md:block">{label}</span>
                                         </div>
@@ -822,14 +797,73 @@ const CreateAuction = () => {
                             </div>
 
                             <form onSubmit={handleSubmit(createAuctionHandler)} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-                                {/* Step 1: Item Information */}
+                                {/* ==================== STEP 0: AI ASSIST ==================== */}
+                                {step === 0 && !aiStepCompleted && (
+                                    <AiAuctionInputStep
+                                        parentCategories={parentCategories}
+                                        subCategories={subCategories}
+                                        selectedParent={selectedParentSlug}
+                                        selectedCategory={selectedCategory}
+                                        onParentChange={(slug) => setValue('parentCategory', slug)}
+                                        onSubcategoryChange={(slug) => setValue('category', slug)}
+                                        onFetchSubcategories={fetchSubCategories}
+                                        loadingCategories={loadingCategories}
+                                        onAnalyze={handleAiAnalyze}
+                                        isAnalyzing={isAnalyzing}
+                                        onSkip={() => {
+                                            setAiStepCompleted(true);
+                                            setStep(1);
+                                            scrollTo({top: 0, behavior: 'smooth'})
+                                        }}
+                                    />
+                                )}
+
+                                {/* ==================== STEP 1: ITEM INFO ==================== */}
                                 {step === 1 && (
                                     <div>
+                                        {/* Category correction warning */}
+                                        {aiResult?.categorySuggestion && aiResult.categorySuggestion.confidence > 70 && (
+                                            <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                                                <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="text-amber-800 font-medium">
+                                                        These images look more like a "{aiResult.categorySuggestion.subcategorySlug}".
+                                                    </p>
+                                                    <p className="text-amber-700 text-sm mt-1">
+                                                        {aiResult.categorySuggestion.reason}
+                                                    </p>
+                                                    <div className="flex gap-3 mt-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setValue('parentCategory', aiResult.categorySuggestion.parentSlug);
+                                                                fetchSubCategories(aiResult.categorySuggestion.parentSlug);
+                                                                setValue('category', aiResult.categorySuggestion.subcategorySlug);
+                                                                fetchCategoryFields(aiResult.categorySuggestion.subcategorySlug);
+                                                                clearResult();
+                                                            }}
+                                                            className="text-sm px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                                                        >
+                                                            Switch Category
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={clearResult}
+                                                            className="text-sm px-3 py-1.5 border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-100"
+                                                        >
+                                                            Keep Current
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <h2 className="text-xl font-semibold mb-6 flex items-center">
                                             Item Details
                                         </h2>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
+                                        {/* Title */}
+                                        <div className="grid grid-cols-1 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="title" className="block text-sm font-medium text-secondary mb-1">
                                                     Item Name *
@@ -845,7 +879,7 @@ const CreateAuction = () => {
                                             </div>
                                         </div>
 
-                                        {/* Category Selection - Two Level Dropdown */}
+                                        {/* Category + Subcategory */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="parentCategory" className="block text-sm font-medium text-secondary mb-1">
@@ -896,7 +930,7 @@ const CreateAuction = () => {
                                             </div>
                                         </div>
 
-                                        {/* Dynamic Fields for Selected Subcategory */}
+                                        {/* Dynamic Fields */}
                                         {selectedCategory && (
                                             <div className="mb-6">
                                                 <div className="mb-4 pb-2 border-b border-gray-200">
@@ -911,6 +945,7 @@ const CreateAuction = () => {
                                             </div>
                                         )}
 
+                                        {/* Description */}
                                         <div className="mb-6">
                                             <label htmlFor="description" className="block text-sm font-medium text-secondary mb-1">
                                                 Description *
@@ -925,46 +960,85 @@ const CreateAuction = () => {
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                            <div>
-                                                <label htmlFor="location" className="block text-sm font-medium text-secondary mb-1">
-                                                    Location
+                                        {/* Photos */}
+                                        <div className="mb-6">
+                                            <label htmlFor="photo-upload" className="block text-sm font-medium text-secondary mb-1">
+                                                Attach Photos *
+                                            </label>
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*"
+                                                    onChange={handlePhotoUpload}
+                                                    className="hidden"
+                                                    id="photo-upload"
+                                                />
+                                                <label htmlFor="photo-upload" className="cursor-pointer">
+                                                    <Image size={40} className="mx-auto text-gray-400 mb-2" />
+                                                    <p className="text-gray-600">Browse photo(s) to upload</p>
                                                 </label>
-                                                <div className="relative">
-                                                    <MapPin size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                                    <input
-                                                        {...register('location')}
-                                                        id="location"
-                                                        type="text"
-                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="e.g., Altamira, Caracas, Venezuela"
-                                                    />
-                                                </div>
                                             </div>
+                                            {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos.message}</p>}
 
-                                            <div>
-                                                <label htmlFor="video" className="block text-sm font-medium text-secondary mb-1">
-                                                    Video Link
-                                                </label>
-                                                <div className="relative">
-                                                    <Youtube size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                                    <input
-                                                        {...register('video', {
-                                                            pattern: {
-                                                                value: /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/,
-                                                                message: 'Please enter a valid YouTube URL'
-                                                            }
-                                                        })}
-                                                        id="video"
-                                                        type="url"
-                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                        placeholder="YouTube video URL"
-                                                    />
-                                                </div>
-                                                {errors.video && <p className="text-red-500 text-sm mt-1">{errors.video.message}</p>}
-                                            </div>
+                                            {uploadedPhotos.length > 0 && (
+                                                <PhotoGallery
+                                                    photos={uploadedPhotos}
+                                                    movePhoto={movePhoto}
+                                                    removePhoto={removePhoto}
+                                                />
+                                            )}
                                         </div>
 
+                                        {/* Documents */}
+                                        <div className="mb-6">
+                                            <label htmlFor="document-upload" className="block text-sm font-medium text-secondary mb-1">
+                                                Attach Documents
+                                            </label>
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    onChange={handleDocumentUpload}
+                                                    className="hidden"
+                                                    id="document-upload"
+                                                />
+                                                <label htmlFor="document-upload" className="cursor-pointer">
+                                                    <File size={40} className="mx-auto text-gray-400 mb-2" />
+                                                    <p className="text-gray-600">Browse document(s) to upload</p>
+                                                    <p className="text-sm text-secondary">Attach documents if you have any.</p>
+                                                </label>
+                                            </div>
+
+                                            {uploadedDocuments.length > 0 && (
+                                                <div className="mt-4 space-y-2">
+                                                    {uploadedDocuments.map((doc, index) => (
+                                                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                                            <span className="text-sm truncate">{doc.name}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeDocument(index)}
+                                                                className="text-red-500"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ==================== STEP 2: AUCTION DETAILS ==================== */}
+                                {step === 2 && (
+                                    <div>
+                                        <h2 className="text-xl font-semibold mb-6 flex items-center">
+                                            <Banknote size={20} className="mr-2" />
+                                            Auction Details
+                                        </h2>
+
+                                        {/* Start Date & End Date */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
@@ -1008,119 +1082,56 @@ const CreateAuction = () => {
                                             </div>
                                         </div>
 
-                                        <div className="mb-6">
-                                            <label htmlFor="photo-upload" className="block text-sm font-medium text-secondary mb-1">
-                                                Attach Photos *
-                                            </label>
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    accept="image/*"
-                                                    onChange={handlePhotoUpload}
-                                                    className="hidden"
-                                                    id="photo-upload"
-                                                />
-                                                <label htmlFor="photo-upload" className="cursor-pointer">
-                                                    <Image size={40} className="mx-auto text-gray-400 mb-2" />
-                                                    <p className="text-gray-600">Browse photo(s) to upload</p>
+                                        {/* Location & Video */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label htmlFor="location" className="block text-sm font-medium text-secondary mb-1">
+                                                    Location
                                                 </label>
-                                            </div>
-                                            {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos.message}</p>}
-
-                                            {uploadedPhotos.length > 0 && (
-                                                <PhotoGallery
-                                                    photos={uploadedPhotos}
-                                                    movePhoto={movePhoto}
-                                                    removePhoto={removePhoto}
-                                                />
-                                            )}
-                                        </div>
-
-                                        <div className="mb-6">
-                                            <label htmlFor="document-upload" className="block text-sm font-medium text-secondary mb-1">
-                                                Attach Documents
-                                            </label>
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    onChange={handleDocumentUpload}
-                                                    className="hidden"
-                                                    id="document-upload"
-                                                />
-                                                <label htmlFor="document-upload" className="cursor-pointer">
-                                                    <File size={40} className="mx-auto text-gray-400 mb-2" />
-                                                    <p className="text-gray-600">Browse document(s) to upload</p>
-                                                    <p className="text-sm text-secondary">Attach documents if you have any.</p>
-                                                </label>
-                                            </div>
-
-                                            {uploadedDocuments.length > 0 && (
-                                                <div className="mt-4 space-y-2">
-                                                    {uploadedDocuments.map((doc, index) => (
-                                                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                                            <span className="text-sm truncate">{doc.name}</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeDocument(index)}
-                                                                className="text-red-500"
-                                                            >
-                                                                <X size={16} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                                <div className="relative">
+                                                    <MapPin size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        {...register('location')}
+                                                        id="location"
+                                                        type="text"
+                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                        placeholder="e.g., Altamira, Caracas, Venezuela"
+                                                    />
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* <div className="mb-6">
-                                            <label htmlFor="service-upload" className="block text-sm font-medium text-secondary mb-1">
-                                                Service History Images
-                                            </label>
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    accept="image/*"
-                                                    onChange={handleServiceRecordUpload}
-                                                    className="hidden"
-                                                    id="service-upload"
-                                                />
-                                                <label htmlFor="service-upload" className="cursor-pointer">
-                                                    <FileText size={40} className="mx-auto text-gray-400 mb-2" />
-                                                    <p className="text-gray-600">Browse service record image(s) to upload</p>
-                                                    <p className="text-sm text-secondary">Service invoices, maintenance records, repair receipts</p>
-                                                </label>
                                             </div>
 
-                                            {uploadedServiceRecords.length > 0 && (
-                                                <ServiceHistoryGallery
-                                                    serviceRecords={uploadedServiceRecords}
-                                                    moveServiceRecord={moveServiceRecord}
-                                                    removeServiceRecord={removeServiceRecord}
-                                                />
-                                            )}
-                                        </div> */}
-                                    </div>
-                                )}
+                                            <div>
+                                                <label htmlFor="video" className="block text-sm font-medium text-secondary mb-1">
+                                                    Video Link
+                                                </label>
+                                                <div className="relative">
+                                                    <Youtube size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        {...register('video', {
+                                                            pattern: {
+                                                                value: /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/,
+                                                                message: 'Please enter a valid YouTube URL'
+                                                            }
+                                                        })}
+                                                        id="video"
+                                                        type="url"
+                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                        placeholder="YouTube video URL"
+                                                    />
+                                                </div>
+                                                {errors.video && <p className="text-red-500 text-sm mt-1">{errors.video.message}</p>}
+                                            </div>
+                                        </div>
 
-                                {/* Step 2: Pricing & Bidding */}
-                                {step === 2 && (
-                                    <div>
-                                        <h2 className="text-xl font-semibold mb-6 flex items-center">
-                                            <Banknote size={20} className="mr-2" />
-                                            Pricing & Bidding
-                                        </h2>
+                                        <hr className="my-6" />
 
+                                        {/* Auction Type */}
                                         <div className="mb-6">
                                             <label className="block text-sm font-medium text-secondary mb-1">Auction Type *</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Changed from grid-cols-3 to grid-cols-4 */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
                                                     { value: 'standard', label: 'Standard Auction' },
                                                     { value: 'reserve', label: 'Reserve Price Auction' },
-                                                    // { value: 'buy_now', label: 'Buy Now Auction' },
-                                                    // { value: 'giveaway', label: 'Free Giveaway' }, 
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                                                         <input
@@ -1136,17 +1147,7 @@ const CreateAuction = () => {
                                             {errors.auctionType && <p className="text-red-500 text-sm mt-1">{errors.auctionType.message}</p>}
                                         </div>
 
-                                        {/* Show immediate start message for buy_now and giveaway */}
-                                        {(watch('auctionType') === 'buy_now' || watch('auctionType') === 'giveaway') && (
-                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                                <p className="text-green-700 flex items-center gap-2">
-                                                    <Zap size={18} />
-                                                    <span>This auction will start immediately upon creation.</span>
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Only show pricing fields if NOT giveaway */}
+                                        {/* Pricing */}
                                         {watch('auctionType') !== 'giveaway' && (
                                             <>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -1169,7 +1170,8 @@ const CreateAuction = () => {
                                                                 />
                                                             </div>
                                                             {errors.startPrice && <p className="text-red-500 text-sm mt-1">{errors.startPrice.message}</p>}
-                                                        </div>)}
+                                                        </div>
+                                                    )}
 
                                                     {(watch('auctionType') === 'standard' || watch('auctionType') === 'reserve') && (
                                                         <div>
@@ -1253,49 +1255,12 @@ const CreateAuction = () => {
                                                         </p>
                                                     </div>
                                                 )}
-
-                                                {/* Allow Offers Toggle */}
-                                                {/* <div className="mb-6">
-                                                    <label className="flex items-center cursor-pointer">
-                                                        <div className="relative">
-                                                            <input
-                                                                type="checkbox"
-                                                                {...register('allowOffers')}
-                                                                id="allowOffers"
-                                                                className="sr-only"
-                                                            />
-                                                            <div className={`block w-14 h-8 rounded-full ${watch('allowOffers') ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                            <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${watch('allowOffers') ? 'transform translate-x-6' : ''}`}></div>
-                                                        </div>
-                                                        <div className="ml-3">
-                                                            <span className="font-medium text-secondary">Allow Offers</span>
-                                                            <p className="text-sm text-secondary mt-1">
-                                                                Enable buyers to make purchase offers during the auction
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div> */}
                                             </>
-                                        )}
-
-                                        {/* Show giveaway info */}
-                                        {watch('auctionType') === 'giveaway' && (
-                                            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
-                                                <h3 className="text-lg font-semibold text-green-700 mb-2 flex items-center gap-2">
-                                                    <span>🎁 Free Giveaway</span>
-                                                </h3>
-                                                <p className="text-green-600 mb-2">
-                                                    This item will be given away for free. The first user who clicks "Claim" will win it immediately.
-                                                </p>
-                                                <p className="text-sm text-green-500">
-                                                    No pricing needed. The auction will end as soon as someone claims it.
-                                                </p>
-                                            </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Step 3: Review & Submit */}
+                                {/* ==================== STEP 3: REVIEW & SUBMIT ==================== */}
                                 {step === 3 && (
                                     <div>
                                         <h2 className="text-xl font-semibold mb-6 flex items-center">
@@ -1369,36 +1334,30 @@ const CreateAuction = () => {
                                                             <div>
                                                                 <p className="text-xs text-secondary">Auction Type</p>
                                                                 <p className="font-medium">
-                                                                    {watch('auctionType') === 'buy_now' && 'Buy Now Auction'}
-                                                                </p>
-                                                                <p className="font-medium">
                                                                     {watch('auctionType') === 'standard' && 'Standard Auction'}
-                                                                </p>
-                                                                <p className="font-medium">
                                                                     {watch('auctionType') === 'reserve' && 'Reserve Auction'}
-                                                                </p>
-                                                                <p className="font-medium">
+                                                                    {watch('auctionType') === 'buy_now' && 'Buy Now Auction'}
                                                                     {watch('auctionType') === 'giveaway' && 'Free Giveaway'}
                                                                 </p>
                                                             </div>
-                                                            {/* {watch('allowOffers') && (
-                                                                <div>
-                                                                    <p className="text-xs text-secondary">Allow Offers</p>
-                                                                    <p className="font-medium text-green-600">Yes</p>
-                                                                </div>
-                                                            )} */}
                                                             <div>
                                                                 <p className="text-xs text-secondary">Start Date</p>
                                                                 <p className="font-medium">
-                                                                    {watch('startDate') ? new Date(watch('startDate')).toLocaleString('en-US') : 'Not provided'}
+                                                                    {watch('startDate') ? new Date(watch('startDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs text-secondary">End Date</p>
                                                                 <p className="font-medium">
-                                                                    {watch('endDate') ? new Date(watch('endDate')).toLocaleString('en-US') : 'Not provided'}
+                                                                    {watch('endDate') ? new Date(watch('endDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
                                                             </div>
+                                                            {watch('video') && (
+                                                                <div>
+                                                                    <p className="text-xs text-secondary">Video</p>
+                                                                    <p className="font-medium truncate">{watch('video')}</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -1418,20 +1377,6 @@ const CreateAuction = () => {
                                                                     {uploadedDocuments.length} uploaded
                                                                 </span>
                                                             </div>
-                                                            <div className="flex justify-between items-center">
-                                                                <p className="text-xs text-secondary">Service Records</p>
-                                                                <span className="font-medium bg-gray-100 px-2 py-1 rounded-full text-xs">
-                                                                    {uploadedServiceRecords.length} uploaded
-                                                                </span>
-                                                            </div>
-                                                            {watch('video') && (
-                                                                <div className="flex justify-between items-center">
-                                                                    <p className="text-xs text-secondary">Video</p>
-                                                                    <span className="font-medium bg-gray-100 px-2 py-1 rounded-full text-xs">
-                                                                        Included
-                                                                    </span>
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </div>
 
@@ -1448,6 +1393,13 @@ const CreateAuction = () => {
                                                                 <div>
                                                                     <p className="text-xs text-secondary">Buy Now Price</p>
                                                                     <p className="font-medium text-blue-600">${watch('buyNowPrice') || '0.00'}</p>
+                                                                </div>
+                                                            )}
+
+                                                            {watch('auctionType') === 'reserve' && (
+                                                                <div>
+                                                                    <p className="text-xs text-secondary">Reserve Price</p>
+                                                                    <p className="font-medium text-orange-600">${watch('reservePrice') || '0.00'}</p>
                                                                 </div>
                                                             )}
 
@@ -1494,7 +1446,7 @@ const CreateAuction = () => {
 
                                 {/* Navigation Buttons */}
                                 <div className="flex justify-between mt-8">
-                                    {step > 1 ? (
+                                    {step > 0 ? (
                                         <button
                                             type="button"
                                             onClick={prevStep}

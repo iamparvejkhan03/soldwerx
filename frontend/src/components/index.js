@@ -63,6 +63,7 @@ import LiquidateForm from "./LiquidateForm";
 import EventCard from "./EventCard";
 import ProxyBidSection from "./ProxyBidSection";
 import CardPaymentModal from "./CardPaymentModal";
+import AiAuctionInputStep from "./AiAuctionInputStep";
 
 export {
     Container,
@@ -130,4 +131,5 @@ export {
     EventCard,
     ProxyBidSection,
     CardPaymentModal,
+    AiAuctionInputStep
 }

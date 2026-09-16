@@ -484,12 +484,6 @@ function AllAuctions() {
                                                                         >
                                                                             Edit
                                                                         </Link>
-                                                                        <button
-                                                                            className="px-4 py-2 text-red-600 hover:bg-red-50 transition-colors text-left"
-                                                                            onClick={() => setActiveDropdown(null)}
-                                                                        >
-                                                                            End
-                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             )}
