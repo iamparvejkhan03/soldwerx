@@ -50,7 +50,7 @@ app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ limit: '16kb' }));
 
 app.use(cors({
-    origin: ['https://www.la-boveda.com', 'https://la-boveda.com', 'https://la-boveda-frontend.onrender.com', 'https://la-boveda-backend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: ['https://www.soldwerx.com', 'https://soldwerx.com', 'https://soldwerx-frontend.onrender.com', 'https://soldwerx-backend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
 }));
 
