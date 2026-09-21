@@ -5,7 +5,7 @@ import upload from '../middlewares/multer.middleware.js';
 
 const aiRouter = Router();
 
-// AI analysis endpoint - accessible by sellers and admins
+// AI analysis endpoint - accessible by sellers, staff, and admins
 aiRouter.post(
     '/analyze-auction',
     authSeller,

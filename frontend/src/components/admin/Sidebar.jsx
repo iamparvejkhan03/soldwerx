@@ -29,7 +29,9 @@ import {
     Store,
     Briefcase,
     CalendarDaysIcon,
-    PercentCircleIcon
+    PercentCircleIcon,
+    ShieldUser,
+    Handshake
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
@@ -37,100 +39,119 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
 const navigation = [
-    {
+     {
         name: 'Dashboard',
         path: '/admin/dashboard',
-        icon: <LayoutDashboard size={20} />
+        icon: <LayoutDashboard size={20} />,
+        permission: 'view_dashboard'
     },
     {
         name: 'Users',
         path: '/admin/users',
-        icon: <Users size={20} />
+        icon: <Users size={20} />,
+        permission: 'manage_users'
+    },
+    {
+        name: 'Staff',
+        path: '/admin/staff',
+        icon: <ShieldUser size={20} />,
+        permission: 'manage_admins'
     },
     {
         name: 'Auctions',
         path: '/admin/auctions/all',
-        icon: <Gavel size={20} />
+        icon: <Gavel size={20} />,
+        permission: 'manage_auctions'
     },
     {
         name: 'Events',
         path: '/admin/events/all',
-        icon: <CalendarDaysIcon size={20} />
+        icon: <CalendarDaysIcon size={20} />,
+        permission: "manage_events"
     },
     {
         name: 'Bids',
         path: '/admin/bids',
-        icon: <Hand size={20} />
+        icon: <Hand size={20} />,
+        permission: 'manage_bids'
     },
     {
         name: 'Offers',
         path: '/admin/offers',
-        icon: <Hand size={20} />
+        icon: <Handshake size={20} />,
+        permission: 'manage_offers'
     },
     {
         name: 'Liquidations',
         path: '/admin/liquidation-requests',
-        icon: <Store size={20} />
+        icon: <Store size={20} />,
+        permission: 'manage_liquidations'
     },
     {
         name: 'Consultations',
         path: '/admin/sell-requests',
-        icon: <Briefcase size={20} />
+        icon: <Briefcase size={20} />,
+        permission: 'manage_sell_requests'
     },
     {
         name: 'Communications',
         path: '/admin/communications/all',
-        icon: <MessageSquare size={20} />
+        icon: <MessageSquare size={20} />,
+        permission: 'manage_communications'
     },
     {
         name: 'Categories',
         path: '/admin/categories',
-        icon: <Tags size={20} />
+        icon: <Tags size={20} />,
+        permission: 'manage_categories'
     },
     {
         name: 'Buyer Payments',
         path: '/admin/transactions',
-        icon: <BanknoteArrowUp size={20} />
+        icon: <BanknoteArrowUp size={20} />,
+        permission: 'manage_transactions'
     },
     {
         name: 'Seller Payouts',
         path: '/admin/payouts',
-        icon: <BanknoteArrowDown size={20} />
+        icon: <BanknoteArrowDown size={20} />,
+        permission: 'manage_payouts'
     },
     {
         name: 'Bank Details',
         path: '/admin/payout-methods',
-        icon: <Building size={20} />
+        icon: <Building size={20} />,
+        permission: null
     },
     {
         name: 'Commissions',
         path: '/admin/commissions',
         icon: <Settings size={20} />,
+        permission: 'manage_commissions'
     },
     {
         name: 'Tax Settings',
         path: '/admin/tax-settings',
         icon: <PercentCircleIcon size={20} />,
+        permission: 'manage_tax'
     },
     {
         name: 'Comments',
         path: '/admin/comments',
         icon: <MessageCircle size={20} />,
+        permission: 'manage_comments'
     },
     {
         name: 'Support',
         path: '/admin/support/inquiries',
         icon: <MessageSquare size={20} />,
+        permission: 'manage_inquiries'
     },
-    // {
-    //     name: 'Notifications',
-    //     path: '/admin/notifications',
-    //     icon: <Bell size={20} />
-    // },
     {
         name: 'Profile',
         path: '/admin/profile',
-        icon: <UserCircle size={20} />
+        icon: <UserCircle size={20} />,
+        permission: null
     }
 ];
 

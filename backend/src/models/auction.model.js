@@ -575,7 +575,7 @@ auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
     }
   }
 
-  if (now >= this.endDate && this.auctionType !== "giveaway") {
+  if (now >= this.endDate && this.auctionType !== "giveaway" && this.auctionType !== "buy_now") {
     // Giveaways don't have end date restrictions
     throw new Error("Auction has ended");
   }

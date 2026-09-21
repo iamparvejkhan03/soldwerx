@@ -573,13 +573,12 @@ function WonAuctions() {
                                                 {formatDate(auction.winTime)}
                                             </p>
                                         </div>
-                                        <div>
-                                            {/* <p className="text-sm text-gray-500">Starting Bid</p> */}
+                                        {auction?.startingBid > 0 && <div>
                                             <p className="text-sm text-gray-500">Starting Price</p>
                                             <p className="font-semibold">
                                                 {formatCurrency(auction.startingBid)}
                                             </p>
-                                        </div>
+                                        </div>}
                                         {
                                             auction.buyNowPrice && (
                                                 <div>
@@ -683,7 +682,7 @@ function WonAuctions() {
                                                         fetchBankDetails();
                                                     }}
                                                     disabled={processing}
-                                                    className="w-full bg-primary text-white hover:bg-primary/90 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                    className="w-full bg-orange-600 text-white hover:bg-orange-700 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                                 >
                                                     {processing ? (
                                                         <Loader size={18} className="animate-spin" />

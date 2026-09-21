@@ -44,19 +44,19 @@ const userSchema = new Schema(
     // User Type
     userType: {
       type: String,
-      enum: ["bidder", "seller", "broker", "admin"],
+      enum: ["bidder", "seller", "broker", "admin", "staff"],
       required: true,
     },
 
     // Additional Info
     countryCode: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     countryName: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     phone: {
@@ -82,6 +82,35 @@ const userSchema = new Schema(
       newsletter: { type: Boolean, default: true },
       smsUpdates: { type: Boolean, default: false },
       favoriteCategories: [{ type: String }],
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    permissions: {
+      type: [String],
+      default: [],
+      enum: [
+        "view_dashboard",
+        "manage_users",
+        "manage_auctions",
+        "manage_bids",
+        "manage_offers",
+        "manage_transactions",
+        "manage_categories",
+        "manage_inquiries",
+        "manage_commissions",
+        "manage_admins",
+        "manage_tax",
+        "manage_communications",
+        "manage_liquidations",
+        "manage_sell_requests",
+        "manage_comments",
+        "manage_payouts",
+        "manage_events",
+      ],
     },
     // Payout Methods for Sellers
     payoutMethods: {

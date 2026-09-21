@@ -29,7 +29,6 @@ const navigation = [
     { name: 'Won Auctions', path: '/bidder/auctions/won', icon: <Award size={20} /> },
     { name: 'Payments', path: '/bidder/payments', icon: <DollarSign size={20} /> },
     // { name: 'Billing', path: '/bidder/billing', icon: <CreditCard size={20} /> },
-    // { name: 'Notifications', path: '/bidder/notifications', icon: <Bell size={20} /> },
     { name: 'Profile', path: '/bidder/profile', icon: <User size={20} /> },
 ];
 

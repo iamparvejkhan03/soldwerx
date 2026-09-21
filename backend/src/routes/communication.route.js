@@ -8,13 +8,14 @@ import {
     markRead,
     getAllCommunications,
 } from "../controllers/communication.controller.js";
+import { requirePermission } from "../middlewares/permission.middleware.js";
 
 const communicationRouter = express.Router();
 
 // All routes require authentication
 communicationRouter.use(auth);
 
-communicationRouter.get("/admin/all", authAdmin, getAllCommunications);
+communicationRouter.get("/admin/all", authAdmin, requirePermission("manage_communications"), getAllCommunications);
 
 // Get communication for an auction
 communicationRouter.get("/:auctionId", getCommunication);

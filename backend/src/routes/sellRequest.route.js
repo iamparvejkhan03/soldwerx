@@ -8,6 +8,7 @@ import {
     getSellStats
 } from '../controllers/sellRequest.controller.js';
 import { auth, authAdmin } from '../middlewares/auth.middleware.js';
+import { requirePermission } from '../middlewares/permission.middleware.js';
 
 const sellRouter = Router();
 
@@ -36,9 +37,9 @@ sellRouter.post(
 );
 
 // Admin routes
-sellRouter.get('/admin/requests', auth, authAdmin, getSellRequests);
-sellRouter.put('/admin/requests/:requestId', auth, authAdmin, updateSellRequest);
-sellRouter.delete('/admin/requests/:requestId', auth, authAdmin, deleteSellRequest);
-sellRouter.get('/admin/requests/stats', auth, authAdmin, getSellStats);
+sellRouter.get('/admin/requests', auth, authAdmin, requirePermission("manage_sell_requests"), getSellRequests);
+sellRouter.put('/admin/requests/:requestId', auth, authAdmin, requirePermission("manage_sell_requests"), updateSellRequest);
+sellRouter.delete('/admin/requests/:requestId', auth, authAdmin, requirePermission("manage_sell_requests"), deleteSellRequest);
+sellRouter.get('/admin/requests/stats', auth, authAdmin, requirePermission("manage_sell_requests"), getSellStats);
 
 export default sellRouter;

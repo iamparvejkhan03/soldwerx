@@ -18,6 +18,7 @@ import {
     getSellerPayoutById,
 } from "../controllers/payout.controller.js";
 import upload from "../middlewares/multer.middleware.js";
+import { requirePermission } from "../middlewares/permission.middleware.js";
 
 const payoutRouter = Router();
 
@@ -43,7 +44,7 @@ payoutRouter.get("/seller", getSellerPayouts);
 payoutRouter.get("/seller/:payoutId", getSellerPayoutById);
 
 // All routes require admin authentication
-payoutRouter.use(authAdmin);
+payoutRouter.use(authAdmin, requirePermission("manage_payouts"),);
 
 // Get all payouts with filters
 payoutRouter.get("/", getAdminPayouts);

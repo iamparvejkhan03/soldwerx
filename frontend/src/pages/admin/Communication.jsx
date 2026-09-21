@@ -18,6 +18,7 @@ import {
     Edit3,
 } from "lucide-react";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 const CommunicationDetail = () => {
     const { auctionId } = useParams();
@@ -116,6 +117,7 @@ const CommunicationDetail = () => {
                 setNewMessage("");
                 setAttachments([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
+                toast.success('Message Sent!');
             } else {
                 alert("Failed to send message");
             }
@@ -176,7 +178,7 @@ const CommunicationDetail = () => {
         Sidebar = AdminSidebar;
         Header = AdminHeader;
         Container = AdminContainer;
-        backLink = "/admin/communications";
+        backLink = "/admin/communications/all";
     } else if (isSeller) {
         Sidebar = SellerSidebar;
         Header = SellerHeader;

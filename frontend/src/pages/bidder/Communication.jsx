@@ -15,6 +15,7 @@ import {
     Edit3,
 } from "lucide-react";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 const Communication = () => {
     const { auctionId } = useParams();
@@ -116,6 +117,7 @@ const Communication = () => {
                 setNewMessage("");
                 setAttachments([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
+                toast.success('Message Sent!');
             } else {
                 alert("Failed to send message");
             }

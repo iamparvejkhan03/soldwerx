@@ -8,6 +8,7 @@ import {
 } from '../controllers/liquidateRequest.controller.js';
 import { auth, authAdmin } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/multer.middleware.js';
+import { requirePermission } from '../middlewares/permission.middleware.js';
 
 const liquidateRouter = Router();
 
@@ -19,9 +20,9 @@ liquidateRouter.post(
 );
 
 // Admin routes
-liquidateRouter.get('/admin/requests', auth, authAdmin, getLiquidateRequests);
-liquidateRouter.put('/admin/requests/:requestId', auth, authAdmin, updateLiquidateRequest);
-liquidateRouter.delete('/admin/requests/:requestId', auth, authAdmin, deleteLiquidateRequest);
-liquidateRouter.get('/admin/requests/stats', auth, authAdmin, getLiquidateStats);
+liquidateRouter.get('/admin/requests', auth, authAdmin, requirePermission("manage_liquidations"), getLiquidateRequests);
+liquidateRouter.put('/admin/requests/:requestId', auth, authAdmin, requirePermission("manage_liquidations"), updateLiquidateRequest);
+liquidateRouter.delete('/admin/requests/:requestId', auth, authAdmin, requirePermission("manage_liquidations"), deleteLiquidateRequest);
+liquidateRouter.get('/admin/requests/stats', auth, authAdmin, requirePermission("manage_liquidations"), getLiquidateStats);
 
 export default liquidateRouter;

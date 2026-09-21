@@ -117,6 +117,7 @@ const SellerCommunication = () => {
                 setNewMessage("");
                 setAttachments([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
+                toast.success('Message Sent!');
             } else {
                 alert("Failed to send message");
             }

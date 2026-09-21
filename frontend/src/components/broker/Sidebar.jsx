@@ -25,7 +25,6 @@ const navigation = [
     { name: 'Bid History', path: '/broker/bids/history', icon: <TrendingUp size={20} /> },
     { name: 'All Offers', path: '/broker/offers/all', icon: <Hand size={20} /> },
     // { name: 'Billing', path: '/broker/billing', icon: <CreditCard size={20} /> },
-    // { name: 'Notifications', path: '/broker/notifications', icon: <Bell size={20} /> },
     { name: 'Profile', path: '/broker/profile', icon: <User size={20} /> },
 ];
 

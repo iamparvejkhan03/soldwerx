@@ -1409,50 +1409,6 @@ const EditAuction = () => {
                                             Auction Details
                                         </h2>
 
-                                        {/* Start Date & End Date */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                            <div>
-                                                <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
-                                                    Start Date & Time *
-                                                </label>
-                                                <div className="relative">
-                                                    <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                                    <input
-                                                        {...register('startDate', { required: 'Start date is required' })}
-                                                        id="startDate"
-                                                        type="datetime-local"
-                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    />
-                                                </div>
-                                                {errors.startDate && <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>}
-                                            </div>
-
-                                            <div>
-                                                <label htmlFor="endDate" className="block text-sm font-medium text-secondary mb-1">
-                                                    End Date & Time *
-                                                </label>
-                                                <div className="relative">
-                                                    <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                                    <input
-                                                        {...register('endDate', {
-                                                            required: 'End date is required',
-                                                            validate: {
-                                                                afterStartDate: value => {
-                                                                    const start = new Date(watch('startDate'));
-                                                                    const end = new Date(value);
-                                                                    return end > start || 'End date must be after start date';
-                                                                }
-                                                            }
-                                                        })}
-                                                        id="endDate"
-                                                        type="datetime-local"
-                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    />
-                                                </div>
-                                                {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
-                                            </div>
-                                        </div>
-
                                         {/* Location & Video */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
@@ -1501,10 +1457,11 @@ const EditAuction = () => {
                                             <label className="block text-sm font-medium text-secondary mb-1">
                                                 Auction Type *
                                             </label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 {[
                                                     { value: 'standard', label: 'Standard Auction' },
                                                     { value: 'reserve', label: 'Reserve Price Auction' },
+                                                    { value: 'buy_now', label: 'Buy Now Auction' },
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                                                         <input
@@ -1529,6 +1486,30 @@ const EditAuction = () => {
                                                 </p>
                                             </div>
                                         )}
+
+                                        {/* Allow Offers Toggle */}
+                                        <div className="mb-6">
+                                            <label className="flex items-center cursor-pointer">
+                                                <div className="relative">
+                                                    <input
+                                                        type="checkbox"
+                                                        {...register('allowOffers')}
+                                                        id="allowOffers"
+                                                        className="sr-only"
+                                                    />
+                                                    <div className={`block w-14 h-8 rounded-full ${watch('allowOffers') ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${watch('allowOffers') ? 'transform translate-x-6' : ''}`}></div>
+                                                </div>
+                                                <div className="ml-3">
+                                                    <span className="font-medium text-primary">Allow Offers</span>
+                                                    <p className="text-sm text-primary mt-1">
+                                                        Enable buyers to make purchase offers during the auction
+                                                    </p>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <hr className="my-6" />
 
                                         {/* Pricing */}
                                         {watch('auctionType') !== 'giveaway' && (
@@ -1647,20 +1628,51 @@ const EditAuction = () => {
                                             </>
                                         )}
 
-                                        {/* Giveaway info */}
-                                        {watch('auctionType') === 'giveaway' && (
-                                            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
-                                                <h3 className="text-lg font-semibold text-green-700 mb-2 flex items-center gap-2">
-                                                    <span>🎁 Free Giveaway</span>
-                                                </h3>
-                                                <p className="text-green-600 mb-2">
-                                                    This item will be given away for free. The first user who clicks "Claim" will win it immediately.
-                                                </p>
-                                                <p className="text-sm text-green-500">
-                                                    No pricing needed. The auction will end as soon as someone claims it.
-                                                </p>
+                                        <hr className="my-6" />
+
+                                        {/* Start Date & End Date */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
+                                                    Start Date & Time *
+                                                </label>
+                                                <div className="relative">
+                                                    <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        {...register('startDate', { required: 'Start date is required' })}
+                                                        id="startDate"
+                                                        type="datetime-local"
+                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                    />
+                                                </div>
+                                                {errors.startDate && <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>}
                                             </div>
-                                        )}
+
+                                            <div>
+                                                <label htmlFor="endDate" className="block text-sm font-medium text-secondary mb-1">
+                                                    End Date & Time *
+                                                </label>
+                                                <div className="relative">
+                                                    <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        {...register('endDate', {
+                                                            required: 'End date is required',
+                                                            validate: {
+                                                                afterStartDate: value => {
+                                                                    const start = new Date(watch('startDate'));
+                                                                    const end = new Date(value);
+                                                                    return end > start || 'End date must be after start date';
+                                                                }
+                                                            }
+                                                        })}
+                                                        id="endDate"
+                                                        type="datetime-local"
+                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                    />
+                                                </div>
+                                                {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
@@ -1744,6 +1756,12 @@ const EditAuction = () => {
                                                                     {watch('auctionType') === 'giveaway' && 'Free Giveaway'}
                                                                 </p>
                                                             </div>
+                                                            {watch('allowOffers') && (
+                                                                <div>
+                                                                    <p className="text-xs text-primary">Allow Offers</p>
+                                                                    <p className="font-medium text-green-600">Yes</p>
+                                                                </div>
+                                                            )}
                                                             <div>
                                                                 <p className="text-xs text-secondary">Start Date</p>
                                                                 <p className="font-medium">

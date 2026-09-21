@@ -21,7 +21,8 @@ const getOrCreateCommunication = async (auctionId, userId) => {
     const isBidder = auction.winner && auction.winner._id.toString() === userId.toString();
     const user = await User.findById(userId);
     const isAdmin = user?.userType === "admin";
-    if (!isSeller && !isBidder && !isAdmin) {
+    const isStaff = user?.userType === "staff";
+    if (!isSeller && !isBidder && !isAdmin && !isStaff) {
         throw new Error("You do not have access to this communication");
     }
 
@@ -90,13 +91,15 @@ export const sendMessage = async (req, res) => {
         const isBidder = auction.winner._id.toString() === userId.toString();
         const user = await User.findById(userId);
         const isAdmin = user?.userType === "admin";
-        if (!isSeller && !isBidder && !isAdmin) {
+        const isStaff = user?.userType === "staff";
+        if (!isSeller && !isBidder && !isAdmin && !isStaff) {
             return res.status(403).json({ success: false, message: "Not authorized" });
         }
 
         let role = "bidder";
         if (isSeller) role = "seller";
         else if (isAdmin) role = "admin";
+        else if (isStaff) role = "staff";
 
         // Get or create communication
         let comm = await Communication.findOne({ auction: auctionId });
@@ -165,6 +168,7 @@ export const sendMessage = async (req, res) => {
         // If sender is seller → notify winning bidder
         // If sender is bidder → notify seller
         // If sender is admin → notify BOTH seller AND winning bidder
+        // If sender is staff → notify BOTH seller AND winning bidder
 
         const sender = user; // The user who sent the message
         const seller = await User.findById(auction.seller._id).select("email firstName lastName username userType");
@@ -183,8 +187,8 @@ export const sendMessage = async (req, res) => {
             }
         };
 
-        if (isAdmin) {
-            // Admin sent message → notify BOTH seller and winning bidder
+        if (isAdmin || isStaff) {
+            // Admin/Staff sent message → notify BOTH seller and winning bidder
             sendNotification(seller, sender, auction, content, comm._id);
             sendNotification(winningBidder, sender, auction, content, comm._id);
         } else if (isSeller) {
@@ -206,7 +210,7 @@ export const sendMessage = async (req, res) => {
     }
 };
 
-// ----- PUT update shipping info (seller or admin only) -----
+// ----- PUT update shipping info (seller or staff or admin only) -----
 export const updateShipping = async (req, res) => {
     try {
         const { auctionId } = req.params;
@@ -219,12 +223,13 @@ export const updateShipping = async (req, res) => {
             .populate("winner", "_id");
         if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
 
-        // Authorization: seller or admin
+        // Authorization: seller or admin or staff
         const isSeller = auction.seller._id.toString() === userId.toString();
         const user = await User.findById(userId);
         const isAdmin = user?.userType === "admin";
-        if (!isSeller && !isAdmin) {
-            return res.status(403).json({ success: false, message: "Only seller or admin can update shipping" });
+        const isStaff = user?.userType === "staff";
+        if (!isSeller && !isAdmin && !isStaff) {
+            return res.status(403).json({ success: false, message: "Only seller, staff, or admin can update shipping" });
         }
 
         // Get or create communication
@@ -256,8 +261,8 @@ export const updateShipping = async (req, res) => {
         // Add a system message about shipping update
         const systemMessage = {
             sender: userId,
-            senderRole: isAdmin ? "admin" : "seller",
-            content: `Shipping information updated${isAdmin ? " by admin" : ""}.`,
+            senderRole: isAdmin ? "admin" : isStaff ? "staff" : "seller",
+            content: `Shipping information updated${isAdmin ? " by admin" : isStaff ? " by staff" : ""}.`,
             attachments: [],
             readBy: [userId],
         };
@@ -280,8 +285,8 @@ export const updateShipping = async (req, res) => {
                 winningBidder,
                 auction,
                 shippingInfo,
-                user, // the updater (admin or seller)
-                isAdmin ? "Admin" : "Seller"
+                user, // the updater (admin or staff or seller)
+                isAdmin ? "Admin" : isStaff ? "Staff" : "Seller"
             ).catch(err => console.error("Background email error:", err));
         }
 
@@ -321,14 +326,11 @@ export const markRead = async (req, res) => {
     }
 };
 
-// GET all communications (admin only)
+// GET all communications (admin/staff only)
 export const getAllCommunications = async (req, res) => {
     try {
-        // Only admin can access
+        // Only admin/staff can access
         const user = await User.findById(req.user._id);
-        if (user.userType !== "admin") {
-            return res.status(403).json({ success: false, message: "Admin access required" });
-        }
 
         const communications = await Communication.find()
             .populate("auction", "title category finalPrice status")

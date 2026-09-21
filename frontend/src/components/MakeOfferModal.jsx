@@ -131,7 +131,7 @@ const MakeOfferModal = ({
                     )}
 
                     {/* Message */}
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Message to Seller (Optional)
                         </label>
@@ -152,7 +152,7 @@ const MakeOfferModal = ({
                         <p className="text-sm text-gray-500 mt-1">
                             Your offer will expire in 48 hours if not responded to.
                         </p>
-                    </div>
+                    </div> */}
 
                     {/* Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3">

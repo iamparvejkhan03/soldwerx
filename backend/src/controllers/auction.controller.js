@@ -276,10 +276,22 @@ export const createAuction = async (req, res) => {
       photos: uploadedPhotos,
       documents: uploadedDocuments,
       serviceRecords: uploadedServiceRecords,
-      status:
-        auctionType === "buy_now" || auctionType === "giveaway"
-          ? "active"
-          : "draft",
+      status: (() => {
+        const now = new Date();
+        const startDateObj = new Date(start);
+        const isAdmin = seller?.userType === "admin" || seller?.userType === "staff";
+        const isBuyNowOrGiveaway = auctionType === "buy_now" || auctionType === "giveaway";
+
+        if (isAdmin && startDateObj <= now) {
+          return "active";
+        } else if (isAdmin && startDateObj > now) {
+          return "approved";
+        } else if (isBuyNowOrGiveaway && isAdmin) {
+          return "active";
+        } else {
+          return "draft";
+        }
+      })(),
     };
 
     // Add bid increment for standard and reserve auctions
@@ -2427,7 +2439,7 @@ export const buyNow = async (req, res) => {
     }
 
     // For regular auctions, check end date
-    if (auction.auctionType !== "giveaway" && new Date() > auction.endDate) {
+    if ((auction.auctionType !== "giveaway" && auction.auctionType !== "buy_now") && new Date() > auction.endDate) {
       return res.status(400).json({
         success: false,
         message: "Auction has already ended",

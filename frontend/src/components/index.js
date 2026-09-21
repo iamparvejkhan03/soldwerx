@@ -37,7 +37,6 @@ import BidderContainer from "./bidder/Container";
 import BidderSidebar from "./bidder/Sidebar";
 import BidderHeader from "./bidder/Header";
 import AdminHeader from "./admin/Header";
-import AdminRoute from "./admin/AdminRoute";
 import AdminSidebar from "./admin/Sidebar";
 import AdminContainer from "./admin/Container";
 import TimerDisplay from "./TimerDisplay";
@@ -64,6 +63,9 @@ import EventCard from "./EventCard";
 import ProxyBidSection from "./ProxyBidSection";
 import CardPaymentModal from "./CardPaymentModal";
 import AiAuctionInputStep from "./AiAuctionInputStep";
+import StaffHeader from "./staff/Header";
+import StaffSidebar from "./staff/Sidebar";
+import StaffContainer from "./staff/Container";
 
 export {
     Container,
@@ -107,7 +109,6 @@ export {
     AdminContainer,
     AdminHeader,
     AdminSidebar,
-    AdminRoute,
     TimerDisplay,
     WatchlistButton,
     SpecificationsSection,
@@ -131,5 +132,8 @@ export {
     EventCard,
     ProxyBidSection,
     CardPaymentModal,
-    AiAuctionInputStep
+    AiAuctionInputStep,
+    StaffContainer,
+    StaffHeader,
+    StaffSidebar,
 }

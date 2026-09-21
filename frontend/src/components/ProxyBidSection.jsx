@@ -163,7 +163,7 @@ const ProxyBidSection = ({ auction, onAuctionUpdate }) => {
             : auction.currentPrice + auction.bidIncrement;
 
     return (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                 <Target className="h-4 w-4" />
                 Proxy Bidding
