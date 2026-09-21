@@ -19,7 +19,7 @@ import {
 
 import { Container, LiquidateForm } from "../components";
 import { Link } from "react-router-dom";
-import { heroImg } from "../assets";
+import { about, heroImg } from "../assets";
 
 // ============================================================
 // LIQUIDATE PAGE DATA
@@ -141,13 +141,11 @@ function Liquidate() {
             <section className="relative min-h-[520px] overflow-hidden bg-[#080A0D]">
                 {/* Hero image
                     Replace this path with your actual liquidate hero image.
-                */}
+                */
+                }
                 <div
-                    className="absolute inset-0 bg-cover bg-center opacity-90"
-                    style={{
-                        backgroundImage:
-                            `url(${heroImg})`,
-                    }}
+                    className="absolute inset-0 bg-cover bg-[position:60%_20%] opacity-90"
+                    style={{ backgroundImage: `url(${about})` }}
                 />
 
                 {/* Dark overlay keeps the typography readable */}
@@ -155,8 +153,8 @@ function Liquidate() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050608]/60 via-transparent to-[#050608]/20" />
 
                 {/* Gold atmosphere */}
-                <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#C59D55]/10 blur-[120px]" />
-                <div className="pointer-events-none absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#C59D55]/10 blur-[110px]" />
+                <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#F5B51B]/10 blur-[120px]" />
+                <div className="pointer-events-none absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#F5B51B]/10 blur-[110px]" />
 
                 <Container>
                     <div className="relative z-10 flex min-h-[520px] items-center pb-14 md:pb-16 pt-28 md:pt-32 lg:pt-36">
@@ -164,22 +162,22 @@ function Liquidate() {
                             {/* Hero content */}
                             <div className="max-w-2xl">
                                 <div className="mb-5 flex items-center gap-3 animate-[fadeUp_.7s_ease-out_both]">
-                                    <span className="h-px w-10 bg-[#C59D55]" />
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#D8B96F]">
+                                    <span className="h-px w-10 bg-[#F5B51B]" />
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#F5B51B]">
                                         Sell With SoldWerX
                                     </span>
                                 </div>
 
                                 <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
                                     LIQUIDATE A
-                                    <span className="block text-[#C59D55]">
+                                    <span className="block text-[#F5B51B]">
                                         BUSINESS OR ESTATE
                                     </span>
                                 </h1>
 
                                 <p className="mt-6 max-w-xl text-base leading-7 text-white/75 md:text-lg animate-[fadeUp_.75s_.16s_ease-out_both]">
                                     We handle the entire process from start to finish so
-                                    you don’t have to.
+                                    you don't have to.
                                 </p>
 
                                 <div className="mt-5 space-y-2.5 animate-[fadeUp_.75s_.24s_ease-out_both]">
@@ -194,7 +192,7 @@ function Liquidate() {
                                             key={item}
                                             className="flex items-center gap-3 text-sm text-white/85 md:text-base"
                                         >
-                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#C59D55]">
+                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5B51B]">
                                                 <Check
                                                     size={13}
                                                     strokeWidth={3}
@@ -209,11 +207,11 @@ function Liquidate() {
 
                             {/* Consultation card */}
                             <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#111318]/95 p-7 shadow-2xl backdrop-blur-sm animate-[fadeUp_.8s_.18s_ease-out_both]">
-                                <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#C59D55]/10 blur-[70px]" />
+                                <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#F5B51B]/10 blur-[70px]" />
 
                                 <div className="relative z-10">
                                     <div className="flex items-start gap-4">
-                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#C59D55]/10 text-[#C59D55]">
+                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F5B51B]/10 text-[#F5B51B]">
                                             <Headphones size={24} strokeWidth={1.8} />
                                         </div>
 
@@ -230,7 +228,7 @@ function Liquidate() {
 
                                     <a
                                         href="#consultation"
-                                        className="group mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#C59D55] px-5 py-3.5 text-sm font-black text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D8B96F] hover:shadow-[0_12px_30px_rgba(197,157,85,0.22)]"
+                                        className="group mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#F5B51B] px-5 py-3.5 text-sm font-black text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_12px_30px_rgba(245,181,27,0.22)]"
                                     >
                                         GET STARTED
                                         <ArrowRight
@@ -253,7 +251,7 @@ function Liquidate() {
                 <Container>
                     {/* Header - NOW MATCHES ABOUT PAGE STYLE */}
                     <div data-reveal-item className="max-w-full mb-12">
-                        <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#A17B35]">
+                        <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                             Simple Process
                         </p>
 
@@ -284,19 +282,19 @@ function Liquidate() {
                                             animation: `fadeUp 0.6s ease-out ${index * 0.1}s both`,
                                         }}
                                     >
-                                        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#C59D55]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#C59D55]/[0.08]" />
+                                        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#F5B51B]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#F5B51B]/[0.08]" />
 
                                         <div className="relative z-10">
                                             <div className="mb-4 flex items-center justify-between">
-                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 group-hover:bg-[#C59D55] group-hover:text-white group-hover:shadow-[0_8px_24px_rgba(197,157,85,0.25)]">
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5B51B]/10 text-[#F5B51B] transition-all duration-300 group-hover:bg-[#F5B51B] group-hover:text-black group-hover:shadow-[0_8px_24px_rgba(245,181,27,0.25)]">
                                                     <Icon size={28} strokeWidth={1.7} />
                                                 </div>
-                                                <span className="text-5xl font-black text-gray-100 transition-colors duration-300 group-hover:text-[#E9DEC8]">
+                                                <span className="text-5xl font-black text-gray-100 transition-colors duration-300 group-hover:text-[#F5B51B]/30">
                                                     {step.number}
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#A17B35]">
+                                            <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#F5B51B]">
                                                 {step.title}
                                             </h3>
 
@@ -304,7 +302,7 @@ function Liquidate() {
                                                 {step.desc}
                                             </p>
 
-                                            <div className="mt-5 h-0.5 w-0 rounded-full bg-[#C59D55] transition-all duration-500 group-hover:w-12" />
+                                            <div className="mt-5 h-0.5 w-0 rounded-full bg-[#F5B51B] transition-all duration-500 group-hover:w-12" />
                                         </div>
                                     </div>
                                 );
@@ -314,8 +312,8 @@ function Liquidate() {
                         {/* CONNECTOR ARROW BETWEEN ROWS */}
                         <div className="flex justify-center py-2">
                             <div className="flex items-center gap-2">
-                                <span className="h-px w-12 bg-gradient-to-r from-transparent to-[#C59D55]/30" />
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 hover:scale-110 hover:bg-[#C59D55]/20">
+                                <span className="h-px w-12 bg-gradient-to-r from-transparent to-[#F5B51B]/30" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5B51B]/10 text-[#F5B51B] transition-all duration-300 hover:scale-110 hover:bg-[#F5B51B]/20">
                                     {/* <ArrowRight size={14}  /> */}
                                     <a
                                         href="#consultation"
@@ -325,7 +323,7 @@ function Liquidate() {
                                         />
                                     </a>
                                 </div>
-                                <span className="h-px w-12 bg-gradient-to-l from-transparent to-[#C59D55]/30" />
+                                <span className="h-px w-12 bg-gradient-to-l from-transparent to-[#F5B51B]/30" />
                             </div>
                         </div>
 
@@ -341,19 +339,19 @@ function Liquidate() {
                                             animation: `fadeUp 0.6s ease-out ${(index + 3) * 0.1}s both`,
                                         }}
                                     >
-                                        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#C59D55]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#C59D55]/[0.08]" />
+                                        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#F5B51B]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#F5B51B]/[0.08]" />
 
                                         <div className="relative z-10">
                                             <div className="mb-4 flex items-center justify-between">
-                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 group-hover:bg-[#C59D55] group-hover:text-white group-hover:shadow-[0_8px_24px_rgba(197,157,85,0.25)]">
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5B51B]/10 text-[#F5B51B] transition-all duration-300 group-hover:bg-[#F5B51B] group-hover:text-black group-hover:shadow-[0_8px_24px_rgba(245,181,27,0.25)]">
                                                     <Icon size={28} strokeWidth={1.7} />
                                                 </div>
-                                                <span className="text-5xl font-black text-gray-100 transition-colors duration-300 group-hover:text-[#E9DEC8]">
+                                                <span className="text-5xl font-black text-gray-100 transition-colors duration-300 group-hover:text-[#F5B51B]/30">
                                                     {step.number}
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#A17B35]">
+                                            <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#F5B51B]">
                                                 {step.title}
                                             </h3>
 
@@ -361,7 +359,7 @@ function Liquidate() {
                                                 {step.desc}
                                             </p>
 
-                                            <div className="mt-5 h-0.5 w-0 rounded-full bg-[#C59D55] transition-all duration-500 group-hover:w-12" />
+                                            <div className="mt-5 h-0.5 w-0 rounded-full bg-[#F5B51B] transition-all duration-500 group-hover:w-12" />
                                         </div>
                                     </div>
                                 );
@@ -372,17 +370,17 @@ function Liquidate() {
                     {/* PROGRESS DOTS - NEW VISUAL ELEMENT */}
                     <div className="mt-10 flex justify-center gap-2">
                         <div className="flex items-center justify-center">
-                        <a
-                            href="#consultation"
-                            className="group flex items-center justify-center gap-2 rounded-xl bg-[#C59D55] px-7 py-3.5 text-sm font-black text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D8B96F] hover:shadow-[0_12px_30px_rgba(197,157,85,0.22)]"
-                        >
-                            GET STARTED
-                            <ArrowRight
-                                size={16}
-                                className="transition-transform duration-300 group-hover:translate-x-1"
-                            />
-                        </a>
-                    </div>
+                            <a
+                                href="#consultation"
+                                className="group flex items-center justify-center gap-2 rounded-xl bg-[#F5B51B] px-7 py-3.5 text-sm font-black text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_12px_30px_rgba(245,181,27,0.22)]"
+                            >
+                                GET STARTED
+                                <ArrowRight
+                                    size={16}
+                                    className="transition-transform duration-300 group-hover:translate-x-1"
+                                />
+                            </a>
+                        </div>
                     </div>
 
                     {/* Recommendations */}
@@ -406,15 +404,15 @@ function Liquidate() {
                                             }`}
                                     >
                                         <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                                            <div className="absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-[#C59D55]/[0.05] blur-[60px]" />
+                                            <div className="absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-[#F5B51B]/[0.05] blur-[60px]" />
                                         </div>
 
                                         <div className="relative z-10">
-                                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C59D55]/10 text-[#A17B35] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#C59D55] group-hover:text-white group-hover:shadow-[0_8px_24px_rgba(197,157,85,0.25)]">
+                                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F5B51B]/10 text-[#F5B51B] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#F5B51B] group-hover:text-black group-hover:shadow-[0_8px_24px_rgba(245,181,27,0.25)]">
                                                 <Icon size={24} strokeWidth={1.7} />
                                             </div>
 
-                                            <h4 className="mt-4 text-xs font-bold text-gray-950 transition-colors duration-300 group-hover:text-[#A17B35]">
+                                            <h4 className="mt-4 text-xs font-bold text-gray-950 transition-colors duration-300 group-hover:text-[#F5B51B]">
                                                 {item.title}
                                             </h4>
 
@@ -422,7 +420,7 @@ function Liquidate() {
                                                 {item.desc}
                                             </p>
 
-                                            <div className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 bg-[#C59D55] transition-all duration-500 group-hover:w-14" />
+                                            <div className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 bg-[#F5B51B] transition-all duration-500 group-hover:w-14" />
                                         </div>
                                     </div>
                                 );
@@ -448,12 +446,12 @@ function Liquidate() {
             >
                 <Container>
                     <div className="relative overflow-hidden rounded-[28px] bg-[#0D0F13] p-8 md:p-12 lg:p-16">
-                        <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#C59D55]/10 blur-[100px]" />
+                        <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#F5B51B]/10 blur-[100px]" />
 
                         <div className="relative z-10">
                             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="max-w-2xl">
-                                    <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#C59D55]">
+                                    <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                                         No Obligation
                                     </p>
 

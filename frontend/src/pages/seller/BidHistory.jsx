@@ -202,7 +202,7 @@ function BidHistory() {
                             <p className="text-gray-600 mb-4">{error}</p>
                             <button
                                 onClick={fetchSellerAuctions}
-                                className="bg-[#C59D55] text-white px-4 py-2 rounded-lg hover:bg-[#C59D55]/90"
+                                className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg"
                             >
                                 Try Again
                             </button>

@@ -644,7 +644,7 @@ function Auctions() {
         <Container>
             <div className="min-h-screen pt-16 md:pt-32 pb-16 bg-gray-50">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-200 px-8 py-8">
+                <div className="">
                     <div className="container mx-auto">
                         <h2 className="text-4xl font-black tracking-[-0.04em] text-gray-950 md:text-5xl">
                                 All
@@ -652,7 +652,7 @@ function Auctions() {
                                     Auctions.
                                 </span>
                             </h2>
-                        <p className="text-gray-600 mt-2">Browse through our selection of premium collectibles across all categories.</p>
+                        <p className="text-gray-600 mt-2">Browse our selection of equipment, trucks, trailers, and business assets across every category.</p>
                     </div>
                 </div>
 

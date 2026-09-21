@@ -94,9 +94,9 @@ function Sidebar() {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
                 {/* Logo/Brand */}
-                <div className="px-4 mb-8 flex items-center justify-between pb-2">
+                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-white/10">
                     <Link to={'/'}>
-                        <img src={logo} className="h-10 md:h-12" alt="logo" />
+                        <img src={logo} className="h-12 md:h-14" alt="logo" />
                     </Link>
                     <button
                         onClick={() => setIsOpen(false)}
@@ -116,8 +116,8 @@ function Sidebar() {
                                     onClick={() => isMobile && setIsOpen(false)}
                                     className={({ isActive }) =>
                                         `flex items-center p-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-[#C59D55] text-white shadow-lg'
-                                            : 'text-white hover:bg-[#C59D55]/90 hover:text-white'
+                                            ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
+                                            : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
                                         }`
                                     }
                                 >

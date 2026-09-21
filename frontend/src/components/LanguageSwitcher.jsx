@@ -135,7 +135,7 @@ export default function LanguageSwitcher({ isScrolled }) {
     return (
         <div className="lang-container relative">
             <button
-                className="lang-button flex items-center gap-1 px-2 py-1 md:py-1.5 md:px-3 border rounded-md"
+                className="lang-button flex items-center gap-1 px-2 py-1 md:py-1.5 md:px-3 border rounded-md bg-gray-100"
                 onClick={() => setOpen(!open)}
             >
                 <img
@@ -143,14 +143,14 @@ export default function LanguageSwitcher({ isScrolled }) {
                     alt={current.name}
                     className="w-7 h-5 object-cover rounded-sm brightness-[85%]"
                 />
-                <span className={`hidden sm:inline ${isScrolled ? 'text-black' : 'text-white'}`}>
+                <span className={`hidden sm:inline ${isScrolled ? 'text-black' : 'text-black'}`}>
                     {current.name}
                 </span>
-                <span className={`text-sm ${isScrolled ? 'text-black' : 'text-white'}`}>▾</span>
+                <span className={`text-sm ${isScrolled ? 'text-black' : 'text-black'}`}>▾</span>
             </button>
 
             {open && (
-                <div className="lang-dropdown absolute top-full right-0 mt-1 bg-white border rounded-md shadow-lg z-50">
+                <div className="lang-dropdown absolute top-full right-0 mt-1 bg-white w-32 border rounded-md shadow-lg z-50">
                     {languages.map((lang) => (
                         <div
                             key={lang.code}

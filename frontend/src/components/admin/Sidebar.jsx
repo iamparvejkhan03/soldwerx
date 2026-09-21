@@ -88,29 +88,19 @@ const navigation = [
         icon: <Tags size={20} />
     },
     {
-        name: 'Transactions',
+        name: 'Buyer Payments',
         path: '/admin/transactions',
-        icon: <DollarSign size={20} />
+        icon: <BanknoteArrowUp size={20} />
     },
     {
-        name: 'Comments',
-        path: '/admin/comments',
-        icon: <MessageCircle size={20} />,
-    },
-    {
-        name: 'Support',
-        path: '/admin/support/inquiries',
-        icon: <MessageSquare size={20} />,
-    },
-    {
-        name: 'Payouts',
+        name: 'Seller Payouts',
         path: '/admin/payouts',
         icon: <BanknoteArrowDown size={20} />
     },
     {
         name: 'Bank Details',
         path: '/admin/payout-methods',
-        icon: <BanknoteArrowUp size={20} />
+        icon: <Building size={20} />
     },
     {
         name: 'Commissions',
@@ -121,6 +111,16 @@ const navigation = [
         name: 'Tax Settings',
         path: '/admin/tax-settings',
         icon: <PercentCircleIcon size={20} />,
+    },
+    {
+        name: 'Comments',
+        path: '/admin/comments',
+        icon: <MessageCircle size={20} />,
+    },
+    {
+        name: 'Support',
+        path: '/admin/support/inquiries',
+        icon: <MessageSquare size={20} />,
     },
     // {
     //     name: 'Notifications',
@@ -207,9 +207,9 @@ function Sidebar() {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
                 {/* Logo/Brand */}
-                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-gray-700">
+                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-white/10">
                     <Link to={'/'}>
-                        <img src={logo} className="h-10 md:h-12" alt="logo" />
+                        <img src={logo} className="h-12 md:h-14" alt="logo" />
                     </Link>
                     <button
                         onClick={() => setIsOpen(false)}
@@ -221,12 +221,12 @@ function Sidebar() {
 
                 {/* Admin Badge */}
                 <div className="px-4 mb-6">
-                    <div className="bg-gradient-to-r from-[#F2D18A] via-[#C59D55] to-[#8C6828] rounded-lg p-3 text-center">
+                    <div className="bg-gradient-to-r from-[#FFC83D] via-[#F5B51B] to-[#E0A413] rounded-lg p-3 text-center text-black">
                         <div className="flex items-center justify-center gap-2">
                             <Shield size={16} />
-                            <span className="text-sm font-medium">Administrator</span>
+                            <span className="text-sm font-semibold">Administrator</span>
                         </div>
-                        <p className="text-xs text-white mt-1">Full System Access</p>
+                        <p className="text-xs mt-1 opacity-70">Full System Access</p>
                     </div>
                 </div>
 
@@ -266,8 +266,8 @@ function Sidebar() {
                                                             onClick={() => isMobile && setIsOpen(false)}
                                                             className={({ isActive }) =>
                                                                 `flex items-center p-2 rounded-lg text-sm transition-all duration-200 ${isActive
-                                                                    ? 'bg-gray-800 text-white'
-                                                                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                                                    ? 'bg-white/10 text-white'
+                                                                    : 'text-white/60 hover:bg-white/10 hover:text-white'
                                                                 }`
                                                             }
                                                         >
@@ -284,8 +284,8 @@ function Sidebar() {
                                         onClick={() => isMobile && setIsOpen(false)}
                                         className={({ isActive }) =>
                                             `flex items-center p-3 rounded-lg transition-all duration-200 ${isActive
-                                                ? 'bg-[#C59D55] text-white shadow-lg'
-                                                : 'text-white hover:bg-[#C59D55]/90 hover:text-white'
+                                                ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
+                                                : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
                                             }`
                                         }
                                     >

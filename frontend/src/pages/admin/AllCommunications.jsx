@@ -136,7 +136,7 @@ const AdminCommunications = () => {
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <Link
                                                             to={`/admin/communication/${comm?.auction?._id}`}
-                                                            className="inline-flex items-center px-3 py-1 bg-[#C59D55] text-white rounded-lg hover:bg-[#C59D55]/90 transition"
+                                                            className="inline-flex items-center px-3 py-1 bg-black text-white hover:bg-black/80 rounded-lg transition"
                                                         >
                                                             <Eye size={16} className="mr-1" />
                                                             View

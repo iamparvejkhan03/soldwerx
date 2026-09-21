@@ -2002,7 +2002,7 @@ export const updatePaymentStatus = async (req, res) => {
 
     if (paymentStatus === 'completed') {
       // payment completed emails will be sent from here
-      agendaService.scheduleInvoiceUpdate(auction._id, userId).catch(err =>
+      agendaService.scheduleInvoiceUpdate(auction._id, admin?._id).catch(err =>
         console.error('Failed to schedule invoice update job:', err)
       );
     }

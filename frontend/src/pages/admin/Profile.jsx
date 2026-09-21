@@ -225,7 +225,7 @@ function Profile() {
                             <p className="text-red-600">Failed to load profile data</p>
                             <button
                                 onClick={fetchUserData}
-                                className="mt-4 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg"
+                                className="mt-4 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg"
                             >
                                 Try Again
                             </button>
@@ -265,7 +265,7 @@ function Profile() {
                                             key={section.id}
                                             onClick={() => setActiveSection(section.id)}
                                             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${activeSection === section.id
-                                                ? `bg-[#C59D55] text-white hover:bg-[#C59D55]/90 font-medium`
+                                                ? `bg-black text-white hover:bg-black/80 font-medium`
                                                 : "text-secondary hover:bg-gray-100"
                                                 }`}
                                         >
@@ -292,7 +292,7 @@ function Profile() {
                                                     <button
                                                         onClick={handleSave}
                                                         disabled={saving}
-                                                        className="flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                                        className="flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                                                     >
                                                         <Save size={16} />
                                                         {saving ? 'Saving...' : 'Save Changes'}
@@ -309,7 +309,7 @@ function Profile() {
                                             ) : (
                                                 <button
                                                     onClick={() => setIsEditing(true)}
-                                                    className="flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg transition-colors"
+                                                    className="flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition-colors"
                                                 >
                                                     <Edit size={16} />
                                                     Edit
@@ -698,7 +698,7 @@ const PasswordChangeForm = ({ onChangePassword, saving }) => {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-6 py-3 rounded-lg transition-colors disabled:opacity-50"
+                    className="bg-black text-white hover:bg-black/80 px-6 py-3 rounded-lg transition-colors disabled:opacity-50"
                 >
                     {saving ? 'Changing Password...' : 'Change Password'}
                 </button>

@@ -317,7 +317,7 @@ function MyOffers() {
                             <p className="text-red-600">{error}</p>
                             <button
                                 onClick={fetchMyOffers}
-                                className="mt-4 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg"
+                                className="mt-4 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg"
                             >
                                 Try Again
                             </button>
@@ -698,7 +698,7 @@ function MyOffers() {
                                             setFilter("all");
                                             setSearchTerm("");
                                         }}
-                                        className="bg-[#C59D55] hover:bg-[#C59D55]/90 text-white px-6 py-2 rounded-lg transition-colors"
+                                        className="bg-black text-white hover:bg-black/80 px-6 py-2 rounded-lg transition-colors"
                                     >
                                         Clear Filters
                                     </button>

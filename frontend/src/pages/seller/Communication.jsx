@@ -193,7 +193,7 @@ const SellerCommunication = () => {
                             <p className="text-red-600">{error}</p>
                             <button
                                 onClick={fetchCommunication}
-                                className="mt-4 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg"
+                                className="mt-4 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg"
                             >
                                 Try Again
                             </button>
@@ -260,7 +260,7 @@ const SellerCommunication = () => {
                                                 <div ref={messagesEndRef} />
                                                 <div
                                                     className={`max-w-[75%] rounded-lg p-3 ${isCurrentUser
-                                                        ? "bg-[#C59D55] text-white"
+                                                        ? "bg-black text-white"
                                                         : "bg-gray-100 text-gray-800"
                                                         }`}
                                                 >
@@ -328,7 +328,7 @@ const SellerCommunication = () => {
                                     <button
                                         type="submit"
                                         disabled={sending || (!newMessage.trim() && attachments.length === 0)}
-                                        className="bg-[#C59D55] text-white px-4 py-2 rounded-lg hover:bg-[#C59D55]/90 transition disabled:opacity-50 flex items-center gap-2 grow sm:grow-0 w-auto justify-center"
+                                        className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2 grow sm:grow-0 w-auto justify-center"
                                     >
                                         <Send size={18} />
                                         Send
@@ -411,7 +411,7 @@ const SellerCommunication = () => {
                                     <button
                                         type="submit"
                                         disabled={updatingShipping}
-                                        className="w-full bg-[#C59D55] text-white py-2 rounded-lg hover:bg-[#C59D55]/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="w-full bg-black text-white hover:bg-black/80 py-2 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         <Edit3 size={16} />
                                         Update Shipping

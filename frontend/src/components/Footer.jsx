@@ -18,8 +18,8 @@ function Footer() {
     const quickLinks = [
         { name: "Home", href: "/" },
         { name: "Events", href: "/events" },
-        {name: 'Liquidate',href: '/liquidate'},
-        {name: 'Sell With Us',href: '/sell-with-us'},
+        { name: 'Liquidate', href: '/liquidate' },
+        { name: 'Sell With Us', href: '/sell-with-us' },
         { name: "About Us", href: "/about" },
         { name: "Contact", href: "/contact" },
         { name: "FAQs", href: "/faqs" },
@@ -94,9 +94,9 @@ function Footer() {
             ====================================================== */}
 
             {/* Gold glow */}
-            <div className="pointer-events-none absolute -left-40 top-0 h-[450px] w-[450px] rounded-full bg-[#C59D55]/[0.045] blur-[120px]" />
+            <div className="pointer-events-none absolute -left-40 top-0 h-[450px] w-[450px] rounded-full bg-[#F5B51B]/[0.045] blur-[120px]" />
 
-            <div className="pointer-events-none absolute -right-40 bottom-0 h-[500px] w-[500px] rounded-full bg-[#C59D55]/[0.035] blur-[130px]" />
+            <div className="pointer-events-none absolute -right-40 bottom-0 h-[500px] w-[500px] rounded-full bg-[#F5B51B]/[0.035] blur-[130px]" />
 
             {/* Subtle grid */}
             <div
@@ -122,13 +122,13 @@ function Footer() {
 
                         <div className="max-w-2xl">
 
-                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C59D55]/20 bg-[#C59D55]/[0.06] px-4 py-2">
+                            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F5B51B]/20 bg-[#F5B51B]/[0.06] px-4 py-2">
                                 <Sparkles
                                     size={13}
-                                    className="text-[#C59D55]"
+                                    className="text-[#F5B51B]"
                                 />
 
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D8B96F]">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                                     Built for Collectors
                                 </span>
                             </div>
@@ -149,10 +149,10 @@ function Footer() {
                         </div>
 
                         <div className="flex shrink-0 items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#C59D55]/10">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F5B51B]/10">
                                 <ShieldCheck
                                     size={20}
-                                    className="text-[#C59D55]"
+                                    className="text-[#F5B51B]"
                                 />
                             </div>
 
@@ -188,14 +188,12 @@ function Footer() {
                             <img
                                 src={logo}
                                 alt="Logo"
-                                className="h-10 w-auto object-contain sm:h-11"
+                                className="h-12 w-auto object-contain sm:h-14"
                             />
                         </Link>
 
                         <p className="mt-5 text-base leading-6 text-white/60 font-light">
-                            A collector-first marketplace for discovering,
-                            buying, and bidding on exceptional sports and
-                            non-sports memorabilia.
+                            A faster, simpler marketplace for buying and selling equipment, trucks, trailers, and business assets — backed by AI-assisted listings and real support.
                         </p>
 
                         {/* Socials */}
@@ -209,7 +207,7 @@ function Footer() {
                                         to={social.href}
                                         target="_blank"
                                         aria-label={social.label}
-                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] text-white/40 transition-all duration-300 hover:-translate-y-1 hover:border-[#C59D55]/30 hover:bg-[#C59D55]/10 hover:text-[#C59D55]"
+                                        className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] text-white/40 transition-all duration-300 hover:-translate-y-1 hover:border-[#F5B51B]/30 hover:bg-[#F5B51B]/10 hover:text-[#F5B51B]"
                                     >
                                         <Icon size={15} strokeWidth={2} />
                                     </Link>
@@ -234,7 +232,7 @@ function Footer() {
                                         to={link.href}
                                         className={({ isActive }) =>
                                             `group font-light flex items-center gap-1.5 text-base transition-colors ${isActive
-                                                ? "text-[#C59D55]"
+                                                ? "text-[#F5B51B]"
                                                 : "text-white/60 hover:text-white"
                                             }`
                                         }
@@ -293,7 +291,7 @@ function Footer() {
                                 <li key={policy.name}>
                                     <Link
                                         to={policy.href}
-                                        className="text-base text-white/60 font-light transition-colors hover:text-[#C59D55]"
+                                        className="text-base text-white/60 font-light transition-colors hover:text-[#F5B51B]"
                                     >
                                         {policy.name}
                                     </Link>
@@ -318,7 +316,7 @@ function Footer() {
                                 to={`tel:${otherData.phone}`}
                                 className="group flex items-start gap-3"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-[#C59D55]/10 group-hover:text-[#C59D55]">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-[#F5B51B]/10 group-hover:text-[#F5B51B]">
                                     <Phone size={15} />
                                 </div>
 
@@ -338,7 +336,7 @@ function Footer() {
                                 to={`mailto:${otherData.email}`}
                                 className="group flex items-start gap-3"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-[#C59D55]/10 group-hover:text-[#C59D55]">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/40 transition-colors group-hover:bg-[#F5B51B]/10 group-hover:text-[#F5B51B]">
                                     <Mail size={15} />
                                 </div>
 
@@ -369,7 +367,7 @@ function Footer() {
                             © {new Date().getFullYear()}{" "}
                             <Link
                                 to="/"
-                                className="font-medium text-white/55 transition-colors hover:text-[#C59D55]"
+                                className="font-medium text-white/55 transition-colors hover:text-[#F5B51B]"
                             >
                                 SoldWerX
                             </Link>

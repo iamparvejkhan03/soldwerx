@@ -1,104 +1,89 @@
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 import TestimonialCard from "./Testimonial";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import Container from "./Container";
 
 const testimonials = [
   {
-    name: "Carlos Mendoza",
-    position: "Collector & Sports Enthusiast",
+    name: "Ryan Kowalski",
+    position: "Construction Company Owner",
     review:
-      "SoldWerX has completely changed how I buy and sell memorabilia. The auctions are smooth, the verification gives me peace of mind, and I've found pieces I never thought I'd own. Highly recommended.",
-    image: "/avatars/1.jpg",
-    date: "January 12, 2026",
+      "I've bought three excavators and a skid steer through SoldWerX. The listings are accurate, the bidding is straightforward, and I've never had a surprise on pickup. It's now the first place I check before calling a dealer.",
+    date: "January 22, 2026",
   },
   {
-    name: "Alejandra Rojas",
-    position: "Memorabilia Dealer",
+    name: "Tanya Brooks",
+    position: "Fleet Manager",
     review:
-      "I've sold over 200 items through SoldWerX. The platform is professional, the buyers are serious, and the 5% commission is more than fair. Payment via bank transfer in USD is seamless. I'll definitely be back.",
-    image: "/avatars/2.jpg",
-    date: "February 8, 2026",
+      "We rotate our truck and trailer inventory through SoldWerX every quarter. The AI listing assistant cut our prep time in half, and the buyers who show up are serious — not tire-kickers. Payouts have been on time, every time.",
+    date: "February 14, 2026",
   },
   {
-    name: "Miguel Torres",
-    position: "Sports Card Collector",
+    name: "Marcus Whitfield",
+    position: "Heavy Equipment Dealer",
     review:
-      "The selection of rare cards on SoldWerX is unmatched. I recently bought a signed rookie card and the entire process — from bidding to delivery — was simple and transparent. Trustworthy and reliable.",
-    image: "/avatars/3.jpg",
-    date: "March 15, 2026",
+      "I consign with several platforms and SoldWerX is the one I trust with my best inventory. Reserve auctions protect my margins, and the support team actually answers the phone. That's rare in this industry.",
+    date: "March 3, 2026",
   },
   {
-    name: "Daniela Suárez",
-    position: "Auction House Owner",
+    name: "Danielle Reyes",
+    position: "Estate Liquidation Specialist",
     review:
-      "Finally a platform that understands the Venezuelan collector. Great support, transparent bidding, secure communications, and fast payouts. SoldWerX is the gold standard for memorabilia in our region.",
-    image: "/avatars/4.jpg",
-    date: "April 5, 2026",
+      "Liquidating an estate is stressful enough without fighting a clunky platform. SoldWerX made it simple — I listed everything in an afternoon, tagged it to a single event, and the whole sale ran itself. My clients were thrilled with the results.",
+    date: "April 18, 2026",
   },
   {
-    name: "Roberto Fernández",
-    position: "Collectibles Dealer",
+    name: "Greg Halvorsen",
+    position: "Restaurant Owner",
     review:
-      "We use SoldWerX for all our high-end inventory. The platform is intuitive, buyers are verified, and the direct purchase option has boosted our sales significantly. Couldn't ask for more.",
-    image: "/avatars/5.jpg",
-    date: "May 20, 2026",
+      "When we closed our second location, I had a full kitchen of equipment and no idea where to start. SoldWerX walked me through it, and the Buy Now option moved most of it within two weeks. Turned dead weight into working capital.",
+    date: "May 27, 2026",
   },
   {
-    name: "Mariana Castillo",
-    position: "Collector & Business Owner",
+    name: "Priya Raman",
+    position: "Logistics Operations Director",
     review:
-      "As someone who collects both sports and non-sports memorabilia, SoldWerX is my go-to platform. Secure transactions, clear communication, and a community that truly values authenticity. Outstanding results every time.",
-    image: "/avatars/6.jpg",
-    date: "June 10, 2026",
+      "We use SoldWerX for both sides — sourcing trailers when we're expanding and selling off units when we're not. The make offer feature during auctions has saved us more than once. Verified sellers and transparent bidding make it an easy call.",
+    date: "June 9, 2026",
   },
 ];
 
 export default function TestimonialSection() {
   const sectionRef = useRef(null);
-
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   /*
    * ============================================================
    * INTERSECTION OBSERVER
    * ============================================================
    */
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setVisible(entry.isIntersecting);
       },
-      {
-        threshold: 0.2,
-      }
+      { threshold: 0.2 }
     );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
   /*
    * ============================================================
-   * KEEN SLIDER
+   * KEEN SLIDER (STRICT 3 CARDS AT A TIME)
    * ============================================================
    */
-
   const [sliderRef, instanceRef] = useKeenSlider({
     loop: true,
-
     slides: {
       perView: 3,
       spacing: 24,
     },
-
     breakpoints: {
       "(max-width: 1024px)": {
         slides: {
@@ -106,7 +91,6 @@ export default function TestimonialSection() {
           spacing: 20,
         },
       },
-
       "(max-width: 640px)": {
         slides: {
           perView: 1,
@@ -114,11 +98,9 @@ export default function TestimonialSection() {
         },
       },
     },
-
     slideChanged(slider) {
       setCurrentSlide(slider.track.details.rel);
     },
-
     created() {
       setLoaded(true);
     },
@@ -127,97 +109,82 @@ export default function TestimonialSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative my-14 overflow-hidden bg-gray-50"
+      className="relative overflow-hidden bg-gradient-to-b from-gray-50 via-white to-gray-50 py-14"
     >
-      <div className="w-full max-w-full mx-auto">
 
+      <div className="mx-auto w-full max-w-full">
         {/* =====================================================
-                    HEADER
-                ====================================================== */}
-
+            HEADER WITH STAGGER ANIMATIONS
+        ====================================================== */}
         <div
-          className={`text-left transition-all duration-1000 ease-out ${visible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-8 opacity-0"
+          className={`flex flex-col md:flex-row md:items-center md:justify-between transition-all duration-1000 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="max-w-7xl">
+            {/* Tag */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#F5B51B]/30 bg-[#F5B51B]/10 px-3.5 py-1 text-xs font-semibold text-[#F5B51B]">
+              <Sparkles size={13} />
+              <span>COMMUNITY TRUST</span>
+            </div>
 
             {/* Heading */}
-
-            <h2 className="text-4xl font-black tracking-[-0.035em] text-[#111315] sm:text-5xl lg:text-[48px]">
+            <h2 className="mt-4 text-4xl font-black tracking-[-0.035em] text-[#111315] sm:text-5xl lg:text-[48px]">
               What Our
-              <span className="ml-2 font-medium italic text-gray-400">
+              <span className="mx-2 font-medium italic text-gray-400">
                 Clients Say.
               </span>
             </h2>
 
-            {/* =================================================
-                            NAVIGATION ARROWS
-                        ================================================== */}
-
-            {loaded && instanceRef.current && (
-              <div
-                className={`hidden gap-2 md:flex md:justify-end transition-all duration-700 delay-300 ${visible
-                    ? "translate-x-0 opacity-100"
-                    : "translate-x-8 opacity-0"
-                  }`}
-              >
-                <button
-                  onClick={() =>
-                    instanceRef.current?.prev()
-                  }
-                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[#A17B35]/40 bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 hover:bg-[#A17B35]/20 hover:-translate-x-0.5"
-                  aria-label="Previous testimonial"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-
-                <button
-                  onClick={() =>
-                    instanceRef.current?.next()
-                  }
-                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[#A17B35]/40 bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 hover:bg-[#A17B35]/20 hover:translate-x-0.5"
-                  aria-label="Next testimonial"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            )}
+            {/* Description */}
+            {/* className="mx-auto mt-6 max-w-xl text-sm leading-7 text-gray-500 sm:text-base"> */}
+            <p
+              className={`mt-6 text-sm leading-7 text-gray-500 sm:text-base transition-all duration-1000 delay-150 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+                }`}
+            >
+              Join buyers across the United States who trust SoldWerX for equipment,
+              trucks, business assets, and more — all in one marketplace.
+            </p>
           </div>
 
-          {/* Description */}
+          {/* =================================================
+              NAVIGATION BUTTONS
+          ================================================== */}
+          {loaded && instanceRef.current && (
+            <div
+              className={`mt-6 flex items-center gap-3 transition-all duration-700 delay-300 md:mt-0 ${visible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"
+                }`}
+            >
+              <button
+                onClick={() => instanceRef.current?.prev()}
+                className="group flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all duration-300 hover:border-[#F5B51B] hover:bg-[#F5B51B] hover:text-black hover:shadow-md"
+                aria-label="Previous testimonial"
+              >
+                <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+              </button>
 
-          <p
-            className={`mt-3 mb-5 text-sm text-gray-500 transition-all duration-1000 delay-150 ease-out md:text-base ${visible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-6 opacity-0"
-              }`}
-          >
-            Join collectors across Venezuela who trust SoldWerX
-            for their sports memorabilia, rare cards, and
-            one-of-a-kind collectibles.
-          </p>
+              <button
+                onClick={() => instanceRef.current?.next()}
+                className="group flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-all duration-300 hover:border-[#F5B51B] hover:bg-[#F5B51B] hover:text-black hover:shadow-md"
+                aria-label="Next testimonial"
+              >
+                <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* =====================================================
-                    SLIDER
-                ====================================================== */}
-
+            SLIDER (STRICT CLIPPING FOR 3 CARDS ONLY)
+        ====================================================== */}
         <div
-          className={`mt-12 transition-all duration-1000 delay-300 ease-out md:mt-6 ${visible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-12 opacity-0"
+          className={`overflow-hidden py-4 transition-all duration-1000 delay-300 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
             }`}
         >
           <div ref={sliderRef} className="keen-slider">
-
             {testimonials.map((t, i) => (
               <div
                 key={i}
-                className={`keen-slider__slide transition-all duration-700 ease-out ${visible
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-12 opacity-0"
+                className={`keen-slider__slide transition-all pt-5 duration-700 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
                   }`}
                 style={{
                   transitionDelay: visible
@@ -228,30 +195,24 @@ export default function TestimonialSection() {
                 <TestimonialCard {...t} />
               </div>
             ))}
-
           </div>
         </div>
 
         {/* =====================================================
-                    MOBILE DOTS
-                ====================================================== */}
-
+            MOBILE DOTS
+        ====================================================== */}
         <div
-          className={`flex items-center justify-center space-x-2 mt-5 transition-all duration-700 delay-500 md:hidden ${visible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-5 opacity-0"
+          className={`mt-6 flex items-center justify-center space-x-2 transition-all duration-700 delay-500 md:hidden ${visible ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
             }`}
         >
           {testimonials.map((_, index) => (
             <button
               key={index}
-              onClick={() =>
-                instanceRef.current?.moveToIdx(index)
-              }
+              onClick={() => instanceRef.current?.moveToIdx(index)}
               aria-label={`Go to testimonial ${index + 1}`}
-              className={`h-3 w-3 rounded-full transition-all duration-300 ${index === currentSlide
-                  ? "bg-neutral-800 scale-110"
-                  : "bg-neutral-300 hover:bg-neutral-400"
+              className={`h-2.5 rounded-full transition-all duration-300 ${index === currentSlide
+                ? "w-7 bg-[#F5B51B]"
+                : "w-2.5 bg-gray-300 hover:bg-gray-400"
                 }`}
             />
           ))}

@@ -1884,7 +1884,7 @@ const EditAuction = () => {
                                                 e.preventDefault();
                                                 nextStep();
                                             }}
-                                            className="flex items-center px-6 py-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 rounded-lg transition-colors"
+                                            className="flex items-center px-6 py-2 bg-black text-white hover:bg-black/80 rounded-lg transition-colors"
                                         >
                                             Next
                                             <ArrowRight size={18} className="ml-2" />
@@ -1893,7 +1893,7 @@ const EditAuction = () => {
                                         <button
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="flex items-center px-6 py-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 rounded-lg transition-colors disabled:opacity-50"
+                                            className="flex items-center px-6 py-2 bg-black text-white hover:bg-black/80 rounded-lg transition-colors disabled:opacity-50"
                                         >
                                             <Gavel size={18} className="mr-2" />
                                             {isSubmitting ? 'Updating Auction...' : 'Update Auction'}

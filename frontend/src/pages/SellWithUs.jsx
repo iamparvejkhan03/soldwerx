@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { Container } from "../components";
-import { heroImg } from "../assets";
+import { heroImg, liquidate } from "../assets";
 
 // Image Upload Component
 const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
@@ -76,10 +76,10 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
                 />
                 <div className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all ${images.length >= maxFiles
                     ? "border-gray-200 bg-gray-50"
-                    : "border-[#C59D55]/30 hover:border-[#C59D55] hover:bg-[#C59D55]/5"
+                    : "border-[#F5B51B]/30 hover:border-[#F5B51B] hover:bg-[#F5B51B]/5"
                     }`}>
                     <div className="flex flex-col items-center p-6 text-center">
-                        <div className="mb-2 rounded-full bg-[#C59D55]/10 p-2.5 text-[#A17B35]">
+                        <div className="mb-2 rounded-full bg-[#F5B51B]/10 p-2.5 text-[#F5B51B]">
                             <Upload size={20} />
                         </div>
                         <p className="text-sm font-medium text-gray-700">
@@ -207,30 +207,30 @@ function SellWithUs() {
             {/* Hero Section */}
             <section className="relative min-h-[450px] overflow-hidden bg-[#080A0D]">
                 <div
-                    className="absolute inset-0 bg-cover bg-center opacity-70"
+                    className="absolute inset-0 bg-cover opacity-70 bg-[position:80%_20%]"
                     style={{
-                        backgroundImage: `url(${heroImg})`,
+                        backgroundImage: `url(${liquidate})`,
                     }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050608] via-[#080A0D]/90 to-[#080A0D]/35" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050608]/60 via-transparent to-[#050608]/20" />
 
-                <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#C59D55]/10 blur-[120px]" />
-                <div className="pointer-events-none absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#C59D55]/10 blur-[110px]" />
+                <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#F5B51B]/10 blur-[120px]" />
+                <div className="pointer-events-none absolute -right-40 bottom-0 h-[400px] w-[400px] rounded-full bg-[#F5B51B]/10 blur-[110px]" />
 
                 <Container>
                     <div className="relative z-10 flex min-h-[450px] items-center pb-14 md:pb-16 pt-28 md:pt-32 lg:pt-36">
                         <div className="max-w-2xl">
                             <div className="mb-5 flex items-center gap-3 animate-[fadeUp_.7s_ease-out_both]">
-                                <span className="h-px w-10 bg-[#C59D55]" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#D8B96F]">
+                                <span className="h-px w-10 bg-[#F5B51B]" />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#F5B51B]">
                                     Sell With SoldWerX
                                 </span>
                             </div>
 
                             <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
                                 Turn Your Items
-                                <span className="block text-[#C59D55]">
+                                <span className="block text-[#F5B51B]">
                                     Into Cash
                                 </span>
                             </h1>
@@ -242,15 +242,15 @@ function SellWithUs() {
 
                             <div className="mt-5 flex flex-wrap gap-4 animate-[fadeUp_.75s_.24s_ease-out_both]">
                                 <div className="flex items-center gap-2 text-sm text-white/85">
-                                    <Check size={16} className="text-[#C59D55]" />
+                                    <Check size={16} className="text-[#F5B51B]" />
                                     <span>Reach thousands of buyers</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-white/85">
-                                    <Check size={16} className="text-[#C59D55]" />
+                                    <Check size={16} className="text-[#F5B51B]" />
                                     <span>Competitive bidding</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-white/85">
-                                    <Check size={16} className="text-[#C59D55]" />
+                                    <Check size={16} className="text-[#F5B51B]" />
                                     <span>Professional photography</span>
                                 </div>
                             </div>
@@ -263,17 +263,17 @@ function SellWithUs() {
             <section className="py-14 md:py-14 bg-[#FBFAF7]">
                 <Container>
                     <div className="relative overflow-hidden rounded-[28px] bg-white p-6 md:p-10 lg:p-14 shadow-[0_30px_100px_rgba(0,0,0,0.08)]">
-                        <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#C59D55]/5 blur-[100px]" />
-                        <div className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#C59D55]/5 blur-[80px]" />
+                        <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#F5B51B]/5 blur-[100px]" />
+                        <div className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#F5B51B]/5 blur-[80px]" />
 
                         <div className="relative z-10">
                             <div className="mb-10 text-center">
                                 <div className="mb-4 inline-flex items-center gap-3">
-                                    <span className="h-px w-8 bg-[#C59D55]" />
-                                    <span className="text-xs font-bold uppercase tracking-[0.22em] text-[#A17B35]">
+                                    <span className="h-px w-8 bg-[#F5B51B]" />
+                                    <span className="text-xs font-bold uppercase tracking-[0.22em] text-[#F5B51B]">
                                         Start Selling Today
                                     </span>
-                                    <span className="h-px w-8 bg-[#C59D55]" />
+                                    <span className="h-px w-8 bg-[#F5B51B]" />
                                 </div>
 
                                 <h2 className="text-3xl font-black leading-tight tracking-[-0.035em] text-gray-950 md:text-4xl lg:text-5xl">
@@ -298,7 +298,7 @@ function SellWithUs() {
                                     <div>
                                         <label className="mb-2 block text-xs font-bold text-gray-700 md:text-sm">
                                             Full Name
-                                            <span className="ml-1 text-[#A17B35]">*</span>
+                                            <span className="ml-1 text-[#F5B51B]">*</span>
                                         </label>
                                         <div className="relative">
                                             <User
@@ -308,7 +308,7 @@ function SellWithUs() {
                                             <input
                                                 {...register("name", { required: true })}
                                                 placeholder="John Doe"
-                                                className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.name
+                                                className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.name
                                                     ? "border-red-300"
                                                     : "border-gray-200"
                                                     }`}
@@ -324,7 +324,7 @@ function SellWithUs() {
                                     <div>
                                         <label className="mb-2 block text-xs font-bold text-gray-700 md:text-sm">
                                             Email Address
-                                            <span className="ml-1 text-[#A17B35]">*</span>
+                                            <span className="ml-1 text-[#F5B51B]">*</span>
                                         </label>
                                         <div className="relative">
                                             <Mail
@@ -335,7 +335,7 @@ function SellWithUs() {
                                                 type="email"
                                                 {...register("email", { required: true })}
                                                 placeholder="john@example.com"
-                                                className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.email
+                                                className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.email
                                                     ? "border-red-300"
                                                     : "border-gray-200"
                                                     }`}
@@ -363,7 +363,7 @@ function SellWithUs() {
                                             <input
                                                 {...register("phone")}
                                                 placeholder="+1 (555) 000-0000"
-                                                className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                                className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                             />
                                         </div>
                                     </div>
@@ -380,7 +380,7 @@ function SellWithUs() {
                                             <input
                                                 {...register("location")}
                                                 placeholder="City, State"
-                                                className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                                className="h-12 w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                             />
                                         </div>
                                     </div>
@@ -390,7 +390,7 @@ function SellWithUs() {
                                 <div>
                                     <label className="mb-2 block text-xs font-bold text-gray-700 md:text-sm">
                                         What are you selling?
-                                        <span className="ml-1 text-[#A17B35]">*</span>
+                                        <span className="ml-1 text-[#F5B51B]">*</span>
                                     </label>
                                     <div className="relative">
                                         <Package
@@ -400,7 +400,7 @@ function SellWithUs() {
                                         <input
                                             {...register("itemType", { required: true })}
                                             placeholder="e.g., trucks, trailers, etc."
-                                            className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.itemType
+                                            className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.itemType
                                                 ? "border-red-300"
                                                 : "border-gray-200"
                                                 }`}
@@ -417,7 +417,7 @@ function SellWithUs() {
                                 <div>
                                     <label className="mb-2 block text-xs font-bold text-gray-700 md:text-sm">
                                         Short Description
-                                        <span className="ml-1 text-[#A17B35]">*</span>
+                                        <span className="ml-1 text-[#F5B51B]">*</span>
                                     </label>
                                     <div className="relative">
                                         <FileText
@@ -427,7 +427,7 @@ function SellWithUs() {
                                         <textarea
                                             {...register("description", { required: true })}
                                             placeholder="Describe your item(s) - condition, age, brand, any notable features..."
-                                            className={`min-h-[120px] w-full resize-none rounded-xl border bg-white pl-11 pr-4 py-3.5 text-sm leading-6 text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.description
+                                            className={`min-h-[120px] w-full resize-none rounded-xl border bg-white pl-11 pr-4 py-3.5 text-sm leading-6 text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.description
                                                 ? "border-red-300"
                                                 : "border-gray-200"
                                                 }`}
@@ -459,7 +459,7 @@ function SellWithUs() {
                                                 <label
                                                     key={method.value}
                                                     className={`cursor-pointer rounded-full border px-5 py-2.5 text-xs font-semibold capitalize transition-all duration-200 flex items-center gap-2 ${active
-                                                        ? "border-[#C59D55] bg-[#C59D55] text-[#111]"
+                                                        ? "border-[#F5B51B] bg-[#F5B51B] text-[#111]"
                                                         : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-800"
                                                         }`}
                                                 >
@@ -491,14 +491,14 @@ function SellWithUs() {
                                 {/* Submit */}
                                 <div className="flex flex-col gap-4 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-2 text-[12px] leading-4 text-gray-400">
-                                        <ShieldCheck size={14} className="shrink-0 text-[#A17B35]" />
+                                        <ShieldCheck size={14} className="shrink-0 text-[#F5B51B]" />
                                         <span>Your information is handled securely.</span>
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={sending}
-                                        className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-[#C59D55] px-7 text-sm font-bold text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D8B96F] hover:shadow-[0_12px_35px_rgba(197,157,85,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-[#F5B51B] px-7 text-sm font-bold text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_12px_35px_rgba(245,181,27,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {sending ? (
                                             <>
@@ -526,7 +526,7 @@ function SellWithUs() {
             <section className="py-14 md:py-14">
                 <Container>
                     <div className="text-center mb-12">
-                        <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#A17B35]">
+                        <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                             Why Choose Us
                         </p>
                         <h2 className="text-4xl font-black leading-tight tracking-[-0.04em] text-gray-950 md:text-5xl">
@@ -569,12 +569,12 @@ function SellWithUs() {
                                     key={index}
                                     className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-7 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)]"
                                 >
-                                    <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#C59D55]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#C59D55]/[0.08]" />
+                                    <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#F5B51B]/[0.04] transition-all duration-700 group-hover:scale-150 group-hover:bg-[#F5B51B]/[0.08]" />
                                     <div className="relative z-10">
-                                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#C59D55]/10 text-[#A17B35] transition-all duration-300 group-hover:bg-[#C59D55] group-hover:text-white group-hover:shadow-[0_8px_24px_rgba(197,157,85,0.25)]">
+                                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5B51B]/10 text-[#F5B51B] transition-all duration-300 group-hover:bg-[#F5B51B] group-hover:text-black group-hover:shadow-[0_8px_24px_rgba(245,181,27,0.25)]">
                                             <Icon size={28} strokeWidth={1.7} />
                                         </div>
-                                        <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#A17B35]">
+                                        <h3 className="text-base font-bold tracking-tight text-gray-950 transition-colors duration-300 group-hover:text-[#F5B51B]">
                                             {item.title}
                                         </h3>
                                         <p className="mt-2 text-sm leading-6 text-gray-500">

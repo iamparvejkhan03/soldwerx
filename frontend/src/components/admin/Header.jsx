@@ -37,7 +37,7 @@ function Header() {
                             ?
                             <Link to={`/admin/profile`}><img src={user?.image} alt="userImage" className="h-10 w-10 rounded-full" /></Link>
                             :
-                            <Link to={`/admin/profile`} className="h-10 w-10 rounded-full bg-[#C59D55] flex items-center justify-center text-white font-semibold">
+                            <Link to={`/admin/profile`} className="h-10 w-10 rounded-full bg-[#F5B51B] flex items-center justify-center text-black font-semibold">
                                 {user?.firstName[0] + user?.lastName[0]}
                             </Link>
                     }

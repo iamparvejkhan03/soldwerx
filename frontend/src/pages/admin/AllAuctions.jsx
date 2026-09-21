@@ -357,7 +357,7 @@ function AllAuctions() {
                                 </div>
                                 <Link
                                     to="/admin/auctions/create"
-                                    className="bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                                    className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
                                 >
                                     <Plus size={18} />
                                     Create Auction
@@ -706,7 +706,7 @@ function AllAuctions() {
                                                                         </button>
                                                                     )}
 
-                                                                    {auction.status === "sold" && (
+                                                                    {/* {auction.status === "sold" && (
                                                                         <button
                                                                             onClick={() => {
                                                                                 handleEditAuction(auction);
@@ -717,7 +717,7 @@ function AllAuctions() {
                                                                             <RefreshCcw size={16} />
                                                                             <span>Relist Auction</span>
                                                                         </button>
-                                                                    )}
+                                                                    )} */}
 
                                                                     {/* Featured Toggle */}
                                                                     {/* <div className="border-t border-gray-100 my-1"></div>

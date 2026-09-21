@@ -295,7 +295,7 @@ function ActiveAuctions() {
                                     setSearchTerm("");
                                     setCategoryFilter("all");
                                 }}
-                                className="bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-6 py-2 rounded-lg transition-colors"
+                                className="bg-black text-white hover:bg-black/80 px-6 py-2 rounded-lg transition-colors"
                             >
                                 Clear All Filters
                             </button>

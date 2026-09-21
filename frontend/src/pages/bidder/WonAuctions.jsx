@@ -382,7 +382,7 @@ function WonAuctions() {
                             <p className="text-red-600">{error}</p>
                             <button
                                 onClick={fetchWonAuctions}
-                                className="mt-4 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg"
+                                className="mt-4 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg"
                             >
                                 Try Again
                             </button>
@@ -547,7 +547,7 @@ function WonAuctions() {
                                                 )}
                                             </div>
                                             {/* <div className="text-sm text-gray-500">Winning Bid</div> */}
-                                            <div className="text-sm text-gray-500">Winning Amount + Fee + Tax</div>
+                                            <div className="text-xs text-gray-500">Winning Amount + Buyer's Premimum + Tax</div>
                                         </div>
                                     </div>
 
@@ -656,7 +656,7 @@ function WonAuctions() {
 
                                         <Link
                                             to={`/bidder/communication/${auction?._id}`}
-                                            className="flex-1 text-center bg-[#C59D55] text-white hover:bg-[#C59D55]/90 py-3 px-6 rounded-lg font-semibold transition-all"
+                                            className="flex-1 text-center bg-black text-white hover:bg-black/80 py-3 px-6 rounded-lg font-semibold transition-all"
                                         >
                                             Communication
                                         </Link>

@@ -1,6 +1,7 @@
 import darkLogo from './darkLogo.webp';
 import logo from './logo.webp';
 import heroImg from './heroImg.webp';
+import liquidate from './liquidate.webp';
 import menuIcon from './menuIcon.svg';
 import closeMenu from './closeMenu.svg';
 import dummyUserImg from './dummyUserImg.webp';
@@ -23,6 +24,7 @@ export {
     darkLogo,
     logo,
     heroImg,
+    liquidate,
     menuIcon,
     closeMenu,
     dummyUserImg,

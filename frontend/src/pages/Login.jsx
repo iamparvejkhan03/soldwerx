@@ -54,7 +54,7 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen pt-32 pb-16 bg-[#C59D55]/10 flex items-center justify-center p-4">
+        <div className="min-h-screen pt-32 pb-16 bg-[#F5B51B]/10 flex items-center justify-center p-4">
             <ForgotPasswordModal isOpen={showForgotPasswordModel} onClose={() => setShowForgotPasswordModal(false)} />
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                 {/* Header */}
@@ -78,7 +78,7 @@ const Login = () => {
                                 <input
                                     type="email"
                                     id="email"
-                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg"
+                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                     placeholder="Enter your email"
                                     required
                                     {...register('email', { required: true })}
@@ -98,7 +98,7 @@ const Login = () => {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     id="password"
-                                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg "
+                                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                     placeholder="Enter your password"
                                     required
                                     {...register('password', { required: true })}
@@ -109,9 +109,9 @@ const Login = () => {
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                 >
                                     {showPassword ? (
-                                        <EyeOff size={20} className="text-gray-400 hover:text-secondary" />
+                                        <EyeOff size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                     ) : (
-                                        <Eye size={20} className="text-gray-400 hover:text-secondary" />
+                                        <Eye size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                     )}
                                 </button>
                             </div>
@@ -122,7 +122,7 @@ const Login = () => {
                             <button
                                 type='button'
                                 onClick={() => setShowForgotPasswordModal(true)}
-                                className="text-primary hover:text-primary-dark text-sm font-medium underline"
+                                className="text-[#F5B51B] hover:text-[#e7a500] text-sm font-medium underline"
                             >
                                 Forgot password?
                             </button>
@@ -132,7 +132,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#C59D55] hover:bg-[#D8B96F] text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[#F5B51B] hover:bg-[#e7a500] text-black py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:shadow-[0_10px_30px_rgba(245,181,27,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Signing in...' : 'Sign In'}
                         </button>
@@ -152,7 +152,7 @@ const Login = () => {
                     <div className="text-center">
                         <p className="text-secondary text-sm">
                             Don't have an account?{' '}
-                            <Link to={`/register`} className="text-primary hover:text-primary-dark font-semibold underline">
+                            <Link to={`/register`} className="text-[#F5B51B] hover:text-[#e7a500] font-semibold underline">
                                 Register Now
                             </Link>
                         </p>

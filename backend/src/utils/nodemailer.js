@@ -258,7 +258,7 @@ const buildInvoiceTable = (invoiceData) => {
         [`Hammer Price: `, `$${invoiceData.hammerPrice.toFixed(2)}`],
     ];
     if (invoiceData.buyerPremium > 0) {
-        rows.push([`Buyer Premium: `, `$${invoiceData.buyerPremium.toFixed(2)}`]);
+        rows.push([`Buyer's Premium: `, `$${invoiceData.buyerPremium.toFixed(2)}`]);
     }
     if (invoiceData.taxAmount > 0) {
         rows.push([`Tax: `, `$${invoiceData.taxAmount.toFixed(2)}`]);
@@ -1854,7 +1854,7 @@ const paymentInitiatedAdminEmail = async (adminEmail, payment, buyer, auction) =
                 <div style="margin: 16px 0 0 0;">
                     ${createSummaryRow('Total Amount:', formatCurrency(payment.totalAmount))}
                     ${createSummaryRow('Bid Amount:', formatCurrency(payment.bidAmount))}
-                    ${createSummaryRow('Commission:', formatCurrency(payment.commissionAmount))}
+                    ${createSummaryRow("Buyer's Premium:", formatCurrency(payment.commissionAmount))}
                     ${createSummaryRow('Payment Method:', 'Bank Transfer')}
                     ${payment.transactionReference ? createSummaryRow('Transaction Ref:', payment.transactionReference) : ''}
                 </div>

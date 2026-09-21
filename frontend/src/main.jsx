@@ -658,14 +658,14 @@ createRoot(document.getElementById('root')).render(
                         />
 
                         {/* Admin Offers */}
-                        {/* <Route
+                        <Route
                             path='/admin/offers'
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <AdminAllOffers />
                                 </Suspense>
                             }
-                        /> */}
+                        />
 
                         {/* Admin Communications */}
                         <Route

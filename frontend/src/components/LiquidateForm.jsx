@@ -68,19 +68,19 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
                     disabled={images.length >= maxFiles}
                 />
                 <div className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all ${images.length >= maxFiles
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-[#C59D55]/30 hover:border-[#C59D55] hover:bg-[#C59D55]/5"
+                        ? "border-white/10 bg-white/[0.02]"
+                        : "border-[#F5B51B]/30 hover:border-[#F5B51B] hover:bg-[#F5B51B]/5"
                     }`}>
                     <div className="flex flex-col items-center p-6 text-center">
-                        <div className="mb-2 rounded-full bg-[#C59D55]/10 p-2.5 text-[#A17B35]">
+                        <div className="mb-2 rounded-full bg-[#F5B51B]/10 p-2.5 text-[#F5B51B]">
                             <Upload size={20} />
                         </div>
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-sm font-medium text-white/80">
                             {images.length >= maxFiles
                                 ? "Maximum photos uploaded"
                                 : "Upload photos of the items"}
                         </p>
-                        <p className="mt-0.5 text-xs text-gray-400">
+                        <p className="mt-0.5 text-xs text-white/40">
                             {images.length >= maxFiles
                                 ? `(${maxFiles}/${maxFiles})`
                                 : `JPG, PNG, WebP (max ${maxFiles} files, 5MB each)`}
@@ -93,7 +93,7 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
             {previews.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                     {previews.map((preview, index) => (
-                        <div key={index} className="group relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                        <div key={index} className="group relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5">
                             <img
                                 src={preview}
                                 alt={`Upload ${index + 1}`}
@@ -202,18 +202,18 @@ function LiquidateForm() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="relative overflow-hidden rounded-[28px] bg-[#0D0F13] p-6 md:p-10 lg:p-14">
                     {/* Decorative elements */}
-                    <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#C59D55]/10 blur-[100px]" />
-                    <div className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#C59D55]/5 blur-[80px]" />
+                    <div className="pointer-events-none absolute -right-20 -top-40 h-96 w-96 rounded-full bg-[#F5B51B]/10 blur-[100px]" />
+                    <div className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#F5B51B]/5 blur-[80px]" />
 
                     <div className="relative z-10">
                         {/* Header */}
                         <div className="mb-10 text-center">
                             <div className="mb-4 inline-flex items-center gap-3">
-                                <span className="h-px w-8 bg-[#C59D55]" />
-                                <span className="text-xs font-bold uppercase tracking-[0.22em] text-[#C59D55]">
+                                <span className="h-px w-8 bg-[#F5B51B]" />
+                                <span className="text-xs font-bold uppercase tracking-[0.22em] text-[#F5B51B]">
                                     No Obligation
                                 </span>
-                                <span className="h-px w-8 bg-[#C59D55]" />
+                                <span className="h-px w-8 bg-[#F5B51B]" />
                             </div>
 
                             <h2 className="text-3xl font-black leading-tight tracking-[-0.035em] text-white md:text-4xl lg:text-5xl">
@@ -239,7 +239,7 @@ function LiquidateForm() {
                                 <div>
                                     <label className="mb-2 block text-xs font-bold text-white/80 md:text-sm">
                                         Full Name
-                                        <span className="ml-1 text-[#C59D55]">*</span>
+                                        <span className="ml-1 text-[#F5B51B]">*</span>
                                     </label>
                                     <div className="relative">
                                         <User
@@ -249,7 +249,7 @@ function LiquidateForm() {
                                         <input
                                             {...register("name", { required: true })}
                                             placeholder="John Doe"
-                                            className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.name
+                                            className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.name
                                                     ? "border-red-400/50"
                                                     : "border-white/10"
                                                 }`}
@@ -265,7 +265,7 @@ function LiquidateForm() {
                                 <div>
                                     <label className="mb-2 block text-xs font-bold text-white/80 md:text-sm">
                                         Email Address
-                                        <span className="ml-1 text-[#C59D55]">*</span>
+                                        <span className="ml-1 text-[#F5B51B]">*</span>
                                     </label>
                                     <div className="relative">
                                         <Mail
@@ -276,7 +276,7 @@ function LiquidateForm() {
                                             type="email"
                                             {...register("email", { required: true })}
                                             placeholder="john@example.com"
-                                            className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.email
+                                            className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.email
                                                     ? "border-red-400/50"
                                                     : "border-white/10"
                                                 }`}
@@ -304,7 +304,7 @@ function LiquidateForm() {
                                         <input
                                             {...register("phone")}
                                             placeholder="+1 (555) 000-0000"
-                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                         />
                                     </div>
                                 </div>
@@ -321,7 +321,7 @@ function LiquidateForm() {
                                         <input
                                             {...register("location")}
                                             placeholder="City, State, or full address"
-                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                         />
                                     </div>
                                 </div>
@@ -331,7 +331,7 @@ function LiquidateForm() {
                             <div>
                                 <label className="mb-2 block text-xs font-bold text-white/80 md:text-sm">
                                     What do you need liquidated?
-                                    <span className="ml-1 text-[#C59D55]">*</span>
+                                    <span className="ml-1 text-[#F5B51B]">*</span>
                                 </label>
                                 <div className="relative">
                                     <FileText
@@ -341,7 +341,7 @@ function LiquidateForm() {
                                     <textarea
                                         {...register("description", { required: true })}
                                         placeholder="Describe the items, assets, or inventory you want to liquidate. Be as detailed as possible..."
-                                        className={`min-h-[120px] w-full resize-none rounded-xl border bg-white/5 pl-11 pr-4 py-3.5 text-sm leading-6 text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10 ${errors.description
+                                        className={`min-h-[120px] w-full resize-none rounded-xl border bg-white/5 pl-11 pr-4 py-3.5 text-sm leading-6 text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.description
                                                 ? "border-red-400/50"
                                                 : "border-white/10"
                                             }`}
@@ -368,7 +368,7 @@ function LiquidateForm() {
                                         <input
                                             {...register("itemCount")}
                                             placeholder="e.g., 50, 100+, etc."
-                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                         />
                                     </div>
                                 </div>
@@ -385,7 +385,7 @@ function LiquidateForm() {
                                         <input
                                             {...register("timeline")}
                                             placeholder="e.g., Within 30 days, ASAP, etc."
-                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#C59D55] focus:ring-4 focus:ring-[#C59D55]/10"
+                                            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10"
                                         />
                                     </div>
                                 </div>
@@ -405,18 +405,18 @@ function LiquidateForm() {
                             {/* Submit */}
                             <div className="flex flex-col gap-4 border-t border-white/5 pt-6 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center gap-2 text-[12px] leading-4 text-white/40">
-                                    <Check size={14} className="shrink-0 text-[#C59D55]" />
+                                    <Check size={14} className="shrink-0 text-[#F5B51B]" />
                                     <span>100% free consultation. No obligation.</span>
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={sending}
-                                    className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-[#C59D55] px-7 text-sm font-bold text-[#111] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D8B96F] hover:shadow-[0_12px_35px_rgba(197,157,85,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-[#F5B51B] px-7 text-sm font-bold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_12px_35px_rgba(245,181,27,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {sending ? (
                                         <>
-                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#111]/25 border-t-[#111]" />
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/25 border-t-black" />
                                             Submitting...
                                         </>
                                     ) : (

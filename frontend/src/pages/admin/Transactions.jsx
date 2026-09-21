@@ -204,6 +204,10 @@ function Transactions() {
                 return <XCircle size={16} className="text-red-600" />;
             case 'processing_failed':
                 return <AlertCircle size={16} className="text-red-600" />;
+            case 'processing':
+                return <Clock size={16} className="text-blue-600" />;
+            case 'refunded':
+                return <XCircle size={16} className="text-gray-600" />;
             default:
                 return <Clock size={16} className="text-gray-600" />;
         }
@@ -215,6 +219,8 @@ function Transactions() {
             created: { class: "bg-blue-100 text-blue-800", text: "Pending" },
             requires_capture: { class: "bg-yellow-100 text-yellow-800", text: "Awaiting Capture" },
             canceled: { class: "bg-red-100 text-red-800", text: "Canceled" },
+            processing: { class: "bg-blue-100 text-blue-800", text: "Processing" },
+            refunded: { class: "bg-gray-100 text-gray-800", text: "Refunded" },
             processing_failed: { class: "bg-red-100 text-red-800", text: "Failed" }
         };
 
@@ -408,8 +414,14 @@ function Transactions() {
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="font-medium text-gray-900 text-sm">
+                                                        <h4 className="font-medium text-gray-900 text-sm flex items-center gap-2">
                                                             {transaction.transactionId}
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${transaction.source === 'bank_transfer'
+                                                                ? 'bg-purple-100 text-purple-700'
+                                                                : 'bg-blue-100 text-blue-700'
+                                                                }`}>
+                                                                {transaction.source === 'bank_transfer' ? 'BANK' : 'CARD'}
+                                                            </span>
                                                         </h4>
                                                         <span className="text-sm font-semibold text-green-600">
                                                             {formatCurrency(transaction.amount)}
@@ -444,7 +456,13 @@ function Transactions() {
                                         <div className="flex items-center justify-between mb-4">
                                             <div>
                                                 <h2 className="text-xl font-bold text-gray-900">{selectedTransaction.transactionId}</h2>
-                                                <p className="text-sm text-gray-600">Payment Intent: {selectedTransaction.paymentIntentId}</p>
+                                                <p className="text-sm text-gray-600">
+                                                    {selectedTransaction.paymentIntentId
+                                                        ? `Payment Intent: ${selectedTransaction.paymentIntentId}`
+                                                        : selectedTransaction.source === 'bank_transfer'
+                                                            ? 'Paid via Bank Transfer'
+                                                            : '—'}
+                                                </p>
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-2xl font-bold text-green-600">
@@ -507,7 +525,7 @@ function Transactions() {
                                             <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                                 <div>
-                                                    <div className="text-sm text-gray-600">Commission</div>
+                                                    <div className="text-sm text-gray-600">Buyer's Premium</div>
                                                     <div className="font-medium">{formatCurrency(selectedTransaction.commissionAmount)}</div>
                                                 </div>
                                                 <div>
@@ -531,7 +549,7 @@ function Transactions() {
                                     </div>
 
                                     {/* Transaction Timeline */}
-                                    <div className="p-6">
+                                    {/* <div className="p-6">
                                         <h3 className="text-lg font-semibold mb-4">Transaction Timeline</h3>
                                         <div className="space-y-4">
                                             <div className="flex items-center">
@@ -568,7 +586,7 @@ function Transactions() {
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">

@@ -2,6 +2,7 @@ import Auction from "../models/auction.model.js";
 import Payment from "../models/payment.model.js";
 import User from "../models/user.model.js";
 import { paymentInitiatedAdminEmail } from "../utils/nodemailer.js";
+import BidPayment from '../models/bidPayment.model.js';
 
 export const createBankTransferPayment = async (req, res) => {
     try {
@@ -225,50 +226,153 @@ export const getAuctionPaymentStatus = async (req, res) => {
 };
 
 // Get all payments for the authenticated bidder
+// export const getBidderPayments = async (req, res) => {
+//     try {
+//         const userId = req.user._id;
+
+//         // Only bidders can access
+//         // if (req.user.userType !== 'bidder') {
+//         //     return res.status(403).json({ success: false, message: "Only bidders can view their payments" });
+//         // }
+
+//         // Fetch all payments for this bidder, populate auction details
+//         const payments = await Payment.find({ bidder: userId })
+//             .populate('auction', 'title finalPrice currentPrice endDate status')
+//             .sort({ createdAt: -1 });
+
+//         // Calculate statistics
+//         const totalCompleted = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.totalAmount, 0);
+//         const totalPending = payments.filter(p => p.status === 'processing' || p.status === 'pending').reduce((sum, p) => sum + p.totalAmount, 0);
+//         const totalAll = payments.reduce((sum, p) => sum + p.totalAmount, 0);
+//         const countCompleted = payments.filter(p => p.status === 'completed').length;
+//         const countPending = payments.filter(p => p.status === 'processing' || p.status === 'pending').length;
+//         const countFailed = payments.filter(p => p.status === 'failed' || p.status === 'cancelled').length;
+
+//         // Format amounts for display (using helper or directly in frontend)
+//         const statistics = {
+//             totalPaid: totalCompleted,
+//             totalPending: totalPending,
+//             totalAll: totalAll,
+//             countCompleted,
+//             countPending,
+//             countFailed,
+//             formattedTotalPaid: formatCurrency(totalCompleted), // use a helper in frontend instead
+//             formattedTotalPending: formatCurrency(totalPending),
+//             formattedTotalAll: formatCurrency(totalAll),
+//         };
+
+//         res.status(200).json({
+//             success: true,
+//             data: {
+//                 payments,
+//                 statistics,
+//             },
+//         });
+//     } catch (error) {
+//         console.error("Error fetching bidder payments:", error);
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// };
+
+const normalizeBidPaymentStatus = (status) => {
+    switch (status) {
+        case 'succeeded': return 'completed';
+        case 'processing': return 'processing';
+        case 'requires_capture': return 'processing';
+        case 'canceled': return 'cancelled';
+        case 'processing_failed': return 'failed';
+        case 'created':
+        case 'requires_payment_method':
+        case 'requires_action':
+        default: return 'pending';
+    }
+};
+
 export const getBidderPayments = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // Only bidders can access
-        // if (req.user.userType !== 'bidder') {
-        //     return res.status(403).json({ success: false, message: "Only bidders can view their payments" });
-        // }
+        const [bankPayments, cardPayments] = await Promise.all([
+            Payment.find({ bidder: userId })
+                .populate('auction', 'title finalPrice currentPrice endDate status')
+                .sort({ createdAt: -1 })
+                .lean(),
+            BidPayment.find({
+                bidder: userId,
+                // Only real charges — skip per-bid authorization holds
+                type: { $in: ['winner_payment', 'final_commission'] }
+            })
+                .populate('auction', 'title finalPrice currentPrice endDate status')
+                .sort({ createdAt: -1 })
+                .lean()
+        ]);
 
-        // Fetch all payments for this bidder, populate auction details
-        const payments = await Payment.find({ bidder: userId })
-            .populate('auction', 'title finalPrice currentPrice endDate status')
-            .sort({ createdAt: -1 });
+        const normalizedBank = bankPayments.map((p) => ({
+            ...p,
+            source: 'bank_transfer',
+            paymentMethod: p.paymentMethod || 'bank_transfer',
+        }));
 
-        // Calculate statistics
-        const totalCompleted = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.totalAmount, 0);
-        const totalPending = payments.filter(p => p.status === 'processing' || p.status === 'pending').reduce((sum, p) => sum + p.totalAmount, 0);
-        const totalAll = payments.reduce((sum, p) => sum + p.totalAmount, 0);
-        const countCompleted = payments.filter(p => p.status === 'completed').length;
-        const countPending = payments.filter(p => p.status === 'processing' || p.status === 'pending').length;
-        const countFailed = payments.filter(p => p.status === 'failed' || p.status === 'cancelled').length;
+        const normalizedCard = cardPayments.map((p) => ({
+            _id: p._id,
+            auction: p.auction,
+            bidder: p.bidder,
+            bidAmount: p.bidAmount || 0,
+            commissionAmount: p.commissionAmount || 0,
+            taxAmount: p.taxAmount || 0,
+            totalAmount: p.totalAmount || 0,
+            status: normalizeBidPaymentStatus(p.status),
+            type: p.type,
+            source: 'stripe',
+            paymentMethod: 'credit_card',
+            transactionReference: p.paymentIntentId,
+            paymentIntentId: p.paymentIntentId,
+            completedAt: p.status === 'succeeded' ? p.updatedAt : null,
+            notes:
+                p.chargeAttempted && p.chargeSucceeded === false
+                    ? 'Card charge failed'
+                    : null,
+            proofOfPayment: [],
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+        }));
 
-        // Format amounts for display (using helper or directly in frontend)
+        const payments = [...normalizedBank, ...normalizedCard].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        // Hide pending transactions from the bidder view
+        const VISIBLE_STATUSES = ['completed', 'processing', 'failed', 'cancelled'];
+        const visiblePayments = payments.filter((p) => VISIBLE_STATUSES.includes(p.status));
+
+        const completed = visiblePayments.filter((p) => p.status === 'completed');
+        const pending = []; // no pending rows visible anymore
+        const failed = visiblePayments.filter(
+            (p) => p.status === 'failed' || p.status === 'cancelled'
+        );
+
+        const totalCompleted = completed.reduce((s, p) => s + p.totalAmount, 0);
+        const totalPending = 0;
+        const totalAll = visiblePayments.reduce((s, p) => s + p.totalAmount, 0);
+
         const statistics = {
             totalPaid: totalCompleted,
             totalPending: totalPending,
             totalAll: totalAll,
-            countCompleted,
-            countPending,
-            countFailed,
-            formattedTotalPaid: formatCurrency(totalCompleted), // use a helper in frontend instead
+            countCompleted: completed.length,
+            countPending: pending.length,
+            countFailed: failed.length,
+            formattedTotalPaid: formatCurrency(totalCompleted),
             formattedTotalPending: formatCurrency(totalPending),
             formattedTotalAll: formatCurrency(totalAll),
         };
 
         res.status(200).json({
             success: true,
-            data: {
-                payments,
-                statistics,
-            },
+            data: { payments: visiblePayments, statistics },
         });
     } catch (error) {
-        console.error("Error fetching bidder payments:", error);
+        console.error('Error fetching bidder payments:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -572,7 +572,7 @@ function Categories() {
                             </div>
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="mt-4 md:mt-0 flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-3 rounded-lg transition-colors"
+                                className="mt-4 md:mt-0 flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-3 rounded-lg transition-colors"
                             >
                                 <Plus size={20} />
                                 Add New Category
@@ -716,7 +716,7 @@ function Categories() {
                                 </p>
                                 <button
                                     onClick={() => setShowForm(true)}
-                                    className="inline-flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg transition-colors"
+                                    className="inline-flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition-colors"
                                 >
                                     <Plus size={18} />
                                     Create Category
@@ -1023,7 +1023,7 @@ const CategoryFormModal = ({
                                     value={formData.name}
                                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C59D55] focus:border-transparent"
-                                    placeholder="e.g., Sports Cards, Signed Jerseys"
+                                    placeholder="e.g., trucks, excavators, etc."
                                     required
                                 />
                             </div>
@@ -1266,7 +1266,7 @@ const CategoryFormModal = ({
                     <button
                         type="submit"
                         disabled={uploading}
-                        className="flex-1 px-4 py-3 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 px-4 py-3 bg-black text-white hover:bg-black/80 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {uploading ? (
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
@@ -1340,7 +1340,7 @@ const FieldManagerModal = ({
                             <h4 className="font-medium text-gray-700">Category Fields</h4>
                             <button
                                 onClick={onAddField}
-                                className="flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg transition-colors"
+                                className="flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition-colors"
                             >
                                 <PlusCircle size={18} />
                                 Add Field
@@ -1360,7 +1360,7 @@ const FieldManagerModal = ({
                                 </p>
                                 <button
                                     onClick={onAddField}
-                                    className="inline-flex items-center gap-2 bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg transition-colors"
+                                    className="inline-flex items-center gap-2 bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition-colors"
                                 >
                                     <Plus size={18} />
                                     Add Your First Field

@@ -35,9 +35,9 @@ function Home() {
     };
 
     const tabDescriptions = {
-        'active': 'Handpicked collectibles. Transparent bidding. Verified authenticity. — find your next treasure today.',
-        'sold': 'Learn from past auctions — browse sold and reserve-not-met listings to bid smarter on your next piece.',
-        'approved': 'Plan your next move — browse upcoming collectible auctions and build your bidding strategy in advance.'
+        'active': 'Live right now. Real bids, real sellers, no guesswork — jump in and take your shot.',
+        'sold': 'See what actually sold and what didn\'t. Past results are the best guide to your next bid.',
+        'approved': 'Approved and queued up. Get a head start, set your budget, and be ready when bidding opens.'
     };
 
     const fetchAuctions = async (tab = activeTab, category = null, limit = 4, sortBy = 'highestBid') => {
@@ -140,7 +140,7 @@ function Home() {
                                         checked={activeTab === 'active'}
                                         onChange={() => handleTabChange('active')}
                                     />
-                                    <label htmlFor="active" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-[#1e2d3b] transition-colors duration-200 peer-checked:bg-[#C59D55] peer-checked:text-white">
+                                    <label htmlFor="active" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-[#1e2d3b] transition-colors duration-200 peer-checked:bg-[#F5B51B] peer-checked:text-black">
                                         Live
                                     </label>
                                 </div>
@@ -153,7 +153,7 @@ function Home() {
                                         checked={activeTab === 'sold'}
                                         onChange={() => handleTabChange('sold')}
                                     />
-                                    <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-gray-500 transition-colors duration-200 peer-checked:bg-[#C59D55] peer-checked:text-white">
+                                    <label htmlFor="sold" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-gray-500 transition-colors duration-200 peer-checked:bg-[#F5B51B] peer-checked:text-black">
                                         Closed
                                     </label>
                                 </div>
@@ -166,7 +166,7 @@ function Home() {
                                         checked={activeTab === 'approved'}
                                         onChange={() => handleTabChange('approved')}
                                     />
-                                    <label htmlFor="approved" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-gray-500 transition-colors duration-200 peer-checked:bg-[#C59D55] peer-checked:text-white">
+                                    <label htmlFor="approved" className="cursor-pointer rounded py-2 px-4 sm:px-8 text-gray-500 transition-colors duration-200 peer-checked:bg-[#F5B51B] peer-checked:text-black">
                                         Upcoming
                                     </label>
                                 </div>
@@ -260,7 +260,7 @@ function Home() {
                         {auctions.length > 0 && (
                             <button
                                 onClick={handleLoadByStatus}
-                                className="px-8 py-3 bg-[#C59D55] text-white font-medium rounded-lg transition-all duration-300 hover:bg-[#D8B96F] hover:shadow-[0_0_35px_rgba(197,157,85,0.25)] focus:outline-none focus:ring-2 focus:ring-[#C59D55] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mt-10 mx-auto"
+                                className="px-8 py-3 bg-[#F5B51B] text-black font-medium rounded-lg transition-all duration-300 hover:bg-[#eaa400] hover:shadow-[0_0_35px_rgba(197,157,85,0.25)] focus:outline-none focus:ring-2 focus:ring-[#F5B51B] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mt-10 mx-auto"
                             >
                                 View More
                             </button>
@@ -270,11 +270,11 @@ function Home() {
             </Container>
 
             {/* Who we are section */}
-            <Container className="mb-8 md:mb-0">
-                <Suspense fallback={<LoadingSpinner />}>
-                    <About />
-                </Suspense>
-            </Container>
+            {/* <Container className="mb-8 md:mb-0"> */}
+            <Suspense fallback={<LoadingSpinner />}>
+                <About />
+            </Suspense>
+            {/* </Container> */}
 
             <Container className="">
                 <HowItWorks />

@@ -177,7 +177,7 @@ function AllEvents() {
                                 </div>
                                 <Link
                                     to="/seller/events/create"
-                                    className="bg-[#C59D55] text-white hover:bg-[#C59D55]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                                    className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
                                 >
                                     <Plus size={18} />
                                     Create Event

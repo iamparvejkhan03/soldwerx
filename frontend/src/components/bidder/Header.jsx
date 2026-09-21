@@ -18,8 +18,8 @@ function Header() {
                 {
                     (dashboardType === 'seller')
                         ?
-                        <button className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-md cursor-pointer" onClick={() => navigate(`/bidder/dashboard`)}><RefreshCcw size={20} />Switch to Bidder</button>
-                        : <button className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-md cursor-pointer" onClick={() => navigate(`/seller/dashboard`)}><RefreshCcw size={20} />Switch to Seller</button>
+                        <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#FFC83D] text-black font-semibold px-5 py-2 rounded-md cursor-pointer transition-colors duration-200" onClick={() => navigate(`/bidder/dashboard`)}><RefreshCcw size={20} />Switch to Bidder</button>
+                        : <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#FFC83D] text-black font-semibold px-5 py-2 rounded-md cursor-pointer transition-colors duration-200" onClick={() => navigate(`/seller/dashboard`)}><RefreshCcw size={20} />Switch to Seller</button>
                 }
             </div>
 
@@ -46,7 +46,7 @@ function Header() {
                             ?
                             <Link to={`/bidder/profile`}><img src={user?.image} alt="userImage" className="h-10 w-10 rounded-full" /></Link>
                             :
-                            <Link to={`/bidder/profile`} className="h-10 w-10 rounded-full bg-[#C59D55] flex items-center justify-center text-white font-semibold">
+                            <Link to={`/bidder/profile`} className="h-10 w-10 rounded-full bg-[#F5B51B] flex items-center justify-center text-black font-semibold">
                                 {user?.firstName[0] + user?.lastName[0]}
                             </Link>
                     }

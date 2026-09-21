@@ -172,7 +172,7 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen pt-32 pb-16 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="min-h-screen pt-32 pb-16 bg-[#F5B51B]/10 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden">
                 {/* Header */}
                 <div className="pt-8 text-center flex flex-col items-center justify-center gap-3">
@@ -205,7 +205,7 @@ const Register = () => {
                                                     message: 'Invalid email address'
                                                 }
                                             })}
-                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                             placeholder="Enter your email"
                                         />
                                         {errors.email && (
@@ -231,7 +231,7 @@ const Register = () => {
                                                     message: 'Please enter a valid phone number'
                                                 }
                                             })}
-                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                             placeholder="e.g., +11234567890"
                                         />
                                         {errors.phone && (
@@ -256,7 +256,7 @@ const Register = () => {
                                                 required: 'Password is required',
                                                 minLength: { value: 6, message: 'Password must be at least 6 characters' }
                                             })}
-                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                             placeholder="Enter your password"
                                         />
                                         <button
@@ -265,9 +265,9 @@ const Register = () => {
                                             className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                         >
                                             {showPassword ? (
-                                                <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                                                <EyeOff size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                             ) : (
-                                                <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                                                <Eye size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                             )}
                                         </button>
                                         {errors.password && (
@@ -290,7 +290,7 @@ const Register = () => {
                                                 required: 'Please confirm your password',
                                                 validate: value => value === password || 'Passwords do not match'
                                             })}
-                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                             placeholder="Confirm your password"
                                         />
                                         <button
@@ -299,9 +299,9 @@ const Register = () => {
                                             className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                         >
                                             {showConfirmPassword ? (
-                                                <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                                                <EyeOff size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                             ) : (
-                                                <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                                                <Eye size={20} className="text-gray-400 hover:text-[#F5B51B]" />
                                             )}
                                         </button>
                                         {errors.confirmPassword && (
@@ -327,7 +327,7 @@ const Register = () => {
                                             required: 'First name is required',
                                             minLength: { value: 2, message: 'First name must be at least 2 characters' }
                                         })}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="w-full p-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                         placeholder="First name"
                                     />
                                     {errors.firstName && (
@@ -345,7 +345,7 @@ const Register = () => {
                                             required: 'Last name is required',
                                             minLength: { value: 2, message: 'Last name must be at least 2 characters' }
                                         })}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        className="w-full p-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                         placeholder="Last name"
                                     />
                                     {errors.lastName && (
@@ -375,7 +375,7 @@ const Register = () => {
                                                     message: 'Username can only contain letters, numbers, and underscores'
                                                 }
                                             })}
-                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20"
                                             placeholder="What others see when you bid"
                                         />
                                         {errors.username && (
@@ -503,7 +503,7 @@ const Register = () => {
                                         <div className="relative">
                                             <select
                                                 {...register('country', { required: 'Country is required' })}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
+                                                className="w-full p-3 border border-gray-300 rounded-lg outline-none transition-colors focus:border-[#F5B51B] focus:ring-2 focus:ring-[#F5B51B]/20 appearance-none"
                                             >
                                                 <option value="">Select country</option>
                                                 {countries.map(country => (
@@ -531,7 +531,7 @@ const Register = () => {
 
                             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch gap-3 my-2">
                                 <label
-                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'bidder' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'bidder' ? 'border-[#F5B51B] bg-[#F5B51B]/5' : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <input
@@ -541,7 +541,7 @@ const Register = () => {
                                         className="hidden"
                                         onChange={() => handleUserTypeChange('bidder')}
                                     />
-                                    <Gavel size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'bidder' ? 'bg-[#C59D55] text-white' : 'bg-gray-200 text-gray-600'
+                                    <Gavel size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'bidder' ? 'bg-[#F5B51B] text-black' : 'bg-gray-200 text-gray-600'
                                         }`} />
                                     <div>
                                         <p className="text-sm font-semibold">I'm a bidder</p>
@@ -550,7 +550,7 @@ const Register = () => {
                                 </label>
 
                                 <label
-                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'seller' ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                    className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer transition-colors ${userType === 'seller' ? 'border-[#F5B51B] bg-[#F5B51B]/5' : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <input
@@ -560,7 +560,7 @@ const Register = () => {
                                         className="hidden"
                                         onChange={() => handleUserTypeChange('seller')}
                                     />
-                                    <Store size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'seller' ? 'bg-[#C59D55] text-white' : 'bg-gray-200 text-gray-600'
+                                    <Store size={40} className={`flex-shrink-0 p-2 rounded ${userType === 'seller' ? 'bg-[#F5B51B] text-black' : 'bg-gray-200 text-gray-600'
                                         }`} />
                                     <div>
                                         <p className="text-sm font-semibold">I'm a seller</p>
@@ -655,7 +655,7 @@ const Register = () => {
                                     {...register('termsConditions', { required: 'Accepting terms of use is required for registration.' })}
                                 />
 
-                                <p className="text-sm text-gray-600">By registering, I agree to SoldWerX's <Link className='text-blue-600 underline' to={`/terms-of-use`}>Terms of Use</Link>. My information will be used as described in the <Link to={`/privacy-policy`} className='text-blue-600 underline'>Privacy Policy</Link>.</p>
+                                <p className="text-sm text-gray-600">By registering, I agree to SoldWerX's <Link className='text-[#F5B51B] underline' to={`/terms-of-use`}>Terms of Use</Link>. My information will be used as described in the <Link to={`/privacy-policy`} className='text-[#F5B51B] underline'>Privacy Policy</Link>.</p>
                             </label>
                             {errors.termsConditions && (
                                 <p className="text-red-500 text-sm mt-1">{errors.termsConditions.message}</p>
@@ -666,7 +666,7 @@ const Register = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#C59D55] hover:bg-[#D8B96F] text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                            className="w-full bg-[#F5B51B] hover:bg-[#e7a500] text-black py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:shadow-[0_10px_30px_rgba(245,181,27,0.25)] disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                         >
                             {isLoading ? 'Creating account...' : 'Create Account'}
                         </button>
@@ -676,7 +676,7 @@ const Register = () => {
                     <div className="text-center mt-6">
                         <p className="text-gray-600 text-sm">
                             Already have an account?{' '}
-                            <Link to="/login" className="text-primary hover:text-primary-dark font-semibold underline">
+                            <Link to="/login" className="text-[#F5B51B] hover:text-[#e7a500] font-semibold underline">
                                 Sign in
                             </Link>
                         </p>

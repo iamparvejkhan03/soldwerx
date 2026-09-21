@@ -238,7 +238,7 @@ function BidderPayments() {
                                                     </p>
                                                     <p className="text-xs text-gray-500">
                                                         Bid: {formatCurrency(payment.bidAmount)}
-                                                        {payment.commissionAmount > 0 && ` + fee`}
+                                                        {payment.commissionAmount > 0 && ` + buyer's premium + tax`}
                                                     </p>
                                                 </div>
 
@@ -351,12 +351,18 @@ function BidderPayments() {
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                                 <span className="text-gray-600">Bid Amount:</span>
-                                                <span className="font-medium">{formatCurrency(selectedPayment.bidAmount)}</span>
+                                                <span className="font-medium text-green-600">{formatCurrency(selectedPayment.bidAmount)}</span>
                                             </div>
                                             {selectedPayment.commissionAmount > 0 && (
                                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                                                    <span className="text-gray-600">Platform Fee:</span>
+                                                    <span className="text-gray-600">Buyer's Premium:</span>
                                                     <span className="font-medium text-blue-600">{formatCurrency(selectedPayment.commissionAmount)}</span>
+                                                </div>
+                                            )}
+                                            {(selectedPayment.commissionAmount + selectedPayment.bidAmount) < selectedPayment.totalAmount && (
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                                    <span className="text-gray-600">Tax:</span>
+                                                    <span className="font-medium text-blue-600">{formatCurrency(selectedPayment.totalAmount - (selectedPayment.commissionAmount + selectedPayment.bidAmount))}</span>
                                                 </div>
                                             )}
                                             <div className="flex justify-between items-center py-2 text-lg">

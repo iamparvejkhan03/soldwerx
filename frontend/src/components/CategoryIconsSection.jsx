@@ -137,9 +137,7 @@ const CategoryIconsSection = () => {
                                 : 'translate-y-5 opacity-0'
                             }`}
                     >
-                        Browse by Category — sports cards, signed jerseys,
-                        game-used balls, autographed photos, and more. All
-                        verified. All in one place.
+                        Browse by Category — heavy equipment, trucks, trailers, vehicles, business assets, estates, and more. All verified. All in one place.
                     </p>
                 </div>
 
