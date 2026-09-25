@@ -13,6 +13,7 @@ const fileFilter = (req, file, cb) => {
   } else if (
     file.fieldname === "photos" ||
     file.fieldname === "logbooks" ||
+    file.fieldname === "attachments" ||
     file.fieldname === "serviceRecords"
   ) {
     if (file.mimetype.startsWith("image/")) {
@@ -25,7 +26,7 @@ const fileFilter = (req, file, cb) => {
         false
       );
     }
-  } else if (file.fieldname === "identificationDocument" || file.fieldname === "idDocument") {
+  } else if (file.fieldname === "identificationDocument" || file.fieldname === "idDocument" || file.fieldname === "attachments" || file.fieldname === "receipt") {
     const allowedMimeTypes = [
       "image/jpeg",
       "image/jpg",
@@ -43,7 +44,7 @@ const fileFilter = (req, file, cb) => {
         false,
       );
     }
-  } else if (file.fieldname === "icon" || file.fieldname === "image" || file.fieldname === 'event-photos') {
+  } else if (file.fieldname === "icon" || file.fieldname === "image" || file.fieldname === 'event-photos' || file.fieldname === "attachments" || file.fieldname === "receipt") {
     // For category icons and images
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
@@ -53,7 +54,7 @@ const fileFilter = (req, file, cb) => {
         false
       );
     }
-  } else if (file.fieldname === "documents" || file.fieldname === "invoice" || file.fieldname === 'event-documents') {
+  } else if (file.fieldname === "documents" || file.fieldname === "invoice" || file.fieldname === 'event-documents' || file.fieldname === "attachments" || file.fieldname === "receipt") {
     // ADDED 'invoice' here
     // Allow almost all file types for documents and invoices, but exclude executables and scripts
     const forbiddenTypes = [

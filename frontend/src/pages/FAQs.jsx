@@ -290,7 +290,7 @@ function FAQsPage() {
                             CATEGORY NAVIGATION
                         ================================================== */}
 
-                        <aside className="lg:sticky lg:top-24 lg:self-start">
+                        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
 
                             <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                                 Browse by section
@@ -339,7 +339,7 @@ function FAQsPage() {
                             </div>
 
                             {/* Mobile category scroll */}
-                            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {faqs.map((category) => {
                                     const active = activeCategory === category.category;
                                     return (
@@ -488,30 +488,33 @@ function FAQsPage() {
                                 BOTTOM CONTACT CTA
                             ================================================== */}
 
-                            <div className="relative mt-10 overflow-hidden rounded-2xl bg-[#08090A] p-7 md:p-9">
+                            <div className="relative mt-10 w-full min-w-0 max-w-full overflow-hidden rounded-2xl bg-[#08090A] p-5 sm:p-7 md:p-9">
                                 <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#F5B51B]/10 blur-[80px]" />
 
-                                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                                    <div>
+                                <div className="relative z-10 flex min-w-0 max-w-full flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                                    <div className="min-w-0 max-w-full">
                                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
                                             Can't find it here
                                         </p>
 
-                                        <h3 className="mt-3 text-2xl font-black tracking-[-0.03em] text-white">
+                                        <h3 className="mt-3 break-words text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
                                             Talk to our team.
                                         </h3>
 
-                                        <p className="mt-2 max-w-lg text-sm leading-6 text-white/55">
+                                        <p className="mt-2 max-w-lg break-words text-sm leading-6 text-white/55">
                                             Send us your question and we'll help you find the right answer.
                                         </p>
                                     </div>
 
                                     <Link
                                         to="/contact"
-                                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-[#F5B51B] px-6 py-3.5 text-sm font-bold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_15px_35px_rgba(245,181,27,0.25)]"
+                                        className="flex w-full max-w-full shrink-0 items-center justify-center gap-2 rounded-md bg-[#F5B51B] px-5 py-3.5 text-sm font-bold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFC83D] hover:shadow-[0_15px_35px_rgba(245,181,27,0.25)] md:w-auto md:px-6"
                                     >
-                                        Contact SoldWerX
-                                        <ArrowRight size={16} />
+                                        <span className="whitespace-nowrap">
+                                            Contact SoldWerX
+                                        </span>
+
+                                        <ArrowRight size={16} className="shrink-0" />
                                     </Link>
                                 </div>
                             </div>

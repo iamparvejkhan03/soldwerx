@@ -14,7 +14,8 @@ import {
     BanknoteArrowUp,
     BanknoteArrowDown,
     CalendarDaysIcon,
-    CalendarPlus
+    CalendarPlus,
+    MessageSquare
 } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { logo } from "../../assets";
@@ -25,6 +26,7 @@ const navigation = [
     { name: 'Dashboard', path: '/seller/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'All Auctions', path: '/seller/auctions/all', icon: <Gavel size={20} /> },
     { name: 'All Events', path: '/seller/events/all', icon: <CalendarDaysIcon size={20} /> },
+    { name: 'Communications', path: '/seller/communications/all', icon: <MessageSquare size={20} /> },
     { name: 'Create Auction', path: '/seller/auctions/create', icon: <Plus size={20} /> },
     { name: 'Create Event', path: '/seller/events/create', icon: <CalendarPlus size={20} /> },
     { name: 'Sold Auctions', path: '/seller/auctions/sold', icon: <Award size={20} /> },

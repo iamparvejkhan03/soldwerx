@@ -95,6 +95,18 @@ function SingleAuction() {
         }
     }, [id, countdown?.status]);
 
+    useEffect(() => {
+        const onKey = (e) => e.key === "Escape" && setShowProxyBidModal(false);
+        if (showProxyBidModal) {
+            document.addEventListener("keydown", onKey);
+            document.body.style.overflow = "hidden";
+        }
+        return () => {
+            document.removeEventListener("keydown", onKey);
+            document.body.style.overflow = "";
+        };
+    }, [showProxyBidModal]);
+
     const scrollToBidSection = () => {
         bidSectionRef.current?.scrollIntoView({
             behavior: 'smooth',
@@ -991,6 +1003,7 @@ function SingleAuction() {
                             <ProxyBidSection
                                 auction={auction}
                                 onAuctionUpdate={updateAuctionState}
+                                onClose={() => setShowProxyBidModal(false)}
                             />
                         </div>
                     </div>

@@ -328,8 +328,21 @@ function Header() {
                     <ul>
                         {
                             navLinks.map(link => (
-                                <li onClick={() => setIsMenuOpen(false)} key={link.name} className="relative mx-5 py-2">
-                                    <NavLink className={({ isActive }) => ``} to={link.href}>{link.name}</NavLink>
+                                <li onClick={() => setIsMenuOpen(false)} key={link.name} className="relative mx-5 py-3">
+                                    <NavLink
+                                        to={link.href}
+                                        className={({ isActive }) =>
+                                            `flex flex-col items-center justify-center transition-colors ${isActive ? 'text-[#F5B51B]' : 'text-gray-900 hover:text-[#F5B51B]'
+                                            }`
+                                        }
+                                    >
+                                        <span className={`${mainLabel} ${isScrolled ? 'group-hover:text-[#F5B51B]' : 'group-hover:text-[#F5B51B]'}`}>
+                                            {link.name}
+                                        </span>
+                                        {link.sublabel && (
+                                            <span className={subLabel}>{link.sublabel}</span>
+                                        )}
+                                    </NavLink>
                                 </li>
                             ))
                         }
@@ -501,7 +514,7 @@ function Header() {
                 <div className="lg:hidden z-50 flex items-center gap-5">
                     <LanguageSwitcher />
                     {
-                        isMenuOpen ? (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={closeMenu} alt="menu icon" className={`h-7 cursor-pointer invert-25 z-50 ${isScrolled}`} />) : (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={menuIcon} alt="menu icon" className={`h-5 cursor-pointer ${isScrolled && 'invert'} z-50`} />)
+                        isMenuOpen ? (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={closeMenu} alt="menu icon" className={`h-7 cursor-pointer invert-25 z-50 ${isScrolled}`} />) : (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={menuIcon} alt="menu icon" className={`h-5 cursor-pointer ${isScrolled && 'invert-25'} z-50`} />)
                     }
                 </div>
             </Container>

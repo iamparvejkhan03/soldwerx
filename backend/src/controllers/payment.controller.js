@@ -55,6 +55,7 @@ export const createBankTransferPayment = async (req, res) => {
                 bidder: userId,
                 bidAmount: bidAmount,
                 commissionAmount: commissionAmount,
+                taxAmount: taxAmount, 
                 totalAmount: totalAmount,
                 status: 'processing',
                 type: 'bank_transfer_payment',
@@ -64,6 +65,7 @@ export const createBankTransferPayment = async (req, res) => {
             // Update existing payment
             payment.bidAmount = bidAmount;
             payment.commissionAmount = commissionAmount;
+            payment.taxAmount = taxAmount, 
             payment.totalAmount = totalAmount;
             payment.status = 'processing'; // Reset to processing if it was cancelled or failed
             payment.type = 'bank_transfer_payment';
@@ -81,7 +83,7 @@ export const createBankTransferPayment = async (req, res) => {
             console.log('⚠️ No admin users found with userType: "admin"');
         } else {
             for (const admin of adminUsers) {
-                await paymentInitiatedAdminEmail(
+                paymentInitiatedAdminEmail(
                     admin?.email,
                     payment,
                     buyer,

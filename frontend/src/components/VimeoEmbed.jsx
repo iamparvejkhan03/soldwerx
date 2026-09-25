@@ -1,12 +1,32 @@
-const VimeoEmbed = ({ videoId, title = "Vimeo Video" }) => {
+export function extractYouTubeId(input) {
+  if (!input) return null;
+
+  // Already a bare 11-char ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+    return input;
+  }
+
+  // watch?v=ID | embed/ID | shorts/ID | live/ID | v/ID | youtu.be/ID
+  // Accepts optional www. / m. and any query string afterwards.
+  const match = input.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+
+  return match ? match[1] : null;
+}
+
+const YouTubeEmbed = ({ videoId, title = "YouTube video" }) => {
+  const id = extractYouTubeId(videoId);
+  if (!id) return <p>Invalid YouTube URL or ID</p>;
+
   return (
-    <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+    <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
       <iframe
-        src={`https://player.vimeo.com/video/${videoId}?badge=0&autopause=0&player_id=0&app_id=58479`}
-        frameBorder="0"
-        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-        referrerPolicy="strict-origin-when-cross-origin"
+        src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`}
         title={title}
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
         style={{
           position: "absolute",
           top: 0,
@@ -19,4 +39,4 @@ const VimeoEmbed = ({ videoId, title = "Vimeo Video" }) => {
   );
 };
 
-export default VimeoEmbed;
+export default YouTubeEmbed;

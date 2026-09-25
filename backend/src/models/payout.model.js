@@ -50,7 +50,6 @@ const payoutSchema = new Schema(
         transactionId: {
             type: String,
             sparse: true,
-            unique: true,
         },
         adminNotes: {
             type: String,

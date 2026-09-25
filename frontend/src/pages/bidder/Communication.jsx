@@ -213,6 +213,25 @@ const Communication = () => {
 
     const { messages, shippingInfo, seller, winningBidder, auction } = communication;
 
+    // 👇 Only show:
+    //   - all non-admin/staff messages (bidder ↔ seller)
+    //   - admin/staff messages addressed to ME
+    const myId = user?._id?.toString();
+    const filteredMessages = (messages || []).filter((msg) => {
+        const senderId = msg.sender?._id?.toString() || msg.sender?.toString();
+        const recipientRaw = msg.recipient?._id || msg.recipient;
+        const recipientId = recipientRaw?.toString();
+
+        const isAdminMsg = msg.senderRole === "admin" || msg.senderRole === "staff";
+
+        // Regular bidder/seller messages → always visible
+        if (!isAdminMsg) return true;
+
+        // Admin/staff messages → visible only if addressed to me
+        if (!myId) return false;
+        return recipientId === myId;
+    });
+
     return (
         <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
             <BidderSidebar />
@@ -224,7 +243,7 @@ const Communication = () => {
                     {/* Header with back button */}
                     <div className="flex items-center gap-4 mb-6 mt-16 md:mt-0">
                         <Link
-                            to={isSeller ? "/seller/auctions/sold" : "/bidder/auctions/won"}
+                            to={"/bidder/communications/all"}
                             className="p-2 bg-white rounded-full shadow hover:shadow-md transition"
                         >
                             <ArrowLeft size={20} className="text-gray-700" />
@@ -242,12 +261,12 @@ const Communication = () => {
                         <div className="lg:col-span-2 bg-white rounded-xl shadow border border-gray-200 flex flex-col h-[600px]">
                             {/* Messages container */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                {messages.length === 0 ? (
+                                {filteredMessages.length === 0 ? (
                                     <div className="text-center text-gray-500 py-8">
                                         <p>No messages yet. Start the conversation!</p>
                                     </div>
                                 ) : (
-                                    messages.map((msg, idx) => {
+                                    filteredMessages.map((msg, idx) => {
                                         const isCurrentUser = msg.sender._id === user?._id;
                                         const senderName = msg.sender?.firstName
                                             ? `${msg.sender.firstName} ${msg.sender.lastName || ""}`
@@ -333,7 +352,7 @@ const Communication = () => {
                                         className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2 grow sm:grow-0 w-auto justify-center"
                                     >
                                         <Send size={18} />
-                                        Send
+                                        {sending ? 'Sending...' : 'Send'}
                                     </button>
                                 </div>
                                 {attachments.length > 0 && (

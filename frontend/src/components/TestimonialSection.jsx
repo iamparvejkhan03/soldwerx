@@ -11,42 +11,42 @@ const testimonials = [
     position: "Construction Company Owner",
     review:
       "I've bought three excavators and a skid steer through SoldWerX. The listings are accurate, the bidding is straightforward, and I've never had a surprise on pickup. It's now the first place I check before calling a dealer.",
-    date: "January 22, 2026",
+    date: "August 22, 2026",
   },
   {
     name: "Tanya Brooks",
     position: "Fleet Manager",
     review:
       "We rotate our truck and trailer inventory through SoldWerX every quarter. The AI listing assistant cut our prep time in half, and the buyers who show up are serious — not tire-kickers. Payouts have been on time, every time.",
-    date: "February 14, 2026",
+    date: "September 14, 2026",
   },
   {
     name: "Marcus Whitfield",
     position: "Heavy Equipment Dealer",
     review:
       "I consign with several platforms and SoldWerX is the one I trust with my best inventory. Reserve auctions protect my margins, and the support team actually answers the phone. That's rare in this industry.",
-    date: "March 3, 2026",
+    date: "July 3, 2026",
   },
   {
     name: "Danielle Reyes",
     position: "Estate Liquidation Specialist",
     review:
       "Liquidating an estate is stressful enough without fighting a clunky platform. SoldWerX made it simple — I listed everything in an afternoon, tagged it to a single event, and the whole sale ran itself. My clients were thrilled with the results.",
-    date: "April 18, 2026",
+    date: "August 18, 2026",
   },
   {
     name: "Greg Halvorsen",
     position: "Restaurant Owner",
     review:
       "When we closed our second location, I had a full kitchen of equipment and no idea where to start. SoldWerX walked me through it, and the Buy Now option moved most of it within two weeks. Turned dead weight into working capital.",
-    date: "May 27, 2026",
+    date: "June 27, 2026",
   },
   {
     name: "Priya Raman",
     position: "Logistics Operations Director",
     review:
       "We use SoldWerX for both sides — sourcing trailers when we're expanding and selling off units when we're not. The make offer feature during auctions has saved us more than once. Verified sellers and transparent bidding make it an easy call.",
-    date: "June 9, 2026",
+    date: "September 9, 2026",
   },
 ];
 

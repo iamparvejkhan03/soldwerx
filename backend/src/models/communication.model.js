@@ -12,6 +12,11 @@ const messageSchema = new mongoose.Schema(
             enum: ["seller", "bidder", "admin", "staff"],
             required: true,
         },
+        recipient: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
+        },
         content: {
             type: String,
             trim: true,

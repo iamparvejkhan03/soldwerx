@@ -14,9 +14,8 @@ const PrivacyPolicy = () => {
                     <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                        <p className="text-blue-800 font-semibold mb-2">VENEZUELA COLLECTIBLES MARKETPLACE</p>
                         <p className="text-blue-700 text-sm">
-                            SoldWerX is a digital auction and direct-purchase marketplace for sports and non-sports collectibles operating in Venezuela.
+                            SoldWerX is a digital auction and direct-purchase marketplace for sports and non-sports collectibles operating in United States of America.
                             This policy explains how we handle your information in accordance with applicable data protection laws.
                         </p>
                     </div>
@@ -173,7 +172,7 @@ const PrivacyPolicy = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. International Transfers</h2>
                             <p className="text-gray-700">
-                                Your information is primarily processed within Venezuela. If transferred outside Venezuela,
+                                Your information is primarily processed within United States of America. If transferred outside United States of America,
                                 we ensure appropriate safeguards are in place to protect your data.
                             </p>
                         </div>
@@ -216,8 +215,8 @@ const PrivacyPolicy = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Privacy Policy is governed by the laws of Venezuela. Any disputes
-                                will be subject to the exclusive jurisdiction of the courts of Venezuela.
+                                This Privacy Policy is governed by the laws of United States of America. Any disputes
+                                will be subject to the exclusive jurisdiction of the courts of United States of America.
                             </p>
                         </div>
                     </div>

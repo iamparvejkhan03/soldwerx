@@ -36,10 +36,10 @@ const CommunicationDetail = () => {
     });
     const [updatingShipping, setUpdatingShipping] = useState(false);
     const [user, setUser] = useState(null);
+    const [activeTab, setActiveTab] = useState("seller"); // staff-only: "seller" | "buyer"
     const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
 
-    // Load user from localStorage
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         setUser(userData);
@@ -54,7 +54,7 @@ const CommunicationDetail = () => {
             scrollToBottom();
             markRead();
         }
-    }, [communication]);
+    }, [communication, activeTab]);
 
     const fetchCommunication = async () => {
         try {
@@ -104,6 +104,16 @@ const CommunicationDetail = () => {
         setSending(true);
         const formData = new FormData();
         formData.append("content", newMessage);
+
+        // Staff must specify the recipient (like admin). Bidder/seller auto-resolve server-side.
+        if (isStaff) {
+            const recipientId =
+                activeTab === "seller"
+                    ? communication?.seller?._id
+                    : communication?.winningBidder?._id;
+            if (recipientId) formData.append("recipientId", recipientId);
+        }
+
         attachments.forEach((file) => formData.append("attachments", file));
 
         try {
@@ -117,13 +127,13 @@ const CommunicationDetail = () => {
                 setNewMessage("");
                 setAttachments([]);
                 if (fileInputRef.current) fileInputRef.current.value = "";
-                toast.success('Message sent!')
+                toast.success("Message sent!");
             } else {
                 alert("Failed to send message");
             }
         } catch (err) {
             console.error(err);
-            alert("Error sending message");
+            alert(err?.response?.data?.message || "Error sending message");
         } finally {
             setSending(false);
         }
@@ -154,7 +164,7 @@ const CommunicationDetail = () => {
             );
             if (data.success) {
                 setCommunication(data.data);
-                alert("Shipping info updated");
+                toast.success("Shipping info updated");
             } else {
                 alert("Failed to update shipping");
             }
@@ -166,13 +176,13 @@ const CommunicationDetail = () => {
         }
     };
 
-    // Determine user type
+    // ---------- Role ----------
     const userType = user?.userType;
     const isSeller = userType === "seller";
     const isStaff = userType === "staff";
     const canEditShipping = isSeller || isStaff;
 
-    // Choose sidebar, header, container, and back link based on role
+    // ---------- Sidebar / Header / Container / Back link ----------
     let Sidebar, Header, Container, backLink;
     if (isStaff) {
         Sidebar = StaffSidebar;
@@ -185,7 +195,6 @@ const CommunicationDetail = () => {
         Container = SellerContainer;
         backLink = "/seller/auctions/sold";
     } else {
-        // bidder (default)
         Sidebar = BidderSidebar;
         Header = BidderHeader;
         Container = BidderContainer;
@@ -234,6 +243,31 @@ const CommunicationDetail = () => {
     if (!communication) return null;
 
     const { messages, shippingInfo, seller, winningBidder, auction } = communication;
+    const myId = user?._id?.toString();
+    const sellerId = communication.seller?._id?.toString();
+    const buyerId = communication.winningBidder?._id?.toString();
+
+    // ---------- Message filtering ----------
+    // Staff → tab-based, sees everything addressed to/from the active party (like admin)
+    // Bidder/Seller → all bidder↔seller messages + only their own admin/staff messages
+    const filteredMessages = (messages || []).filter((msg) => {
+        const senderId = msg.sender?._id?.toString() || msg.sender?.toString();
+        const recipientRaw = msg.recipient?._id || msg.recipient;
+        const recipientId = recipientRaw?.toString();
+        const isAdminMsg = msg.senderRole === "admin" || msg.senderRole === "staff";
+
+        if (isStaff) {
+            // Admin-style tabs
+            if (activeTab === "seller") {
+                return senderId === sellerId || recipientId === sellerId;
+            }
+            return senderId === buyerId || recipientId === buyerId;
+        }
+
+        // Bidder / Seller
+        if (!isAdminMsg) return true; // bidder↔seller always visible
+        return recipientId === myId;   // admin/staff → me only
+    });
 
     return (
         <section className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
@@ -243,7 +277,7 @@ const CommunicationDetail = () => {
                 <Container>
                     <AccountInactiveBanner />
 
-                    {/* Header with back button */}
+                    {/* Header */}
                     <div className="flex items-center gap-4 mb-6 pt-16 md:pt-0">
                         <Link
                             to={backLink}
@@ -260,25 +294,52 @@ const CommunicationDetail = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Main chat area */}
+                        {/* Chat card */}
                         <div className="lg:col-span-2 bg-white rounded-xl shadow border border-gray-200 flex flex-col h-[600px]">
+                            {/* Staff tabs — same as admin */}
+                            {isStaff && (
+                                <div className="border-b border-gray-200 flex">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab("seller")}
+                                        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "seller"
+                                                ? "border-b-2 border-[#C59D55] text-[#C59D55]"
+                                                : "text-gray-500 hover:text-gray-700"
+                                            }`}
+                                    >
+                                        <User size={16} className="inline mr-2" />
+                                        Seller
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab("buyer")}
+                                        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "buyer"
+                                                ? "border-b-2 border-[#C59D55] text-[#C59D55]"
+                                                : "text-gray-500 hover:text-gray-700"
+                                            }`}
+                                    >
+                                        <User size={16} className="inline mr-2" />
+                                        Buyer
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Messages */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                {messages.length === 0 ? (
+                                {filteredMessages.length === 0 ? (
                                     <div className="text-center text-gray-500 py-8">
-                                        <p>No messages yet. Start the conversation!</p>
+                                        <p>
+                                            {isStaff
+                                                ? `No messages with this ${activeTab === "seller" ? "seller" : "buyer"} yet.`
+                                                : "No messages yet. Start the conversation!"}
+                                        </p>
                                     </div>
                                 ) : (
-                                    messages.map((msg, idx) => {
-                                        const isCurrentUser = msg.sender._id === user?._id;
+                                    filteredMessages.map((msg, idx) => {
+                                        const isCurrentUser = msg.sender?._id?.toString() === myId;
                                         const senderName = msg.sender?.firstName
                                             ? `${msg.sender.firstName} ${msg.sender.lastName || ""}`
                                             : msg.sender?.username || "Unknown";
-                                        const roleLabel =
-                                            msg.senderRole === "seller"
-                                                ? "Seller"
-                                                : msg.senderRole === "staff"
-                                                    ? "Staff"
-                                                    : "Bidder";
                                         return (
                                             <div
                                                 key={idx}
@@ -293,14 +354,14 @@ const CommunicationDetail = () => {
                                                     <div className="flex items-center gap-2 text-xs mb-1">
                                                         <span className="font-semibold">{senderName}</span>
                                                         <span className="text-gray-600 dark:text-gray-600">•</span>
-                                                        {/* <span className="text-gray-500 dark:text-gray-400">{roleLabel}</span>
-                                                        <span className="text-gray-500 dark:text-gray-400">•</span> */}
                                                         <span className="text-gray-600 dark:text-gray-600">
                                                             {format(new Date(msg.createdAt), "MMM d, h:mm a")}
                                                         </span>
                                                     </div>
-                                                    {msg.content && <p className="text-sm break-words">{msg.content}</p>}
-                                                    {msg.attachments.length > 0 && (
+                                                    {msg.content && (
+                                                        <p className="text-sm break-words">{msg.content}</p>
+                                                    )}
+                                                    {msg.attachments?.length > 0 && (
                                                         <div className="mt-2 space-y-1">
                                                             {msg.attachments.map((att, i) => (
                                                                 <a
@@ -324,7 +385,7 @@ const CommunicationDetail = () => {
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* Message input */}
+                            {/* Input */}
                             <form
                                 onSubmit={handleSendMessage}
                                 className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-xl"
@@ -332,7 +393,11 @@ const CommunicationDetail = () => {
                                 <div className="flex items-center flex-wrap gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Write something..."
+                                        placeholder={
+                                            isStaff
+                                                ? `Send message to ${activeTab === "seller" ? "Seller" : "Buyer"}...`
+                                                : "Write something..."
+                                        }
                                         className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[#C59D55] focus:border-transparent"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
@@ -358,7 +423,7 @@ const CommunicationDetail = () => {
                                         className="bg-black text-white hover:bg-black/80 px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2 grow sm:grow-0 w-auto justify-center"
                                     >
                                         <Send size={18} />
-                                        Send
+                                        {sending ? "Sending..." : "Send"}
                                     </button>
                                 </div>
                                 {attachments.length > 0 && (
@@ -482,12 +547,6 @@ const CommunicationDetail = () => {
                                                 {shippingInfo.notes && (
                                                     <p>
                                                         <span className="text-gray-500">Notes:</span> {shippingInfo.notes}
-                                                    </p>
-                                                )}
-                                                {shippingInfo.updatedBy && (
-                                                    <p className="text-xs text-gray-400">
-                                                        Updated by{" "}
-                                                        {shippingInfo.updatedBy.firstName || shippingInfo.updatedBy.username}
                                                     </p>
                                                 )}
                                             </>

@@ -7,6 +7,8 @@ import {
     updateShipping,
     markRead,
     getAllCommunications,
+    getBidderCommunications,
+    getSellerCommunications,
 } from "../controllers/communication.controller.js";
 import { requirePermission } from "../middlewares/permission.middleware.js";
 
@@ -16,6 +18,10 @@ const communicationRouter = express.Router();
 communicationRouter.use(auth);
 
 communicationRouter.get("/admin/all", authAdmin, requirePermission("manage_communications"), getAllCommunications);
+
+// Bidder / Seller — MUST come before "/:auctionId"
+communicationRouter.get("/bidder/all", getBidderCommunications);
+communicationRouter.get("/seller/all", getSellerCommunications);
 
 // Get communication for an auction
 communicationRouter.get("/:auctionId", getCommunication);

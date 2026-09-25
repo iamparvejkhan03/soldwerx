@@ -684,12 +684,12 @@ export const deleteEvent = async (req, res) => {
         }
 
         // Only allow deletion of draft or cancelled events
-        if (!["draft", "cancelled"].includes(event.status)) {
-            return res.status(400).json({
-                success: false,
-                message: "Only draft or cancelled events can be deleted",
-            });
-        }
+        // if (!["draft", "cancelled"].includes(event.status)) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Only draft or cancelled events can be deleted",
+        //     });
+        // }
 
         // Delete uploaded files from cloudinary
         for (const photo of event.photos) {

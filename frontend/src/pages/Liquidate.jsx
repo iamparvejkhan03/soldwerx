@@ -168,10 +168,10 @@ function Liquidate() {
                                     </span>
                                 </div>
 
-                                <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
-                                    LIQUIDATE A
+                                <h1 className="text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
+                                    Liquidate a
                                     <span className="block text-[#F5B51B]">
-                                        BUSINESS OR ESTATE
+                                        Business or Estate
                                     </span>
                                 </h1>
 

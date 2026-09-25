@@ -16,16 +16,6 @@ function Header() {
 
             {/* Right section with icons and user */}
             <div className="flex items-center space-x-4 md:space-x-5">
-                {/* Notifications */}
-                {/* <button className="relative p-2 text-secondary hover:text-black transition-colors">
-                    <Bell size={22} />
-                    {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {notificationsCount}
-                        </span>
-                    )}
-                </button> */}
-
                 {/* User profile */}
                 <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
                     <div className="text-right hidden md:block">

@@ -389,17 +389,21 @@ export const respondToOffer = async (req, res) => {
     // Send email notification to buyer
     try {
       if (response === "accept") {
-        await offerAcceptedEmail(
+        offerAcceptedEmail(
           offer.buyer.email,
           updatedAuction,
           offer.amount
+        ).catch((error) =>
+            console.error("Failed to send offer accepted email:", error),
         );
       } else if (response === "reject") {
-        await offerRejectedEmail(
+        offerRejectedEmail(
           offer.buyer.email,
           updatedAuction,
           offer.amount,
           offer?.sellerResponse || "Offer rejected by seller",
+        ).catch((error) =>
+            console.error("Failed to send offer rejected email:", error),
         );
       }
     } catch (emailError) {
@@ -493,11 +497,13 @@ export const acceptCounterOffer = async (req, res) => {
 
     // Send email notification to seller
     try {
-      await offerAcceptedEmail(
+      offerAcceptedEmail(
         updatedAuction.winner.email,
         updatedAuction,
         offer.counterOffer.amount,
-      );
+      ).catch((error) =>
+            console.error("Failed to send offer accepted email:", error),
+        );
     } catch (emailError) {
       console.error(
         "Failed to send acceptance notification email:",
@@ -1163,7 +1169,7 @@ export const adminRespondToOffer = async (req, res) => {
           console.error("Failed to send admin auction won email:", error)
       );
     } else {
-      await offerRejectedEmail(
+      offerRejectedEmail(
         offer.buyer.email,
         updatedAuction,
         offer.amount,

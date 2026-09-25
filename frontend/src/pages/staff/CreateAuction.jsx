@@ -874,7 +874,7 @@ const CreateAuction = () => {
                                                     id="title"
                                                     type="text"
                                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    placeholder="e.g., 1985 Star Co. Michael Jordan #117 BGS Gem Mint 9.5"
+                                                    placeholder="e.g., John Deere 5310"
                                                 />
                                                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
                                             </div>
@@ -1116,7 +1116,7 @@ const CreateAuction = () => {
                                         )}
 
                                         {/* Allow Offers Toggle */}
-                                        <div className="mb-6">
+                                        {(watch('auctionType') !== 'buy_now' && watch('auctionType') !== 'giveaway') && <div className="mb-6">
                                             <label className="flex items-center cursor-pointer">
                                                 <div className="relative">
                                                     <input
@@ -1135,7 +1135,7 @@ const CreateAuction = () => {
                                                     </p>
                                                 </div>
                                             </label>
-                                        </div>
+                                        </div>}
 
                                         <hr className="my-6" />
 

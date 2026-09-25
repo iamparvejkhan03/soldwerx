@@ -47,9 +47,9 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
     };
 
     const removeImage = (index) => {
+        URL.revokeObjectURL(previews[index]); 
         const updatedImages = images.filter((_, i) => i !== index);
         const updatedPreviews = previews.filter((_, i) => i !== index);
-
         setImages(updatedImages);
         setPreviews(updatedPreviews);
         onImagesChange(updatedImages);
@@ -68,8 +68,8 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
                     disabled={images.length >= maxFiles}
                 />
                 <div className={`flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all ${images.length >= maxFiles
-                        ? "border-white/10 bg-white/[0.02]"
-                        : "border-[#F5B51B]/30 hover:border-[#F5B51B] hover:bg-[#F5B51B]/5"
+                    ? "border-white/10 bg-white/[0.02]"
+                    : "border-[#F5B51B]/30 hover:border-[#F5B51B] hover:bg-[#F5B51B]/5"
                     }`}>
                     <div className="flex flex-col items-center p-6 text-center">
                         <div className="mb-2 rounded-full bg-[#F5B51B]/10 p-2.5 text-[#F5B51B]">
@@ -141,6 +141,7 @@ function LiquidateForm() {
 
     const [sending, setSending] = useState(false);
     const [photos, setPhotos] = useState([]);
+    const [uploadKey, setUploadKey] = useState(0);
 
     const submitHandler = async (formData) => {
         try {
@@ -177,6 +178,7 @@ function LiquidateForm() {
                 toast.success(data.message || "Your liquidation request has been submitted successfully!");
                 reset();
                 setPhotos([]);
+                setUploadKey((k) => k + 1);
 
                 window.scrollTo({
                     top: 0,
@@ -250,8 +252,8 @@ function LiquidateForm() {
                                             {...register("name", { required: true })}
                                             placeholder="John Doe"
                                             className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.name
-                                                    ? "border-red-400/50"
-                                                    : "border-white/10"
+                                                ? "border-red-400/50"
+                                                : "border-white/10"
                                                 }`}
                                         />
                                     </div>
@@ -277,8 +279,8 @@ function LiquidateForm() {
                                             {...register("email", { required: true })}
                                             placeholder="john@example.com"
                                             className={`h-12 w-full rounded-xl border bg-white/5 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.email
-                                                    ? "border-red-400/50"
-                                                    : "border-white/10"
+                                                ? "border-red-400/50"
+                                                : "border-white/10"
                                                 }`}
                                         />
                                     </div>
@@ -342,8 +344,8 @@ function LiquidateForm() {
                                         {...register("description", { required: true })}
                                         placeholder="Describe the items, assets, or inventory you want to liquidate. Be as detailed as possible..."
                                         className={`min-h-[120px] w-full resize-none rounded-xl border bg-white/5 pl-11 pr-4 py-3.5 text-sm leading-6 text-white outline-none transition-all placeholder:text-white/40 focus:border-[#F5B51B] focus:ring-4 focus:ring-[#F5B51B]/10 ${errors.description
-                                                ? "border-red-400/50"
-                                                : "border-white/10"
+                                            ? "border-red-400/50"
+                                            : "border-white/10"
                                             }`}
                                     />
                                 </div>
@@ -397,6 +399,7 @@ function LiquidateForm() {
                                     Photos (Optional)
                                 </label>
                                 <ImageUpload
+                                    key={uploadKey}
                                     onImagesChange={setPhotos}
                                     maxFiles={5}
                                 />

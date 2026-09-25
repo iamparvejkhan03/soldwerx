@@ -55,6 +55,7 @@ export const getCommunication = async (req, res) => {
 
         // Populate all needed fields
         await comm.populate("messages.sender", "username firstName lastName userType");
+        await comm.populate("messages.recipient", "username firstName lastName userType");
         await comm.populate("shippingInfo.updatedBy", "username firstName lastName");
         await comm.populate("seller", "username firstName lastName email");
         await comm.populate("winningBidder", "username firstName lastName email");
@@ -74,10 +75,9 @@ export const getCommunication = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const { auctionId } = req.params;
-        const { content } = req.body;
+        const { content, recipientId } = req.body;
         const userId = req.user._id;
 
-        // Get auction for validation
         const auction = await Auction.findById(auctionId)
             .populate("seller", "_id")
             .populate("winner", "_id");
@@ -92,6 +92,7 @@ export const sendMessage = async (req, res) => {
         const user = await User.findById(userId);
         const isAdmin = user?.userType === "admin";
         const isStaff = user?.userType === "staff";
+
         if (!isSeller && !isBidder && !isAdmin && !isStaff) {
             return res.status(403).json({ success: false, message: "Not authorized" });
         }
@@ -101,7 +102,39 @@ export const sendMessage = async (req, res) => {
         else if (isAdmin) role = "admin";
         else if (isStaff) role = "staff";
 
-        // Get or create communication
+        // ---------- Determine recipient ----------
+        let recipient = null;
+
+        if (isAdmin || isStaff) {
+            // Admin/staff must explicitly pick seller or bidder
+            if (!recipientId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Recipient ID required for admin/staff",
+                });
+            }
+            const recipientUser = await User.findById(recipientId);
+            if (!recipientUser) {
+                return res.status(400).json({ success: false, message: "Recipient not found" });
+            }
+            const isRecipientSeller = recipientUser._id.toString() === auction.seller._id.toString();
+            const isRecipientBidder = recipientUser._id.toString() === auction.winner._id.toString();
+            if (!isRecipientSeller && !isRecipientBidder) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Recipient must be seller or winning bidder",
+                });
+            }
+            recipient = recipientUser._id;
+        } else if (isSeller) {
+            // Seller → Winning Bidder
+            recipient = auction.winner._id;
+        } else if (isBidder) {
+            // Bidder → Seller
+            recipient = auction.seller._id;
+        }
+
+        // ---------- Get or create communication ----------
         let comm = await Communication.findOne({ auction: auctionId });
         if (!comm) {
             comm = new Communication({
@@ -114,7 +147,7 @@ export const sendMessage = async (req, res) => {
             });
         }
 
-        // Upload attachments
+        // ---------- Attachments ----------
         const attachments = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
@@ -141,10 +174,11 @@ export const sendMessage = async (req, res) => {
             }
         }
 
-        // Build message
+        // ---------- Build & save message (recipient is now set) ----------
         const message = {
             sender: userId,
             senderRole: role,
+            recipient,               // 👈 now saved
             content: content || "",
             attachments,
             readBy: [userId],
@@ -154,48 +188,42 @@ export const sendMessage = async (req, res) => {
         comm.lastMessageAt = new Date();
         await comm.save();
 
-        // Populate for response
+        // ---------- Populate for response ----------
         await comm.populate("messages.sender", "username firstName lastName userType");
-        await comm.populate("seller", "username firstName lastName");
-        await comm.populate("winningBidder", "username firstName lastName");
+        await comm.populate("messages.recipient", "username firstName lastName userType");
+        await comm.populate("shippingInfo.updatedBy", "username firstName lastName");
+        await comm.populate("seller", "username firstName lastName email");
+        await comm.populate("winningBidder", "username firstName lastName email");
         await comm.populate("auction", "title category finalPrice status");
 
-        // ============================================================
-        // FIRE-AND-FORGET EMAIL NOTIFICATIONS (background)
-        // ============================================================
+        // ---------- Email notifications ----------
+        const sender = user;
+        const seller = await User.findById(auction.seller._id)
+            .select("email firstName lastName username userType");
+        const winningBidder = await User.findById(auction.winner._id)
+            .select("email firstName lastName username userType");
 
-        // Determine who to notify (the other party)
-        // If sender is seller → notify winning bidder
-        // If sender is bidder → notify seller
-        // If sender is admin → notify BOTH seller AND winning bidder
-        // If sender is staff → notify BOTH seller AND winning bidder
-
-        const sender = user; // The user who sent the message
-        const seller = await User.findById(auction.seller._id).select("email firstName lastName username userType");
-        const winningBidder = await User.findById(auction.winner._id).select("email firstName lastName username userType");
-
-        // Function to send email in background (no await)
-        const sendNotification = (recipient, senderUser, auctionData, messageContent, commId) => {
-            if (recipient && recipient.email && recipient._id.toString() !== senderUser._id.toString()) {
+        const sendNotification = (recipientUser, senderUser, auctionData, messageContent, commId) => {
+            if (recipientUser && recipientUser.email && recipientUser._id.toString() !== senderUser._id.toString()) {
                 newMessageNotificationEmail(
-                    recipient,
+                    recipientUser,
                     senderUser,
                     auctionData,
-                    messageContent || 'No text content (attachment(s) sent)',
+                    messageContent || "No text content (attachment(s) sent)",
                     commId
-                ).catch(err => console.error("Background email error:", err));
+                ).catch((err) => console.error("Background email error:", err));
             }
         };
 
         if (isAdmin || isStaff) {
-            // Admin/Staff sent message → notify BOTH seller and winning bidder
-            sendNotification(seller, sender, auction, content, comm._id);
-            sendNotification(winningBidder, sender, auction, content, comm._id);
+            // Admin/staff → notify ONLY the chosen recipient
+            const target = recipient.toString() === auction.seller._id.toString()
+                ? seller
+                : winningBidder;
+            sendNotification(target, sender, auction, content, comm._id);
         } else if (isSeller) {
-            // Seller sent message → notify winning bidder only
             sendNotification(winningBidder, sender, auction, content, comm._id);
         } else if (isBidder) {
-            // Bidder sent message → notify seller only
             sendNotification(seller, sender, auction, content, comm._id);
         }
 
@@ -344,6 +372,48 @@ export const getAllCommunications = async (req, res) => {
         });
     } catch (error) {
         console.error("Get all communications error:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// GET communications for the logged-in bidder
+export const getBidderCommunications = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const communications = await Communication.find({ winningBidder: userId })
+            .populate("auction", "title categories finalPrice status auctionType photos")
+            .populate("seller", "username firstName lastName email")
+            .populate("winningBidder", "username firstName lastName email")
+            .sort({ lastMessageAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: communications,
+        });
+    } catch (error) {
+        console.error("Get bidder communications error:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// GET communications for the logged-in seller
+export const getSellerCommunications = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const communications = await Communication.find({ seller: userId })
+            .populate("auction", "title categories finalPrice status auctionType photos")
+            .populate("seller", "username firstName lastName email")
+            .populate("winningBidder", "username firstName lastName email")
+            .sort({ lastMessageAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: communications,
+        });
+    } catch (error) {
+        console.error("Get seller communications error:", error);
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };

@@ -175,8 +175,8 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>This Agreement is governed by the laws of Venezuela</li>
-                                <li>Any disputes shall be resolved by the courts of Venezuela</li>
+                                <li>This Agreement is governed by the laws of United States of America</li>
+                                <li>Any disputes shall be resolved by the courts of United States of America</li>
                             </ul>
                         </div>
 

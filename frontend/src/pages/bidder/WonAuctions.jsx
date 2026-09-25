@@ -162,7 +162,7 @@ const BankTransferDetails = ({ bankDetails, onCopy, handleBankTransfer, onClose,
                 <p className="text-xs text-yellow-800 flex items-start gap-2">
                     <Info size={16} className="flex-shrink-0 mt-0.5" />
                     <span>
-                        Funds may take 1-3 business days to clear.
+                        Please send your payment on the above details. <br /> Admin will manually review your payment and approve it. <br /> Funds may take 1-3 business days to clear.
                     </span>
                 </p>
             </div>
@@ -274,6 +274,7 @@ function WonAuctions() {
                 toast.success("Bank transfer initiated! Please transfer the amount to the provided bank details.");
                 setShowBankDetailsModal(false);
                 setProcessing(false);
+                await fetchWonAuctions();
             }
         } catch (error) {
             toast.dismiss(loadingToast);

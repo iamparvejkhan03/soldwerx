@@ -4,7 +4,7 @@ import axiosInstance from "../utils/axiosInstance";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 
-const ProxyBidSection = ({ auction, onAuctionUpdate }) => {
+const ProxyBidSection = ({ auction, onAuctionUpdate, onClose }) => {
     const [maxAmount, setMaxAmount] = useState("");
     const [newMaxAmount, setNewMaxAmount] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -78,6 +78,7 @@ const ProxyBidSection = ({ auction, onAuctionUpdate }) => {
                 setProxyBidStatus(data.data.proxyBid);
                 setNewMaxAmount(bidAmount.toString());
                 if (onAuctionUpdate) onAuctionUpdate(data.data.auction);
+                onClose?.();
             }
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to place proxy bid");
@@ -119,9 +120,8 @@ const ProxyBidSection = ({ auction, onAuctionUpdate }) => {
 
             if (data.success) {
                 toast.success("Proxy bid updated successfully!");
-                // Re-fetch status to get latest data from server
-                await fetchProxyBidStatus();
                 if (onAuctionUpdate) onAuctionUpdate(data.data.auction);
+                onClose?.();
             }
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to update proxy bid");
@@ -143,6 +143,7 @@ const ProxyBidSection = ({ auction, onAuctionUpdate }) => {
                 setProxyBidStatus(null);
                 setNewMaxAmount("");
                 if (onAuctionUpdate) onAuctionUpdate(data.data.auction);
+                onClose?.();
             }
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to cancel proxy bid");

@@ -642,7 +642,7 @@ function Auctions() {
 
     return (
         <Container>
-            <div className="min-h-screen pt-16 md:pt-32 pb-16 bg-gray-50">
+            <div className="min-h-screen pt-28 md:pt-32 pb-16 bg-gray-50">
                 {/* Header */}
                 <div className="">
                     <div className="container mx-auto">

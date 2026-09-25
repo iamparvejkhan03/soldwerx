@@ -530,7 +530,7 @@ function Transactions() {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm text-gray-600">Tax</div>
-                                                    <div className="font-medium">{formatCurrency(selectedTransaction?.taxAmount)}</div>
+                                                    <div className="font-medium">{formatCurrency(selectedTransaction.taxAmount)}</div>
                                                 </div>
                                                 <div>
                                                     <div className="text-sm text-gray-600">Total Amount</div>

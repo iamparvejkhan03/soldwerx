@@ -1148,7 +1148,7 @@ const EditAuction = () => {
                                                     id="title"
                                                     type="text"
                                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                    placeholder="e.g., 1985 Star Co. Michael Jordan #117 BGS Gem Mint 9.5"
+                                                    placeholder="e.g., John Deere 5310"
                                                 />
                                                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
                                             </div>
@@ -1355,13 +1355,6 @@ const EditAuction = () => {
                                                                         <X size={16} />
                                                                     </button>
                                                                 </div>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Add document caption..."
-                                                                    value={documentCaptions[index] || ''}
-                                                                    onChange={(e) => handleDocumentCaptionChange('existing', index, e.target.value)}
-                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                                />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -1385,13 +1378,6 @@ const EditAuction = () => {
                                                                         <X size={16} />
                                                                     </button>
                                                                 </div>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="Add document caption..."
-                                                                    value={uploadedDocumentCaptions[index] || ''}
-                                                                    onChange={(e) => handleDocumentCaptionChange('new', index, e.target.value)}
-                                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                                />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -1488,7 +1474,7 @@ const EditAuction = () => {
                                         )}
 
                                         {/* Allow Offers Toggle */}
-                                        <div className="mb-6">
+                                        {(watch('auctionType') !== 'buy_now' && watch('auctionType') !== 'giveaway') && <div className="mb-6">
                                             <label className="flex items-center cursor-pointer">
                                                 <div className="relative">
                                                     <input
@@ -1507,7 +1493,7 @@ const EditAuction = () => {
                                                     </p>
                                                 </div>
                                             </label>
-                                        </div>
+                                        </div>}
 
                                         <hr className="my-6" />
 

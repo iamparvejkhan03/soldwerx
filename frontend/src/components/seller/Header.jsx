@@ -15,26 +15,16 @@ function Header() {
             {/* Left section with search */}
             <div className="flex-1 max-w-lg flex justify-end md:justify-start px-2">
                 {/* <Link to={`/`} className="text-secondary"><Home size={22} /></Link> */}
-                {
+                {/* {
                     (dashboardType === 'seller')
                         ?
                         <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#FFC83D] text-black font-semibold px-5 py-2 rounded-md cursor-pointer transition-colors duration-200" onClick={() => navigate(`/bidder/dashboard`)}><RefreshCcw size={20} />Switch to Bidder</button>
                         : <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#FFC83D] text-black font-semibold px-5 py-2 rounded-md cursor-pointer transition-colors duration-200" onClick={() => navigate(`/seller/dashboard`)}><RefreshCcw size={20} />Switch to Seller</button>
-                }
+                } */}
             </div>
 
             {/* Right section with icons and user */}
             <div className="flex items-center space-x-4 md:space-x-5">
-                {/* Notifications */}
-                {/* <button className="relative p-2 text-secondary hover:text-black transition-colors">
-                    <Bell size={22} />
-                    {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {notificationsCount}
-                        </span>
-                    )}
-                </button> */}
-
                 {/* User profile */}
                 <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
                     <div className="text-right hidden md:block">

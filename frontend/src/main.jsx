@@ -38,6 +38,7 @@ const BidHistorySeller = lazy(() => import('./pages/seller/BidHistory'));
 const SellerProfile = lazy(() => import('./pages/seller/Profile'));
 const SellerBilling = lazy(() => import('./pages/seller/Billing'));
 const SellerCommunication = lazy(() => import('./pages/seller/Communication'));
+const SellerAllCommunications = lazy(() => import('./pages/seller/AllCommunications'));
 const SellerPayoutMethods = lazy(() => import('./pages/seller/PayoutMethods'));
 const SellerPayouts = lazy(() => import('./pages/seller/Payouts'));
 const CreateEventSeller = lazy(() => import('./pages/seller/CreateEvent'));
@@ -67,6 +68,7 @@ const WonAuctions = lazy(() => import('./pages/bidder/WonAuctions'));
 const BidderProfile = lazy(() => import('./pages/bidder/Profile'));
 const BidderBilling = lazy(() => import('./pages/bidder/Billing'));
 const BidderCommunication = lazy(() => import('./pages/bidder/Communication'));
+const BidderAllCommunications = lazy(() => import('./pages/bidder/AllCommunications'));
 const BidderPayments = lazy(() => import('./pages/bidder/Payments'));
 const ActiveEvents = lazy(() => import('./pages/bidder/ActiveEvents'));
 
@@ -254,6 +256,15 @@ createRoot(document.getElementById('root')).render(
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <SellerCommunication />
+                                </Suspense>
+                            }
+                        />
+                        {/* Seller Live Communications */}
+                        <Route
+                            path='/seller/communications/all'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <SellerAllCommunications />
                                 </Suspense>
                             }
                         />
@@ -480,6 +491,15 @@ createRoot(document.getElementById('root')).render(
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                     <BidderCommunication />
+                                </Suspense>
+                            }
+                        />
+                        {/* Bidder All Communications */}
+                        <Route
+                            path='/bidder/communications/all'
+                            element={
+                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                    <BidderAllCommunications />
                                 </Suspense>
                             }
                         />

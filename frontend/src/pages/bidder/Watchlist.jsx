@@ -321,7 +321,7 @@ function Watchlist() {
                                     Start adding items to your watchlist to track their progress and get notified when auctions are ending.
                                 </p>
                                 <Link to={'/bidder/auctions/active'} className="bg-black text-white hover:bg-black/80 px-6 py-3 rounded-lg transition-colors">
-                                    Browse Available Auctions
+                                    Browse Auctions
                                 </Link>
                             </div>
                         )}

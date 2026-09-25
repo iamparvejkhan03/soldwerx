@@ -88,7 +88,7 @@ const navigation = [
         permission: 'manage_liquidations'
     },
     {
-        name: 'Consultations',
+        name: 'Sell Requests',
         path: '/admin/sell-requests',
         icon: <Briefcase size={20} />,
         permission: 'manage_sell_requests'

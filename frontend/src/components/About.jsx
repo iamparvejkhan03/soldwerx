@@ -70,7 +70,8 @@ function About() {
             ref={ref}
             className="
                 relative
-                my-14
+                my-8
+                md:my-14
                 overflow-hidden
                 bg-[#F8F7F4]
                 py-14

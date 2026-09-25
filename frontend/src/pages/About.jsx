@@ -193,12 +193,12 @@ function About() {
                         <div>
                             <LotTag number="01">What SoldWerX Is</LotTag>
 
-                            <h1 className="font-display mt-7 text-5xl font-semibold leading-[1.04] tracking-tight text-[#08090A] sm:text-6xl lg:text-[64px]">
+                            <h1 className="font-display mt-7 text-4xl font-semibold leading-[1.04] tracking-tight text-[#08090A] sm:text-6xl lg:text-[64px]">
                                 Verified.
                                 Sold.
                             </h1>
 
-                            <p className="font-display mt-3 max-w-lg text-xl leading-snug text-[#8A6A00]">
+                            <p className="font-display mt-3 max-w-lg text-lg md:text-xl leading-snug text-[#8A6A00]">
                                 Every asset on SoldWerX comes from a seller we've checked.
                             </p>
 
@@ -259,7 +259,7 @@ function About() {
                     <div className="mb-10 max-w-7xl">
                         <LotTag number="03">For buyers and sellers</LotTag>
 
-                        <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
+                        <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
                             Built for both ends of the transaction
                         </h2>
 
@@ -274,7 +274,7 @@ function About() {
                         <div className="flex-1 bg-[#08090A] p-8 md:p-12">
                             <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">For buyers</p>
 
-                            <h3 className="font-display mt-3 text-3xl font-semibold text-white">
+                            <h3 className="font-display mt-3 text-2xl md:text-3xl font-semibold text-white">
                                 Get the right asset.
                             </h3>
 
@@ -305,7 +305,7 @@ function About() {
                         <div className="flex-1 bg-[#F8F7F4] p-8 md:p-12">
                             <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">For sellers</p>
 
-                            <h3 className="font-display mt-3 text-3xl font-semibold text-[#08090A]">
+                            <h3 className="font-display mt-3 text-2xl md:text-3xl font-semibold text-[#08090A]">
                                 Sell to buyers who are ready to bid.
                             </h3>
 
@@ -342,7 +342,7 @@ function About() {
                     <div className="mb-12 max-w-7xl">
                         <LotTag number="04">The checklist</LotTag>
 
-                        <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
+                        <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
                             Six things every listing runs through
                         </h2>
                     </div>
@@ -378,7 +378,7 @@ function About() {
                     <div className="mb-12 max-w-7xl">
                         <LotTag number="05">What we stand on</LotTag>
 
-                        <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
+                        <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight text-[#08090A] md:text-5xl">
                             What holds the whole thing together
                         </h2>
                     </div>
@@ -409,7 +409,7 @@ function About() {
                             <div className="max-w-xl">
                                 <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">Ready when you are</p>
 
-                                <h3 className="font-display mt-4 text-3xl font-semibold leading-tight text-white md:text-4xl">
+                                <h3 className="font-display mt-4 text-2xl font-semibold leading-tight text-white md:text-4xl">
                                     Bring what you have. Find what you're missing.
                                 </h3>
 

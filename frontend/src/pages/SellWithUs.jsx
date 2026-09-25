@@ -55,9 +55,9 @@ const ImageUpload = ({ onImagesChange, maxFiles = 5 }) => {
     };
 
     const removeImage = (index) => {
+        URL.revokeObjectURL(previews[index]);
         const updatedImages = images.filter((_, i) => i !== index);
         const updatedPreviews = previews.filter((_, i) => i !== index);
-
         setImages(updatedImages);
         setPreviews(updatedPreviews);
         onImagesChange(updatedImages);
@@ -148,6 +148,7 @@ function SellWithUs() {
     const [sending, setSending] = useState(false);
     const [photos, setPhotos] = useState([]);
     const preferredMethod = watch("preferredMethod");
+    const [uploadKey, setUploadKey] = useState(0);
 
     const submitHandler = async (formData) => {
         try {
@@ -182,6 +183,7 @@ function SellWithUs() {
                 toast.success(data.message || "Your selling request has been submitted successfully!");
                 reset();
                 setPhotos([]);
+                setUploadKey((k) => k + 1);
 
                 window.scrollTo({
                     top: 0,
@@ -228,7 +230,7 @@ function SellWithUs() {
                                 </span>
                             </div>
 
-                            <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
+                            <h1 className="text-4xl font-black leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[64px] animate-[fadeUp_.75s_.08s_ease-out_both]">
                                 Turn Your Items
                                 <span className="block text-[#F5B51B]">
                                     Into Cash
@@ -483,6 +485,7 @@ function SellWithUs() {
                                         Photos (Optional)
                                     </label>
                                     <ImageUpload
+                                        key={uploadKey}
                                         onImagesChange={setPhotos}
                                         maxFiles={5}
                                     />
