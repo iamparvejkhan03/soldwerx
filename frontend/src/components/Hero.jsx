@@ -424,16 +424,15 @@ function Hero() {
                         </span>
 
                         {[
-                            "Equipment",
-                            "Trucks",
-                            "Trailers",
-                            "Business Assets",
-                            "Estates",
+                            {title:"Heavy Equipment", slug: 'heavy-equipment'},
+                            {title: "Trailers", slug: 'trailers'},
+                            {title: "Business Assets", slug: 'business-assets'},
+                            {title: "Vehicles", slug: 'vehicles'},
                         ].map((item, index) => (
                             <Link
-                                key={item}
+                                key={item.title}
                                 to={`/auctions?category=${encodeURIComponent(
-                                    item.toLowerCase()
+                                    item.slug
                                 )}`}
                                 className="
                                     text-[10px]
@@ -445,9 +444,9 @@ function Hero() {
                                     hover:text-[#F5B51B]
                                 "
                             >
-                                {item}
+                                {item.title}
 
-                                {index !== 4 && (
+                                {index !== 3 && (
                                     <span className="ml-5 text-white/20">
                                         /
                                     </span>
