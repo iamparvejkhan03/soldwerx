@@ -126,7 +126,7 @@ export default function LanguageSwitcher({ isScrolled }) {
                     alt={current.name}
                     className="w-7 h-5 object-cover rounded-sm brightness-[85%]"
                 />
-                <span className={`hidden sm:inline ${isScrolled ? 'text-black' : 'text-white'}`}>
+                <span className={`hidden sm:inline ${isScrolled ? 'text-black' : 'text-black'}`}>
                     {current.name}
                 </span>
                 <span className={`text-sm ${isScrolled ? 'text-black' : 'text-black'}`}>▾</span>
