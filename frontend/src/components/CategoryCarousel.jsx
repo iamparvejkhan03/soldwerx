@@ -28,10 +28,10 @@ const getCategoryIcon = (categoryName) => {
     if (name.includes("estate") || name.includes("liquidate") || name.includes("liquidation")) {
         return Building;
     }
-    if (name.includes("machinery") || name.includes("truck") || name.includes("dumper")) {
+    if (name.includes("machinery") || name.includes("trucks") || name.includes("dumper") || name.includes("trailer")) {
         return Truck;
     }
-    if (name.includes("memorabilia") || name.includes("collectible")) {
+    if (name.includes("assets") || name.includes("collectible")) {
         return Sparkles;
     }
     return Package;
@@ -194,8 +194,7 @@ function CategoryCarousel({ categories = [], onCategoryClick }) {
                                     ================================================== */}
 
                                     <div className="absolute inset-x-5 top-5 flex items-start justify-between">
-                                        {/* Category icon badge */}
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all duration-500 group-hover:border-[#F5B51B] group-hover:bg-[#F5B51B] group-hover:text-black">
+                                        {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all duration-500 group-hover:border-[#F5B51B] group-hover:bg-[#F5B51B] group-hover:text-black">
                                             {hasIcon ? (
                                                 <img
                                                     src={category.icon}
@@ -205,9 +204,8 @@ function CategoryCarousel({ categories = [], onCategoryClick }) {
                                             ) : (
                                                 <Icon size={18} strokeWidth={1.75} />
                                             )}
-                                        </div>
+                                        </div> */}
 
-                                        {/* Floating arrow (reveals on hover) */}
                                         <div className="flex h-9 w-9 -translate-y-1 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white opacity-0 backdrop-blur-md transition-all duration-500 group-hover:translate-y-0 group-hover:border-[#F5B51B]/60 group-hover:opacity-100 group-hover:text-[#F5B51B]">
                                             <ArrowUpRight size={16} />
                                         </div>
@@ -226,7 +224,7 @@ function CategoryCarousel({ categories = [], onCategoryClick }) {
                                                     </span>
                                                 )}
 
-                                                <h3 className="mt-2 truncate text-lg font-black uppercase tracking-[-0.02em] text-white">
+                                                <h3 className="mt-2 text-base font-black tracking-[-0.02em] text-white">
                                                     {category.name}
                                                 </h3>
                                             </div>
