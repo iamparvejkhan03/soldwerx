@@ -90,12 +90,14 @@ function Sidebar() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed md:relative w-64 bg-[#080A0D] text-white h-screen md:h-auto md:min-h-screen overflow-y-auto p-4 flex flex-col z-50
+                fixed md:relative w-64 bg-[#080A0D] text-white
+                h-dvh md:h-auto md:min-h-screen
+                flex flex-col z-50
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
-                {/* Logo/Brand */}
-                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-white/10">
+                {/* ── Fixed header: logo + close ── */}
+                <div className="shrink-0 px-4 pt-4 pb-3 mb-2 border-b border-white/10 flex items-center justify-between">
                     <Link to={'/'}>
                         <img src={logo} className="h-12 md:h-14" alt="logo" />
                     </Link>
@@ -107,8 +109,8 @@ function Sidebar() {
                     </button>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1">
+                {/* ── Scrollable middle: link list ── */}
+                <nav className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 [-webkit-overflow-scrolling:touch]">
                     <ul className="space-y-2">
                         {navigation.map((link, i) => (
                             <li key={i}>
@@ -127,17 +129,19 @@ function Sidebar() {
                                 </NavLink>
                             </li>
                         ))}
-                        <li>
-                            <button
-                                onClick={logout}
-                                className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
-                            >
-                                <LogOut size={20} className="mr-3" />
-                                <span>Log Out</span>
-                            </button>
-                        </li>
                     </ul>
                 </nav>
+
+                {/* ── Fixed footer: Logout ── */}
+                <div className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-white/10">
+                    <button
+                        onClick={logout}
+                        className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
+                    >
+                        <LogOut size={20} className="mr-3" />
+                        <span>Log Out</span>
+                    </button>
+                </div>
             </aside>
         </>
     );

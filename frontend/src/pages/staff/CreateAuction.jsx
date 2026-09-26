@@ -36,6 +36,7 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../utils/axiosInstance.js';
 import { useNavigate } from 'react-router-dom';
 import { useAiListingAssistant } from '../../hooks/useAiListingAssistant.jsx';
+import { extractYouTubeId } from '../../components/YouTubeEmbed.jsx';
 
 // Drag and Drop item types
 const ItemTypes = {
@@ -610,10 +611,10 @@ const CreateAuction = () => {
 
         // Step 2: Auction Type + Pricing + Dates + Location + Video
         if (step === 2) {
-            const fieldsToValidate = ['auctionType', 'startDate', 'endDate'];
+            const fieldsToValidate = ['auctionType'];
 
             if (auctionType === 'standard' || auctionType === 'reserve') {
-                fieldsToValidate.push('startPrice', 'bidIncrement');
+                fieldsToValidate.push('startPrice', 'bidIncrement', 'startDate', 'endDate');
             }
 
             if (auctionType === 'reserve') {
@@ -621,7 +622,7 @@ const CreateAuction = () => {
             }
 
             if (auctionType === 'buy_now') {
-                fieldsToValidate.push('buyNowPrice', 'startPrice');
+                fieldsToValidate.push('buyNowPrice');
             }
 
             const overallValidationPassed = await trigger(fieldsToValidate);
@@ -701,8 +702,12 @@ const CreateAuction = () => {
             formData.append('auctionType', auctionData.auctionType);
             formData.append('allowOffers', auctionData.allowOffers || false);
             formData.append('features', auctionData.features || '');
-            formData.append('startDate', new Date(auctionData.startDate).toISOString());
-            formData.append('endDate', new Date(auctionData.endDate).toISOString());
+            if (auctionData.startDate) {
+                formData.append('startDate', new Date(auctionData.startDate).toISOString());
+            }
+            if (auctionData.endDate) {
+                formData.append('endDate', new Date(auctionData.endDate).toISOString());
+            }
 
             if (auctionData.specifications) {
                 formData.append('specifications', JSON.stringify(auctionData.specifications));
@@ -753,7 +758,6 @@ const CreateAuction = () => {
             const errorMessage = error?.response?.data?.message || 'Failed to create auction';
             toast.error(errorMessage);
             console.log('Create auction error:', error);
-            navigate('/staff/auctions/all');
         } finally {
             setIsLoading(false);
         }
@@ -1065,10 +1069,10 @@ const CreateAuction = () => {
                                                     <Youtube size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
                                                         {...register('video', {
-                                                            pattern: {
-                                                                value: /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/,
-                                                                message: 'Please enter a valid YouTube URL'
-                                                            }
+                                                            validate: (value) => {
+                                                                if (!value) return true;
+                                                                return !!extractYouTubeId(value) || 'Please enter a valid YouTube URL';
+                                                            },
                                                         })}
                                                         id="video"
                                                         type="url"
@@ -1253,7 +1257,7 @@ const CreateAuction = () => {
                                         <hr className="my-6" />
 
                                         {/* Start Date & End Date */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        {watch('auctionType') !== "buy_now" && <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
                                                     Start Date & Time *
@@ -1261,7 +1265,10 @@ const CreateAuction = () => {
                                                 <div className="relative">
                                                     <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
-                                                        {...register('startDate', { required: 'Start date is required' })}
+                                                        {...register("startDate", {
+                                                            required:
+                                                                watch('auctionType') === "buy_now" ? false : "Start date is required",
+                                                        })}
                                                         id="startDate"
                                                         type="datetime-local"
                                                         className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1278,7 +1285,8 @@ const CreateAuction = () => {
                                                     <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
                                                         {...register('endDate', {
-                                                            required: 'End date is required',
+                                                            required:
+                                                                watch('auctionType') === "buy_now" ? false : "End date is required",
                                                             validate: {
                                                                 afterStartDate: value => {
                                                                     const start = new Date(watch('startDate'));
@@ -1294,7 +1302,7 @@ const CreateAuction = () => {
                                                 </div>
                                                 {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
                                             </div>
-                                        </div>
+                                        </div>}
                                     </div>
                                 )}
 
@@ -1384,18 +1392,18 @@ const CreateAuction = () => {
                                                                     <p className="font-medium text-green-600">Yes</p>
                                                                 </div>
                                                             )}
-                                                            <div>
+                                                            {watch('auctionType') !== "buy_now" && <div>
                                                                 <p className="text-xs text-secondary">Start Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('startDate') ? new Date(watch('startDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
-                                                            </div>
-                                                            <div>
+                                                            </div>}
+                                                            {watch('auctionType') !== "buy_now" && <div>
                                                                 <p className="text-xs text-secondary">End Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('endDate') ? new Date(watch('endDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
-                                                            </div>
+                                                            </div>}
                                                             {watch('video') && (
                                                                 <div>
                                                                     <p className="text-xs text-secondary">Video</p>
@@ -1427,11 +1435,11 @@ const CreateAuction = () => {
                                                     {/* Pricing */}
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
                                                         <h4 className="font-medium mb-3">Pricing</h4>
-                                                        <div className="space-y-2">
-                                                            <div>
+                                                        <div className="space-y-2 grid sm:grid-cols-2">
+                                                            {watch('auctionType') !== "buy_now" && <div>
                                                                 <p className="text-xs text-secondary">Start Price</p>
                                                                 <p className="font-medium">${watch('startPrice') || '0.00'}</p>
-                                                            </div>
+                                                            </div>}
 
                                                             {watch('auctionType') === 'buy_now' && (
                                                                 <div>

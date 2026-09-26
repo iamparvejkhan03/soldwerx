@@ -1074,6 +1074,8 @@ export const updateAuction = async (req, res) => {
       serviceRecordOrder,
     } = req.body;
 
+    const isBuyNow = auctionType === "buy_now";
+
     // ========== CATEGORIES HANDLING - FIXED ==========
     let categoriesArray = [];
     if (req.body.categories) {
@@ -1108,12 +1110,10 @@ export const updateAuction = async (req, res) => {
         message: "At least one category is required",
       });
     }
-
-    console.log("Categories after parsing:", categoriesArray);
     // =================================================
 
     // Basic validation - check if fields exist in req.body
-    if (!title || !description || !auctionType || !startDate || !endDate) {
+    if (!title || !description || !auctionType) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
@@ -1121,6 +1121,16 @@ export const updateAuction = async (req, res) => {
           title: !title,
           description: !description,
           auctionType: !auctionType,
+        },
+      });
+    }
+
+    // Basic validation - check if fields exist in req.body
+    if (!isBuyNow && (!startDate || !endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Start and end date must be provided",
+        missing: {
           startDate: !startDate,
           endDate: !endDate,
         },
@@ -1128,7 +1138,7 @@ export const updateAuction = async (req, res) => {
     }
 
     // Validate start price for all auction types
-    if (!startPrice || parseFloat(startPrice) < 0) {
+    if (!isBuyNow && (!startPrice || parseFloat(startPrice) < 0)) {
       return res.status(400).json({
         success: false,
         message: "Start price is required and must be positive",
@@ -1699,15 +1709,16 @@ export const updateAuction = async (req, res) => {
     // ========== DATE VALIDATION ==========
 
     // Validate dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const now = new Date();
+    let start = null;
+    let end = null;
+    let now = new Date();
 
-    if (end <= start) {
-      return res.status(400).json({
-        success: false,
-        message: "End date must be after start date",
-      });
+    if (!isBuyNow) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+      if (end <= start) {
+        return res.status(400).json({ success: false, message: "End date must be after start date" });
+      }
     }
 
     // ========== STATUS DETERMINATION ==========
@@ -1852,31 +1863,22 @@ export const updateAuction = async (req, res) => {
     }).populate("seller", "username firstName lastName");
 
     // ========== RESCHEDULE JOBS ==========
-
-    // Reschedule jobs if dates changed
-    if (
-      start.getTime() !== new Date(auction.startDate).getTime() ||
-      end.getTime() !== new Date(auction.endDate).getTime()
-    ) {
+    if (isBuyNow) {
+      // Products don't have scheduled jobs
       await agendaService.cancelAuctionJobs(auction._id);
+    } else {
+      const datesChanged =
+        start.getTime() !== new Date(auction.startDate).getTime() ||
+        end.getTime() !== new Date(auction.endDate).getTime();
 
-      // Only schedule jobs for timed auctions (standard/reserve)
-      if (auctionType === "standard" || auctionType === "reserve") {
-        // Schedule activation if start date is in future
-        if (start > new Date()) {
-          await agendaService.scheduleAuctionActivation(
-            updatedAuction._id,
-            start,
-          );
+      if (datesChanged) {
+        await agendaService.cancelAuctionJobs(auction._id);
+        if (auctionType === "standard" || auctionType === "reserve") {
+          if (start > new Date()) {
+            await agendaService.scheduleAuctionActivation(updatedAuction._id, start);
+          }
+          await agendaService.scheduleAuctionEnd(updatedAuction._id, end);
         }
-
-        // Always schedule end job for timed auctions
-        await agendaService.scheduleAuctionEnd(updatedAuction._id, end);
-      } else {
-        // For buy_now and giveaway, no need to schedule jobs
-        console.log(
-          `🛒 ${auctionType} auction ${id} - no jobs scheduled (always available)`,
-        );
       }
     }
 

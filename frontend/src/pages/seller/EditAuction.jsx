@@ -25,6 +25,7 @@ import { RTE, SellerContainer, SellerHeader, SellerSidebar } from '../../compone
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../utils/axiosInstance';
+import { extractYouTubeId } from '../../components/YouTubeEmbed';
 
 // Drag and Drop item types
 const ItemTypes = {
@@ -705,10 +706,10 @@ const EditAuction = () => {
 
         // Step 2: Auction Details (dates, auction type, pricing)
         if (step === 2) {
-            const fieldsToValidate = ['auctionType', 'startDate', 'endDate'];
+            const fieldsToValidate = ['auctionType'];
 
             if (auctionType === 'standard' || auctionType === 'reserve') {
-                fieldsToValidate.push('startPrice', 'bidIncrement');
+                fieldsToValidate.push('startPrice', 'bidIncrement', 'startDate', 'endDate');
             }
 
             if (auctionType === 'reserve') {
@@ -943,9 +944,12 @@ const EditAuction = () => {
             formDataToSend.append('videoLink', formData.video || '');
             formDataToSend.append('auctionType', formData.auctionType);
             formDataToSend.append('allowOffers', formData.allowOffers || false);
-            formDataToSend.append('startDate', new Date(formData.startDate).toISOString());
-            formDataToSend.append('endDate', new Date(formData.endDate).toISOString());
-
+            if (formData.startDate) {
+                formDataToSend.append('startDate', new Date(formData.startDate).toISOString());
+            }
+            if (formData.endDate) {
+                formDataToSend.append('endDate', new Date(formData.endDate).toISOString());
+            }
             const currentSpecifications = formData.specifications || {};
             if (currentSpecifications && Object.keys(currentSpecifications).length > 0) {
                 formDataToSend.append('specifications', JSON.stringify(currentSpecifications));
@@ -1421,10 +1425,10 @@ const EditAuction = () => {
                                                     <Youtube size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
                                                         {...register('video', {
-                                                            pattern: {
-                                                                value: /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/,
-                                                                message: 'Please enter a valid YouTube URL'
-                                                            }
+                                                            validate: (value) => {
+                                                                if (!value) return true;
+                                                                return !!extractYouTubeId(value) || 'Please enter a valid YouTube URL';
+                                                            },
                                                         })}
                                                         id="video"
                                                         type="url"
@@ -1617,7 +1621,7 @@ const EditAuction = () => {
                                         <hr className="my-6" />
 
                                         {/* Start Date & End Date */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        {watch('auctionType') !== "buy_now" && <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="startDate" className="block text-sm font-medium text-secondary mb-1">
                                                     Start Date & Time *
@@ -1625,7 +1629,10 @@ const EditAuction = () => {
                                                 <div className="relative">
                                                     <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
-                                                        {...register('startDate', { required: 'Start date is required' })}
+                                                        {...register('startDate', {
+                                                            required:
+                                                                watch('auctionType') === "buy_now" ? false : "Start date is required",
+                                                        })}
                                                         id="startDate"
                                                         type="datetime-local"
                                                         className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1642,7 +1649,8 @@ const EditAuction = () => {
                                                     <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
                                                         {...register('endDate', {
-                                                            required: 'End date is required',
+                                                            required:
+                                                                watch('auctionType') === "buy_now" ? false : "End date is required",
                                                             validate: {
                                                                 afterStartDate: value => {
                                                                     const start = new Date(watch('startDate'));
@@ -1658,7 +1666,7 @@ const EditAuction = () => {
                                                 </div>
                                                 {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
                                             </div>
-                                        </div>
+                                        </div>}
                                     </div>
                                 )}
 
@@ -1748,18 +1756,18 @@ const EditAuction = () => {
                                                                     <p className="font-medium text-green-600">Yes</p>
                                                                 </div>
                                                             )}
-                                                            <div>
+                                                            {watch('auctionType') !== "buy_now" && <div>
                                                                 <p className="text-xs text-secondary">Start Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('startDate') ? new Date(watch('startDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
-                                                            </div>
-                                                            <div>
+                                                            </div>}
+                                                            {watch('auctionType') !== "buy_now" && <div>
                                                                 <p className="text-xs text-secondary">End Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('endDate') ? new Date(watch('endDate')).toLocaleString() : 'Not provided'}
                                                                 </p>
-                                                            </div>
+                                                            </div>}
                                                             {watch('video') && (
                                                                 <div>
                                                                     <p className="text-xs text-secondary">Video</p>
@@ -1804,7 +1812,7 @@ const EditAuction = () => {
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
                                                         <h4 className="font-medium mb-3">Pricing</h4>
                                                         <div className="space-y-2">
-                                                            {(watch('auctionType') === 'standard' || watch('auctionType') === 'reserve' || watch('auctionType') === 'buy_now') && (
+                                                            {(watch('auctionType') === 'standard' || watch('auctionType') === 'reserve' || watch('auctionType') !== 'buy_now') && (
                                                                 <div>
                                                                     <p className="text-xs text-secondary">Start Price</p>
                                                                     <p className="font-medium">${watch('startPrice') || '0.00'}</p>

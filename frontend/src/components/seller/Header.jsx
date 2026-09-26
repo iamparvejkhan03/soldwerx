@@ -14,7 +14,7 @@ function Header() {
         <header className="bg-white w-full fixed top-0 md:static shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6 z-20">
             {/* Left section with search */}
             <div className="flex-1 max-w-lg flex justify-end md:justify-start px-2">
-                {/* <Link to={`/`} className="text-secondary"><Home size={22} /></Link> */}
+                <Link to={`/`} className="text-secondary"><Home size={22} /></Link>
                 {/* {
                     (dashboardType === 'seller')
                         ?

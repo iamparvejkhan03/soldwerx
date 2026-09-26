@@ -327,12 +327,22 @@ function SingleAuction() {
     };
 
     // Extract YouTube ID from URL
-    const getYouTubeId = (url) => {
-        if (!url) return null;
-        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = url.match(regex);
+    function getYouTubeId(input) {
+        if (!input) return null;
+
+        // Already a bare 11-char ID
+        if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+            return input;
+        }
+
+        // watch?v=ID | embed/ID | shorts/ID | live/ID | v/ID | youtu.be/ID
+        // Accepts optional www. / m. and any query string afterwards.
+        const match = input.match(
+            /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+        );
+
         return match ? match[1] : null;
-    };
+    }
 
     const youtubeVideoId = getYouTubeId(auction?.videoLink);
     const minBidAmount = auction?.bidCount > 0 ? auction?.currentPrice + auction?.bidIncrement : auction?.currentPrice;

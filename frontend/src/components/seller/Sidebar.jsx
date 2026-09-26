@@ -93,56 +93,63 @@ function Sidebar() {
             )}
 
             {/* Sidebar */}
-            <aside className={`
-        fixed md:relative w-64 bg-[#080A0D] text-white h-screen md:h-auto md:min-h-screen overflow-y-auto p-4 flex flex-col z-50
+            <aside
+    className={`
+        fixed md:relative w-64 bg-[#080A0D] text-white
+        h-dvh md:h-auto md:min-h-screen
+        flex flex-col z-50
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-                {/* Logo/Brand */}
-                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-white/10">
-                    <Link to={'/'}>
-                        <img src={logo} className="h-12 md:h-14" alt="logo" />
-                    </Link>
-                    <button
-                        onClick={() => setIsOpen(false)}
-                        className="md:hidden text-white"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+    `}
+>
+    {/* ── Fixed header ── */}
+    <div className="shrink-0 px-4 pt-4 pb-3 mb-2 border-b border-white/10 flex items-center justify-between">
+        <Link to="/">
+            <img src={logo} className="h-12 md:h-14" alt="logo" />
+        </Link>
+        <button
+            onClick={() => setIsOpen(false)}
+            className="md:hidden text-white"
+        >
+            <X size={24} />
+        </button>
+    </div>
 
-                {/* Navigation */}
-                <nav className="flex-1">
-                    <ul className="space-y-2">
-                        {navigation.map((link, i) => (
-                            <li key={i}>
-                                <NavLink
-                                    to={link.path}
-                                    onClick={() => isMobile && setIsOpen(false)}
-                                    className={({ isActive }) =>
-                                        `flex items-center p-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
-                                            : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
-                                        }`
-                                    }
-                                >
-                                    <span className="mr-3">{link.icon}</span>
-                                    <span>{link.name}</span>
-                                </NavLink>
-                            </li>
-                        ))}
-                        <li>
-                            <button
-                                onClick={logout}
-                                className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
-                            >
-                                <LogOut size={20} className="mr-3" />
-                                <span>Log Out</span>
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
+    {/* ── Scrollable middle: the link list ── */}
+    <nav className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 [-webkit-overflow-scrolling:touch]">
+        <ul className="space-y-2">
+            {navigation.map((link, i) => (
+                <li key={i}>
+                    <NavLink
+                        to={link.path}
+                        onClick={() => isMobile && setIsOpen(false)}
+                        className={({ isActive }) =>
+                            `flex items-center p-3 rounded-lg transition-all duration-200 ${
+                                isActive
+                                    ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
+                                    : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
+                            }`
+                        }
+                    >
+                        <span className="mr-3">{link.icon}</span>
+                        <span>{link.name}</span>
+                    </NavLink>
+                </li>
+            ))}
+        </ul>
+    </nav>
+
+    {/* ── Fixed footer: Logout ── */}
+    <div className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-white/10">
+        <button
+            onClick={logout}
+            className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
+        >
+            <LogOut size={20} className="mr-3" />
+            <span>Log Out</span>
+        </button>
+    </div>
+</aside>
         </>
     );
 }

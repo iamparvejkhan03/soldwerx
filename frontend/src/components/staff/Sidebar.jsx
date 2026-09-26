@@ -240,37 +240,39 @@ function Sidebar() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed md:relative w-64 bg-[#080A0D] text-white h-screen md:h-auto md:min-h-screen overflow-y-auto z-50 p-4 flex flex-col 
+                fixed md:relative w-64 bg-[#080A0D] text-white
+                h-dvh md:h-auto md:min-h-screen
+                flex flex-col z-50
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
-                {/* Logo/Brand */}
-                <div className="px-4 mb-8 flex items-center justify-between pb-2 border-b border-gray-700">
-                    <Link to='/' className="z-50 mb-4 flex items-center gap-2">
-                        <img src={logo} alt="logo" className="h-12 md:h-14" />
-                        {/* <span className={`text-xl font-bold text-pure-white`}>JLTM</span> */}
-                    </Link>
-                    <button
-                        onClick={() => setIsOpen(false)}
-                        className="md:hidden text-white"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
+                {/* ── Fixed top: logo + close + role badge ── */}
+                <div className="shrink-0 px-4 pt-4">
+                    <div className="px-4 mb-4 flex items-center justify-between pb-2 border-b border-gray-700">
+                        <Link to='/' className="flex items-center gap-2">
+                            <img src={logo} alt="logo" className="h-12 md:h-14" />
+                        </Link>
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            className="md:hidden text-white"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
 
-                {/* Role Badge */}
-                <div className="px-4 mb-6">
-                    <div className={`${role.bgColor} ${role.textColor} rounded-lg p-3 text-center`}>
-                        <div className="flex items-center justify-center gap-2 ${role.badgeColor}">
-                            <Shield size={16} />
-                            <span className="text-sm font-medium">{role.title}</span>
+                    <div className="px-4 mb-4">
+                        <div className={`${role.bgColor} ${role.textColor} rounded-lg p-3 text-center`}>
+                            <div className="flex items-center justify-center gap-2">
+                                <Shield size={16} />
+                                <span className="text-sm font-medium">{role.title}</span>
+                            </div>
+                            <p className="text-xs mt-1 opacity-70">{role.description}</p>
                         </div>
-                        <p className={`text-xs ${role.badgeColor} mt-1`}>{role.description}</p>
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1">
+                {/* ── Scrollable middle: nav links ── */}
+                <nav className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 [-webkit-overflow-scrolling:touch]">
                     <ul className="space-y-1">
                         {navigation.map((link) => (
                             <li key={link.name}>
@@ -334,16 +336,19 @@ function Sidebar() {
                                 )}
                             </li>
                         ))}
-                        {/* Logout Button */}
-                        <button
-                            onClick={logout}
-                            className="flex items-center w-full p-3 mt-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
-                        >
-                            <LogOut size={20} className="mr-3" />
-                            <span>Log Out</span>
-                        </button>
                     </ul>
                 </nav>
+
+                {/* ── Fixed bottom: Logout ── */}
+                <div className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-gray-700">
+                    <button
+                        onClick={logout}
+                        className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
+                    >
+                        <LogOut size={20} className="mr-3" />
+                        <span>Log Out</span>
+                    </button>
+                </div>
             </aside>
         </>
     );

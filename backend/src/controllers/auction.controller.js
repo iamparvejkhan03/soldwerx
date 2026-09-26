@@ -43,6 +43,8 @@ export const createAuction = async (req, res) => {
       endDate,
     } = req.body;
 
+    const isBuyNow = auctionType === "buy_now";
+
     let categoriesArray = [];
     if (req.body.categories) {
       try {
@@ -76,15 +78,22 @@ export const createAuction = async (req, res) => {
     }
 
     // Basic validation
-    if (!title || !description || !auctionType || !startDate || !endDate) {
+    if (!title || !description || !auctionType) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
       });
     }
 
+    if (!isBuyNow && (!startDate || !endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date and end date fields must be provided",
+      });
+    }
+
     // Validate start price for all auction types
-    if (!startPrice || parseFloat(startPrice) < 0) {
+    if (!isBuyNow && (!startPrice || parseFloat(startPrice) < 0)) {
       return res.status(400).json({
         success: false,
         message: "Start price is required and must be positive",
@@ -203,7 +212,7 @@ export const createAuction = async (req, res) => {
             filename: doc.originalname,
             originalName: doc.originalname,
             resourceType: "raw",
-            caption: documentCaptions[index] || "", // ADD THIS
+            caption: newDocumentCaptions[index] || "", // ADD THIS
           });
         } catch (uploadError) {
           console.error("Document upload error:", uploadError);
@@ -245,15 +254,15 @@ export const createAuction = async (req, res) => {
       }
     }
     // Validate dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const now = new Date();
+    let start = null;
+    let end = null;
 
-    if (end <= start) {
-      return res.status(400).json({
-        success: false,
-        message: "End date must be after start date",
-      });
+    if (!isBuyNow) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+      if (end <= start) {
+        return res.status(400).json({ success: false, message: "End date must be after start date" });
+      }
     }
 
     // Create auction data object
@@ -793,6 +802,8 @@ export const updateAuction = async (req, res) => {
       serviceRecordOrder,
     } = req.body;
 
+    const isBuyNow = auctionType === "buy_now";
+
     // ========== CATEGORIES HANDLING ==========
     let categoriesArray = [];
     if (req.body.categories) {
@@ -823,15 +834,27 @@ export const updateAuction = async (req, res) => {
     }
 
     // Basic validation
-    if (!title || !description || !auctionType || !startDate || !endDate) {
+    if (!title || !description || !auctionType) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
       });
     }
 
+    // Basic validation - check if fields exist in req.body
+    if (!isBuyNow && (!startDate || !endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Start and end date must be provided",
+        missing: {
+          startDate: !startDate,
+          endDate: !endDate,
+        },
+      });
+    }
+
     // Validate start price for all auction types
-    if (!startPrice || parseFloat(startPrice) < 0) {
+    if (!isBuyNow && (!startPrice || parseFloat(startPrice) < 0)) {
       return res.status(400).json({
         success: false,
         message: "Start price is required and must be positive",
@@ -1374,16 +1397,16 @@ export const updateAuction = async (req, res) => {
       finalServiceRecords = [...finalServiceRecords, ...newServiceRecords];
     }
 
-    // ========== DATE VALIDATION ==========
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const now = new Date();
+    // Validate dates
+    let start = null;
+    let end = null;
 
-    if (end <= start) {
-      return res.status(400).json({
-        success: false,
-        message: "End date must be after start date",
-      });
+    if (!isBuyNow) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+      if (end <= start) {
+        return res.status(400).json({ success: false, message: "End date must be after start date" });
+      }
     }
 
     // ========== STATUS DETERMINATION ==========
@@ -1472,23 +1495,22 @@ export const updateAuction = async (req, res) => {
     }).populate("seller", "username firstName lastName");
 
     // ========== RESCHEDULE JOBS ==========
-    if (
-      start.getTime() !== new Date(auction.startDate).getTime() ||
-      end.getTime() !== new Date(auction.endDate).getTime()
-    ) {
+    if (isBuyNow) {
+      // Products don't have scheduled jobs
       await agendaService.cancelAuctionJobs(auction._id);
+    } else {
+      const datesChanged =
+        start.getTime() !== new Date(auction.startDate).getTime() ||
+        end.getTime() !== new Date(auction.endDate).getTime();
 
-      // Only schedule jobs for timed auctions (standard/reserve)
-      if (auctionType === "standard" || auctionType === "reserve") {
-        if (start > new Date()) {
-          await agendaService.scheduleAuctionActivation(
-            updatedAuction._id,
-            start,
-          );
+      if (datesChanged) {
+        await agendaService.cancelAuctionJobs(auction._id);
+        if (auctionType === "standard" || auctionType === "reserve") {
+          if (start > new Date()) {
+            await agendaService.scheduleAuctionActivation(updatedAuction._id, start);
+          }
+          await agendaService.scheduleAuctionEnd(updatedAuction._id, end);
         }
-        await agendaService.scheduleAuctionEnd(updatedAuction._id, end);
-      } else {
-        console.log(`🛒 ${auctionType} auction ${id} - no jobs scheduled`);
       }
     }
 

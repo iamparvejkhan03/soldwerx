@@ -426,7 +426,7 @@ function AllAuctions() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="py-4 px-6 text-sm text-gray-900">${auction.startPrice?.toLocaleString('en-US')}</td>
+                                                    <td className="py-4 px-6 text-sm text-gray-900">${auction.auctionType === 'buy_now' ? auction.buyNowPrice : auction.startPrice?.toLocaleString('en-US')}</td>
                                                     <td className="py-4 px-6 text-sm font-medium text-green-600">
                                                         {/* ${auction.currentPrice?.toLocaleString('en-US')} */}
                                                         {auction.bids?.length > 0 ? auction.currentPrice?.toLocaleString('en-US') : 'No Bids'}
@@ -444,7 +444,7 @@ function AllAuctions() {
                                                         </div>
                                                     </td>
                                                     <td className="py-4 px-6 text-sm text-gray-900">
-                                                        {formatTimeLeft(auction.endDate)}
+                                                        {auction.auctionType === "buy_now" ? auction.status : formatTimeLeft(auction.endDate)}
                                                     </td>
                                                     {/* <td className="py-4 px-6 text-sm">
                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig.class}`}>

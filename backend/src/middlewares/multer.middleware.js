@@ -13,7 +13,6 @@ const fileFilter = (req, file, cb) => {
   } else if (
     file.fieldname === "photos" ||
     file.fieldname === "logbooks" ||
-    file.fieldname === "attachments" ||
     file.fieldname === "serviceRecords"
   ) {
     if (file.mimetype.startsWith("image/")) {

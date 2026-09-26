@@ -1,15 +1,17 @@
 export function extractYouTubeId(input) {
-  if (!input) return null;
+    if (!input) return null;
 
-  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
-    return input;
-  }
+    // Already a bare 11-char ID
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+        return input;
+    }
 
-  const match = input.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-  );
+    // watch?v=ID | embed/ID | shorts/ID | live/ID | v/ID | youtu.be/ID
+    const match = input.match(
+        /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
 
-  return match ? match[1] : null;
+    return match ? match[1] : null;
 }
 
 const YouTubeEmbed = ({ videoId, title = "YouTube video" }) => {

@@ -103,15 +103,15 @@ function Contact() {
                                     </span>
 
                                     <h2 className="mt-6 max-w-sm text-3xl font-black leading-[1.05] tracking-[-0.04em] text-white md:text-4xl">
-                                        Start with
+                                        Get in touch.
                                         <br />
                                         <span className="text-[#F5B51B]">
-                                            a conversation.
+                                            We're listening.
                                         </span>
                                     </h2>
 
                                     <p className="mt-5 max-w-sm text-sm leading-7 text-white/55 md:text-base">
-                                        You don't need to know exactly who to talk to. Send the details and we'll route it to the right person.
+                                        Whether you're buying, selling, or just exploring — reach out and our team will respond within one business day.
                                     </p>
                                 </div>
 

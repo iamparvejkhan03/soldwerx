@@ -258,11 +258,11 @@ function AllAuctions() {
         navigate(`/admin/auctions/edit/${auction._id}`);
     };
 
-    const getStatusBadge = (status, endDate) => {
+    const getStatusBadge = (status, endDate, auctionType) => {
         const config = {
             active: {
                 color: "bg-green-100 text-green-800",
-                text: new Date(endDate) > new Date() ? "Active" : "Ending Soon"
+                text: new Date(endDate) > new Date() ? "Active" : auctionType === "buy_now" ? "active" : "Ending Soon"
             },
             draft: { color: "bg-amber-100 text-amber-800", text: "Pending" },
             approved: { color: "bg-green-100 text-green-800", text: "Approved" },
@@ -560,7 +560,7 @@ function AllAuctions() {
                                                         })()}
                                                     </div>
                                                     <div className="text-xs text-gray-500">
-                                                        Start: {formatCurrency(auction.startPrice)}
+                                                        {auction.auctionType !== "buy_now" && <div>Start: {formatCurrency(auction.startPrice)}</div>}
                                                         {auction.reservePrice && (
                                                             <div>Reserve: {formatCurrency(auction.reservePrice)}</div>
                                                         )}
@@ -587,9 +587,9 @@ function AllAuctions() {
                                                 </td> */}
                                                 <td className="py-4 px-6">
                                                     <div className="space-y-2">
-                                                        {getStatusBadge(auction.status, auction.endDate)}
+                                                        {getStatusBadge(auction.status, auction.endDate, auction.auctionType)}
                                                         {/* {getConditionBadge(auction.specifications)} */}
-                                                        {auction.status === 'active' && (
+                                                        {auction.status === 'active' && auction.auctionType !== 'buy_now' && (
                                                             <div className="text-xs text-gray-500">
                                                                 Ends: {formatTimeRemaining(auction.endDate)}
                                                             </div>
@@ -836,7 +836,7 @@ function AllAuctions() {
                             )} */}
                                             </div>
                                             <div className="flex flex-wrap gap-2 mb-2">
-                                                {getStatusBadge(selectedAuction.status, selectedAuction.endDate)}
+                                                {getStatusBadge(selectedAuction.status, selectedAuction.endDate, selectedAuction.auctionType)}
                                                 {getAuctionTypeBadge(selectedAuction.auctionType)}
                                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                                     {selectedAuction.category}
@@ -995,15 +995,15 @@ function AllAuctions() {
                                         <div className="space-y-4">
                                             <h5 className="font-semibold text-gray-900">Timeline & Participants</h5>
                                             <div className="space-y-3">
-                                                <div className="flex justify-between">
+                                                {selectedAuction.auctionType !== "buy_now" && <div className="flex justify-between">
                                                     <span className="text-gray-500">Start Date</span>
                                                     <span className="font-medium">{formatDate(selectedAuction.startDate)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
+                                                </div>}
+                                                {selectedAuction.auctionType !== "buy_now" && <div className="flex justify-between">
                                                     <span className="text-gray-500">End Date</span>
                                                     <span className="font-medium">{formatDate(selectedAuction.endDate)}</span>
-                                                </div>
-                                                {selectedAuction.status === 'active' && (
+                                                </div>}
+                                                {selectedAuction.status === 'active' && selectedAuction.auctionType !== "buy_now" && (
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-500">Time Remaining</span>
                                                         <span className="font-medium text-amber-600">{formatTimeRemaining(selectedAuction.endDate)}</span>
