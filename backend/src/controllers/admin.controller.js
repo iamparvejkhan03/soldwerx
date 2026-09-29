@@ -1196,9 +1196,6 @@ export const updateAuction = async (req, res) => {
         sellerFeeValue: 0,
         bidPaymentRequired: true,
         taxAmount: 0,
-
-        // Set status based on new dates
-        status: "draft", // Start as draft since it's being re-listed
       };
 
       // Apply reset data to auction object
@@ -1727,30 +1724,24 @@ export const updateAuction = async (req, res) => {
     let newStatus;
 
     if (isSoldAuction) {
-      // For sold auctions being reset, determine status based on new dates
-      const originalStart = auction.startDate;
-      const originalEnd = auction.endDate;
-      const startChanged = start.getTime() !== originalStart.getTime();
-      const endChanged = end.getTime() !== originalEnd.getTime();
-
-      // If dates haven't changed, keep the original date logic but reset everything else
-      if (!startChanged && !endChanged) {
-        // Use the original date logic but with reset status
-        if (originalStart > now) {
-          newStatus = "draft"; // Future date, start as draft
-        } else if (originalStart <= now && originalEnd > now) {
-          newStatus = "active"; // Should be active now
-        } else if (originalEnd <= now) {
-          newStatus = "ended"; // Already ended
-        }
+      if (isBuyNow) {
+        // Buy Now has no dates — reset directly.
+        // Admin re-lists it as active, ready for a new buyer.
+        newStatus = "active";
       } else {
-        // If dates have changed, use the new dates
-        if (start > now) {
-          newStatus = "draft"; // Future date, start as draft
-        } else if (start <= now && end > now) {
-          newStatus = "active"; // Should be active now
-        } else if (end <= now) {
-          newStatus = "ended"; // Already ended
+        const originalStart = auction.startDate;
+        const originalEnd = auction.endDate;
+        const startChanged = start.getTime() !== originalStart.getTime();
+        const endChanged = end.getTime() !== originalEnd.getTime();
+
+        if (!startChanged && !endChanged) {
+          if (originalStart > now) newStatus = "draft";
+          else if (originalStart <= now && originalEnd > now) newStatus = "active";
+          else if (originalEnd <= now) newStatus = "ended";
+        } else {
+          if (start > now) newStatus = "draft";
+          else if (start <= now && end > now) newStatus = "active";
+          else if (end <= now) newStatus = "ended";
         }
       }
     } else {
@@ -1787,7 +1778,7 @@ export const updateAuction = async (req, res) => {
       specifications: finalSpecifications,
       location: location || "",
       videoLink: videoLink || "",
-      startPrice: parseFloat(startPrice),
+      startPrice: parseFloat(startPrice) || 0,
       auctionType,
       allowOffers: allowOffers === "true" || allowOffers === true,
       startDate: start,
@@ -1825,7 +1816,7 @@ export const updateAuction = async (req, res) => {
       updateData.bids = [];
       updateData.proxyBids = [];
       updateData.offers = [];
-      updateData.currentPrice = parseFloat(startPrice);
+      updateData.currentPrice = parseFloat(startPrice) || 0;
       updateData.currentBidder = null;
       updateData.winner = null;
       updateData.finalPrice = null;

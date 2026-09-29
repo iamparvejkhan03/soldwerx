@@ -1044,6 +1044,10 @@ auctionSchema.methods.isReserveMet = function () {
 
 // Method to end auction
 auctionSchema.methods.endAuction = async function () {
+  if (this.auctionType === "buy_now" || this.auctionType === "giveaway") {
+    return this; // never auto-end these
+  }
+  
   if (this.status !== "active") return this;
 
   const now = new Date();
@@ -1235,13 +1239,26 @@ auctionSchema.pre("remove", async function (next) {
 
 // Update when auction dates change
 auctionSchema.pre("save", async function (next) {
-  if (this.isModified("startDate") || this.isModified("endDate")) {
+  // Never schedule jobs for always-available auctions
+  const isAlwaysAvailable =
+    this.auctionType === "buy_now" || this.auctionType === "giveaway";
+
+  if (isAlwaysAvailable) {
+    // Make sure any stale jobs are cleared
+    try { await agendaService.cancelAuctionJobs(this._id); } catch (e) { }
+    return next();
+  }
+
+  const datesChanged =
+    this.isModified("startDate") || this.isModified("endDate");
+
+  if (datesChanged && this.startDate && this.endDate) {
     try {
       await agendaService.cancelAuctionJobs(this._id);
-      if (this.status === "draft") {
+      if (this.status === "draft" && this.startDate) {
         await agendaService.scheduleAuctionActivation(this._id, this.startDate);
       }
-      if (this.status === "draft" || this.status === "active") {
+      if ((this.status === "draft" || this.status === "active") && this.endDate) {
         await agendaService.scheduleAuctionEnd(this._id, this.endDate);
       }
     } catch (error) {

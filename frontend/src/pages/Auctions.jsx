@@ -435,9 +435,9 @@ function Auctions() {
         setUiFilters(newFilters);
 
         // Only update API filters if we have parameters
-        if (categoryParam || subcategoryParam || statusParam || auctionTypeParam || allowOffersParam) {
-            updateFilters(newFilters);
-        }
+        // if (categoryParam || subcategoryParam || statusParam || auctionTypeParam || allowOffersParam) {
+        //     updateFilters(newFilters);
+        // }
     }, [location.search]);
 
     // Fetch parent categories on mount

@@ -287,19 +287,21 @@ export const createAuction = async (req, res) => {
       serviceRecords: uploadedServiceRecords,
       status: (() => {
         const now = new Date();
-        const startDateObj = new Date(start);
         const isAdmin = seller?.userType === "admin" || seller?.userType === "staff";
-        const isBuyNowOrGiveaway = auctionType === "buy_now" || auctionType === "giveaway";
+        const isBuyNowOrGiveaway =
+          auctionType === "buy_now" || auctionType === "giveaway";
 
-        if (isAdmin && startDateObj <= now) {
-          return "active";
-        } else if (isAdmin && startDateObj > now) {
-          return "approved";
-        } else if (isBuyNowOrGiveaway && isAdmin) {
-          return "active";
-        } else {
-          return "draft";
+        // Always-available auctions: no dates, act on winner/approval only
+        if (isBuyNowOrGiveaway) {
+          return isAdmin ? "active" : "draft";
         }
+
+        // Timed auctions: only compare if start actually exists
+        if (!start) return isAdmin ? "approved" : "draft";
+
+        if (isAdmin && start <= now) return "active";
+        if (isAdmin && start > now) return "approved";
+        return "draft";
       })(),
     };
 
@@ -330,17 +332,11 @@ export const createAuction = async (req, res) => {
     const auction = await Auction.create(auctionData);
 
     // Schedule activation job (always needed for all types)
-    await agendaService.scheduleAuctionActivation(
-      auction._id,
-      auction.startDate,
-    );
-
-    // Only schedule end job for timed auctions (standard/reserve)
-    if (
-      auction.auctionType === "standard" ||
-      auction.auctionType === "reserve"
-    ) {
-      await agendaService.scheduleAuctionEnd(auction._id, auction.endDate);
+    if (auction.auctionType !== "buy_now" && auction.auctionType !== "giveaway") {
+      await agendaService.scheduleAuctionActivation(auction._id, auction.startDate);
+      if (auction.auctionType === "standard" || auction.auctionType === "reserve") {
+        await agendaService.scheduleAuctionEnd(auction._id, auction.endDate);
+      }
     }
 
     // Populate seller info for response
@@ -1410,7 +1406,31 @@ export const updateAuction = async (req, res) => {
     }
 
     // ========== STATUS DETERMINATION ==========
-    let newStatus = "draft";
+    let newStatus;
+
+    if (isEndedAuction) {
+      // Seller is resetting an ended auction — go back to draft
+      // (or approved/active, matching createAuction's logic)
+      const now = new Date();
+      const isAdmin = seller?.userType === "admin" || seller?.userType === "staff";
+      const isBuyNowOrGiveaway =
+        auctionType === "buy_now" || auctionType === "giveaway";
+
+      if (isBuyNowOrGiveaway) {
+        newStatus = isAdmin ? "active" : "draft";
+      } else if (!start) {
+        newStatus = isAdmin ? "approved" : "draft";
+      } else if (isAdmin && start <= now) {
+        newStatus = "active";
+      } else if (isAdmin && start > now) {
+        newStatus = "approved";
+      } else {
+        newStatus = "draft";
+      }
+    } else {
+      // Keep the existing status — don't downgrade active/approved/sold
+      newStatus = auction.status;
+    }
 
     // ========== PREPARE UPDATE DATA ==========
     const updateData = {
@@ -1495,10 +1515,13 @@ export const updateAuction = async (req, res) => {
     }).populate("seller", "username firstName lastName");
 
     // ========== RESCHEDULE JOBS ==========
-    if (isBuyNow) {
-      // Products don't have scheduled jobs
+    const isAlwaysAvailable =
+      auctionType === "buy_now" || auctionType === "giveaway";
+
+    if (isAlwaysAvailable) {
+      // Always-available auctions never have scheduled jobs
       await agendaService.cancelAuctionJobs(auction._id);
-    } else {
+    } else if (start && end) {
       const datesChanged =
         start.getTime() !== new Date(auction.startDate).getTime() ||
         end.getTime() !== new Date(auction.endDate).getTime();

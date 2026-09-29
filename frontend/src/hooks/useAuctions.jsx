@@ -110,22 +110,29 @@ export const useAuctions = () => {
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
 
-        // Handle categories from URL (can be comma-separated string)
+        // Build categories array from BOTH singular and plural params
         let categories = [];
-        const categoriesParam = searchParams.get('categories');
+
+        const categoryParam = searchParams.get('category');       // singular
+        const subcategoryParam = searchParams.get('subcategory'); // singular
+
+        if (categoryParam) categories.push(categoryParam);
+        if (subcategoryParam) categories.push(subcategoryParam);
+
+        const categoriesParam = searchParams.get('categories');   // plural (backward compat)
         if (categoriesParam) {
-            categories = categoriesParam.split(',').filter(cat => cat.trim() !== '');
+            categories = categories.concat(
+                categoriesParam.split(',').filter(cat => cat.trim() !== '')
+            );
         }
 
-        // Extract ALL URL parameters including new ones
         const urlFilters = {
-            categories: categories, // Now an array
+            categories,                                          // ← now correctly populated
             status: searchParams.get('status') || 'active',
             search: searchParams.get('search') || '',
             priceMin: searchParams.get('priceMin') || '',
             priceMax: searchParams.get('priceMax') || '',
             location: searchParams.get('location') || '',
-            // New car filters from URL
             make: searchParams.get('make') || '',
             model: searchParams.get('model') || '',
             yearMin: searchParams.get('yearMin') || '',
@@ -139,17 +146,8 @@ export const useAuctions = () => {
             sortOrder: searchParams.get('sortOrder') || 'desc'
         };
 
-        // Clean empty values
-        const cleanUrlFilters = cleanFilters(urlFilters);
-
-        if (Object.keys(cleanUrlFilters).length > 0) {
-            // If we have URL parameters, use them for initial fetch
-            setFilters(urlFilters);
-            fetchAuctions(1, 12, urlFilters);
-        } else {
-            // If no URL parameters, fetch with default filters
-            fetchAuctions(1, 12, filters);
-        }
+        setFilters(urlFilters);
+        fetchAuctions(1, 12, urlFilters); // always fetches with correct filters
     }, [location.search]);
 
     return {
