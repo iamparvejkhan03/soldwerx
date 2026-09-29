@@ -13,6 +13,8 @@
     "server": "nodemon src/server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1142.0",
+    "@aws-sdk/lib-storage": "^3.1142.0",
     "@google/genai": "^2.22.0",
     "agenda": "^5.0.0",
     "axios": "^1.12.2",
@@ -23,6 +25,7 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
+    "file-type": "^22.1.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.2",
     "multer": "^2.0.2",
