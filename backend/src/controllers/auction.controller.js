@@ -2864,7 +2864,7 @@ export const placeProxyBid = async (req, res) => {
     // max allows. Doing it here instead would bypass the outbid-notification
     // logic that lives inside processProxyBids.
     const priceBeforeProxy = auction.currentPrice;
-    
+
     await processProxyBids(auction._id);
 
     // --- Fetch updated auction ---
@@ -3001,7 +3001,7 @@ export const placeBidDirect = async (
       if (auction.autoExtend) {
         const timeRemaining = auction.endDate - now;
         if (timeRemaining < 2 * 60 * 1000) {
-          const newEndDate = new Date(auction.endDate.getTime() + 2 * 60 * 1000);
+          const newEndDate = new Date(now.getTime() + 2 * 60 * 1000);
           update.$set.endDate = newEndDate;
           extended = true;
         }
