@@ -3,6 +3,8 @@ import { BidderContainer, BidderHeader, BidderSidebar, AuctionCard, AuctionListI
 import { Clock, Gavel, Award, BarChart3, Search, Filter, SortAsc, Users, Loader, Grid, List } from "lucide-react";
 import { useAuctions } from "../../hooks/useAuctions";
 import { useStats } from "../../hooks/useStats";
+import { useLiveAuctionTicks } from "../../hooks/useLiveAuctionTicks";
+import { useEffect } from "react";
 
 function ActiveAuctions() {
     const {
@@ -18,6 +20,10 @@ function ActiveAuctions() {
     const [sortBy, setSortBy] = useState("newest");
     const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
     const { stats } = useStats();
+
+    const [liveAuctions, setLiveAuctions] = useState([]);
+    useEffect(() => { setLiveAuctions(auctions); }, [auctions]);
+    useLiveAuctionTicks(setLiveAuctions);
 
     const handleLoadMore = () => {
         loadMoreAuctions();
@@ -57,7 +63,7 @@ function ActiveAuctions() {
 
     const categories = ["all", ...new Set(auctions.map(auction => auction.category))];
 
-    const filteredAuctions = auctions
+    const filteredAuctions = liveAuctions
         .filter(auction => {
             const matchesSearch = searchTerm === "" ||
                 auction.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||

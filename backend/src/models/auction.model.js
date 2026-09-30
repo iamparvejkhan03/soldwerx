@@ -545,12 +545,16 @@ auctionSchema.methods.placeBid = async function (
   this.bidCount += 1;
   this.lastBidTime = now;
 
-  // Auto-extend if bidding near end time (last 5 minutes)
+  // Auto-extend if bidding near end time
   if (this.autoExtend) {
     const timeRemaining = this.endDate - now;
     if (timeRemaining < 2 * 60 * 1000) {
-      const newEndDate = new Date(this.endDate.getTime() + 2 * 60 * 1000);
+      // Less than 2 minutes
+      // Reset to exactly 2 minutes from now (not add to existing time)
+      const newEndDate = new Date(now.getTime() + 2 * 60 * 1000);
       this.endDate = newEndDate;
+
+      // Reschedule the end job with new time
       await agendaService.cancelAuctionJobs(this._id);
       await agendaService.scheduleAuctionEnd(this._id, newEndDate);
     }
@@ -1047,7 +1051,7 @@ auctionSchema.methods.endAuction = async function () {
   if (this.auctionType === "buy_now" || this.auctionType === "giveaway") {
     return this; // never auto-end these
   }
-  
+
   if (this.status !== "active") return this;
 
   const now = new Date();

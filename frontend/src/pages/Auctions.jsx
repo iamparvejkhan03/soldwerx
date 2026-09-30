@@ -5,6 +5,7 @@ import AuctionCard from "../components/AuctionCard";
 import { useAuctions } from "../hooks/useAuctions";
 import { useLocation } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
+import { useLiveAuctionTicks } from "../hooks/useLiveAuctionTicks";
 
 // Car filters that apply to ALL categories
 const carFilters = {
@@ -363,6 +364,10 @@ function Auctions() {
         updateFilters
     } = useAuctions();
 
+    const [liveAuctions, setLiveAuctions] = useState([]);
+    useEffect(() => { setLiveAuctions(auctions); }, [auctions]);
+    useLiveAuctionTicks(setLiveAuctions);
+
     const [uiFilters, setUiFilters] = useState({
         categories: [],
         status: "",
@@ -647,11 +652,11 @@ function Auctions() {
                 <div className="">
                     <div className="container mx-auto">
                         <h2 className="text-4xl font-black tracking-[-0.04em] text-gray-950 md:text-5xl">
-                                All
-                                <span className="ml-2 font-medium italic text-gray-400">
-                                    Auctions.
-                                </span>
-                            </h2>
+                            All
+                            <span className="ml-2 font-medium italic text-gray-400">
+                                Auctions.
+                            </span>
+                        </h2>
                         <p className="text-gray-600 mt-2">Browse our selection of equipment, trucks, trailers, and business assets across every category.</p>
                     </div>
                 </div>
@@ -708,7 +713,7 @@ function Auctions() {
                             {/* Results Count and Sort */}
                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
                                 <p className="text-gray-600">
-                                    {loading ? "Loading auctions..." : `Showing ${auctions.length} of ${pagination?.totalAuctions || 0} auctions`}
+                                    {loading ? "Loading auctions..." : `Showing ${liveAuctions.length} of ${pagination?.totalAuctions || 0} auctions`}
                                 </p>
 
                                 <div className="flex items-center gap-3">
@@ -748,7 +753,7 @@ function Auctions() {
                             </div>
 
                             {/* Auction Grid */}
-                            {loading && auctions.length === 0 ? (
+                            {loading && liveAuctions.length === 0 ? (
                                 // Loading Skeleton based on view mode
                                 viewMode === "grid" ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
@@ -795,12 +800,12 @@ function Auctions() {
                                         ))}
                                     </div>
                                 )
-                            ) : auctions.length > 0 ? (
+                            ) : liveAuctions.length > 0 ? (
                                 <>
                                     {viewMode === "grid" ? (
                                         // Grid View
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-8 md:gap-y-12">
-                                            {auctions.map(auction => (
+                                            {liveAuctions.map(auction => (
                                                 <AuctionCard
                                                     key={auction._id}
                                                     auction={auction}
@@ -810,7 +815,7 @@ function Auctions() {
                                     ) : (
                                         // List View
                                         <div className="space-y-2">
-                                            {auctions.map((auction) => (
+                                            {liveAuctions.map((auction) => (
                                                 <AuctionListItem
                                                     key={auction._id}
                                                     auction={auction}
@@ -836,7 +841,7 @@ function Auctions() {
                                                     <>
                                                         Load More Auctions
                                                         <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                                                            {pagination.totalAuctions - auctions.length} more
+                                                            {pagination.totalAuctions - liveAuctions.length} more
                                                         </span>
                                                     </>
                                                 )}
@@ -845,7 +850,7 @@ function Auctions() {
                                     )}
 
                                     {/* End of Auctions Message */}
-                                    {pagination?.currentPage >= pagination?.totalPages && auctions.length > 0 && (
+                                    {pagination?.currentPage >= pagination?.totalPages && liveAuctions.length > 0 && (
                                         <div className="text-center py-8 text-gray-500">
                                             <p>You've seen all {pagination.totalAuctions} auctions</p>
                                         </div>

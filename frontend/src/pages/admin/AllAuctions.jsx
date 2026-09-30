@@ -5,6 +5,7 @@ import { about } from "../../assets";
 import toast from "react-hot-toast";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
+import { useLiveAuctionTicks } from "../../hooks/useLiveAuctionTicks";
 
 function AllAuctions() {
     const [auctions, setAuctions] = useState([]);
@@ -29,6 +30,10 @@ function AllAuctions() {
         hasNext: false,
         hasPrev: false
     });
+
+    const [liveAuctions, setLiveAuctions] = useState([]);
+    useEffect(() => { setLiveAuctions(auctions); }, [auctions]);
+    useLiveAuctionTicks(setLiveAuctions);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -451,7 +456,7 @@ function AllAuctions() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {auctions.map((auction) => (
+                                        {liveAuctions.map((auction) => (
                                             <tr key={auction._id} className="hover:bg-gray-50">
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center">
@@ -759,7 +764,7 @@ function AllAuctions() {
                                     </tbody>
                                 </table>
 
-                                {auctions.length === 0 && (
+                                {liveAuctions.length === 0 && (
                                     <div className="text-center py-12">
                                         <Gavel size={48} className="mx-auto text-gray-300 mb-3" />
                                         <p className="text-gray-500">No auctions found matching your criteria</p>

@@ -53,7 +53,7 @@ function HowItWorks() {
     return (
         <section
             ref={ref}
-            className="relative overflow-hidden bg-white/10"
+            className="relative overflow-hidden bg-white/10 mb-14"
         >
             {/* =====================================================
                 BACKGROUND DETAILS

@@ -22,6 +22,7 @@ import {
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import Payment from "../models/payment.model.js";
+import { broadcastAuctionChange, broadcastAuctionRemoved } from "../services/realtimeService.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -870,6 +871,8 @@ export const updateAuctionStatus = async (req, res) => {
       message = `Auction ${featured ? "featured" : "unfeatured"} successfully`;
     }
 
+    broadcastAuctionChange(auctionId);
+
     res.status(200).json({
       success: true,
       message,
@@ -929,6 +932,8 @@ export const approveAuction = async (req, res) => {
 
     await auction.save();
 
+    broadcastAuctionChange(auctionId);
+
     // ✅ Send response immediately
     res.status(200).json({
       success: true,
@@ -987,6 +992,8 @@ export const deleteAuction = async (req, res) => {
 
     await Auction.findByIdAndDelete(auctionId);
 
+    broadcastAuctionRemoved(auctionId);
+
     res.status(200).json({
       success: true,
       message: "Auction deleted successfully",
@@ -1022,6 +1029,8 @@ export const endAuction = async (req, res) => {
     }
 
     await auction.endAuction();
+
+    broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
@@ -1873,6 +1882,8 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    broadcastAuctionChange(id);
+
     res.status(200).json({
       success: true,
       message: isSoldAuction
@@ -2000,6 +2011,8 @@ export const updatePaymentStatus = async (req, res) => {
         console.error('Failed to schedule invoice update job:', err)
       );
     }
+
+    broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,

@@ -26,6 +26,10 @@ import eventRouter from "./routes/event.route.js";
 import taxRouter from "./routes/tax.route.js";
 import aiRouter from "./routes/ai.route.js";
 
+import http from "http";
+import { Server } from "socket.io";
+import { setIO } from "./utils/socket.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -102,8 +106,31 @@ app.use((error, req, res, next) => {
     });
 });
 
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+// ============ SOCKET.IO SETUP ============
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: ['https://www.soldwerx.com', 'https://soldwerx.com', 'https://soldwerx-frontend.onrender.com', 'https://soldwerx-backend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'], credentials: true },
+  transports: ["websocket", "polling"],
+});
+
+setIO(io);
+
+io.on("connection", (socket) => {
+  // Every connected client auto-joins the global feed
+  socket.join("global");
+
+  socket.on("joinAuction", (id) => {
+    if (id) socket.join(`auction:${id}`);
+  });
+  socket.on("leaveAuction", (id) => {
+    if (id) socket.leave(`auction:${id}`);
+  });
+});
+
+// Replace: const server = app.listen(PORT, ...)
+server.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
 
 // Graceful shutdown

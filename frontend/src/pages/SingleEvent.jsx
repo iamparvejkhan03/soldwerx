@@ -27,6 +27,7 @@ import { about } from "../assets";
 import axiosInstance from "../utils/axiosInstance";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
+import { useLiveAuctionTicks } from "../hooks/useLiveAuctionTicks";
 
 // Lazy load components
 const ImageLightBox = lazy(() => import('../components/ImageLightBox'));
@@ -43,6 +44,10 @@ function SingleEvent() {
     const hasFetchedRef = useRef(false);
     const navigate = useNavigate();
     const { user } = useAuth();
+
+    const [liveAuctions, setLiveAuctions] = useState([]);
+    useEffect(() => { setLiveAuctions(auctions); }, [auctions]);
+    useLiveAuctionTicks(setLiveAuctions);
 
     // Fetch event data
     useEffect(() => {
@@ -283,30 +288,30 @@ function SingleEvent() {
                                     </div>
                                 )}
                                 {/* Share & Save */}
-                    <div className="">
-                        <div className="flex items-center justify-center gap-4">
-                            <button
-                                onClick={handleShare}
-                                className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
-                            >
-                                <Share2 size={18} />
-                                <span className="text-sm">Share</span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    // Add to calendar functionality
-                                    const eventDate = new Date(event.eventDate);
-                                    const endDate = event.endDate ? new Date(event.endDate) : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
-                                    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${eventDate.toISOString().replace(/-|:|\.\d+/g, '')}/${endDate.toISOString().replace(/-|:|\.\d+/g, '')}&details=${encodeURIComponent(event.description?.replace(/<[^>]*>/g, '') || '')}&location=${encodeURIComponent(event.location || '')}`;
-                                    window.open(calendarUrl, '_blank');
-                                }}
-                                className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
-                            >
-                                <CalendarDays size={18} />
-                                <span className="text-sm">Add to Calendar</span>
-                            </button>
-                        </div>
-                    </div>
+                                <div className="">
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            onClick={handleShare}
+                                            className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
+                                        >
+                                            <Share2 size={18} />
+                                            <span className="text-sm">Share</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                // Add to calendar functionality
+                                                const eventDate = new Date(event.eventDate);
+                                                const endDate = event.endDate ? new Date(event.endDate) : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
+                                                const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${eventDate.toISOString().replace(/-|:|\.\d+/g, '')}/${endDate.toISOString().replace(/-|:|\.\d+/g, '')}&details=${encodeURIComponent(event.description?.replace(/<[^>]*>/g, '') || '')}&location=${encodeURIComponent(event.location || '')}`;
+                                                window.open(calendarUrl, '_blank');
+                                            }}
+                                            className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
+                                        >
+                                            <CalendarDays size={18} />
+                                            <span className="text-sm">Add to Calendar</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -437,7 +442,7 @@ function SingleEvent() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {event.auctions.map((auction) => (
+                        {liveAuctions.map((auction) => (
                             <AuctionCard
                                 key={auction._id}
                                 auction={auction}
@@ -460,7 +465,7 @@ function SingleEvent() {
             )}
 
             {/* No Auctions Message */}
-            {event.auctions && event.auctions.length === 0 && (
+            {liveAuctions && liveAuctions.length === 0 && (
                 <div className="mt-12 bg-gray-50 rounded-xl border border-gray-200 p-12 text-center">
                     <Calendar size={48} className="mx-auto text-gray-300 mb-4" />
                     <h3 className="text-xl font-medium text-gray-700 mb-2">No Auctions Assigned</h3>

@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { useComments } from "../hooks/useComments";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { useAuth } from "../contexts/AuthContext";
+import { socket } from "../utils/socket.js";
 
 const YouTubeEmbed = lazy(() => import('../components/YouTubeEmbed'));
 const ImageLightBox = lazy(() => import('../components/ImageLightBox'));
@@ -84,12 +85,14 @@ function SingleAuction() {
             }
         };
 
-        if (countdown?.status === 'ended') {
-            const timer = setTimeout(() => {
-                fetchAuction();
-            }, 2000);
-            return () => clearTimeout(timer);
-        } else if (!hasFetchedRef.current) {
+        // if (countdown?.status === 'ended') {
+        //     const timer = setTimeout(() => {
+        //         fetchAuction();
+        //     }, 2000);
+        //     return () => clearTimeout(timer);
+        // } else 
+
+        if (!hasFetchedRef.current) {
             hasFetchedRef.current = true;
             fetchAuction();
         }
@@ -106,6 +109,33 @@ function SingleAuction() {
             document.body.style.overflow = "";
         };
     }, [showProxyBidModal]);
+
+    // ---- LIVE SUBSCRIPTION ----
+    useEffect(() => {
+        if (!id) return;
+
+        socket.emit("joinAuction", id);
+
+        const onUpdate = (full) => {
+            // full is a populated auction object — same shape as the HTTP response
+            setAuction(full);
+        };
+
+        const onRemoved = () => {
+            // optional: show a "removed" state, or redirect
+            setAuction(null);
+        };
+
+        socket.on("auction:update", onUpdate);
+        socket.on("auction:removed", onRemoved);
+
+        return () => {
+            socket.off("auction:update", onUpdate);
+            socket.off("auction:removed", onRemoved);
+            socket.emit("leaveAuction", id);
+        };
+    }, [id]);
+    // ---------------------------
 
     const scrollToBidSection = () => {
         bidSectionRef.current?.scrollIntoView({

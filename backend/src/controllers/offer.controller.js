@@ -11,6 +11,8 @@ import {
   sendAuctionWonEmail,
 } from "../utils/nodemailer.js";
 
+import { broadcastAuctionChange } from "../services/realtimeService.js";
+
 /**
  * @desc    Make an offer on an auction
  * @route   POST /api/v1/auctions/offer/:id
@@ -143,6 +145,8 @@ export const makeOffer = async (req, res) => {
     const updatedAuction = await Auction.findById(id)
       .populate("offers.buyer", "email username firstName lastName")
       .populate("seller", "email username firstName lastName");
+
+      broadcastAuctionChange(id);
 
     res.status(201).json({
       success: true,
@@ -411,6 +415,8 @@ export const respondToOffer = async (req, res) => {
       // Don't fail the request if email fails
     }
 
+    broadcastAuctionChange(auctionId);
+
     res.status(200).json({
       success: true,
       message: `Offer ${response}ed successfully`,
@@ -512,6 +518,8 @@ export const acceptCounterOffer = async (req, res) => {
       // Don't fail the request if email fails
     }
 
+    broadcastAuctionChange(auctionId);
+
     res.status(200).json({
       success: true,
       message:
@@ -604,6 +612,8 @@ export const withdrawOffer = async (req, res) => {
     //   );
     //   // Don't fail the request if email fails
     // }
+
+    broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
@@ -790,6 +800,7 @@ export const cleanupExpiredOffers = async (req, res) => {
 
       if (changed) {
         await auction.save();
+        broadcastAuctionChange(auction._id);
       }
     }
 
@@ -1135,6 +1146,8 @@ export const adminRespondToOffer = async (req, res) => {
       .populate("seller", "username firstName lastName email phone")
       .populate("winner", "username firstName lastName email phone address");
 
+      broadcastAuctionChange(auctionId);
+
     res.status(200).json({
       success: true,
       message: `Offer ${response}ed by administrator`,
@@ -1226,6 +1239,8 @@ export const adminCancelOffer = async (req, res) => {
     offer.updatedAt = new Date();
 
     await auction.save();
+
+    broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
@@ -1497,6 +1512,8 @@ export const adminEndAuctionWithOffer = async (req, res) => {
     //   console.error("Failed to send notification emails:", emailError);
     // }
 
+    broadcastAuctionChange(auctionId);
+
     res.status(200).json({
       success: true,
       message: "Auction ended successfully via offer acceptance",
@@ -1562,6 +1579,8 @@ export const reactivateOffer = async (req, res) => {
       .populate("offers.buyer", "username firstName lastName email phone")
       .populate("seller", "username firstName lastName email phone")
       .populate("winner", "username firstName lastName email phone");
+
+      broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,

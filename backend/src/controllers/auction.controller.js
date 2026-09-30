@@ -18,7 +18,7 @@ import {
 import Category from "../models/category.model.js";
 import Commission from "../models/commission.model.js";
 import { processProxyBids } from "../services/proxyBidService.js";
-// import { sendProxyBidPlacedEmail, sendProxyBidOutbidEmail } from "../utils/nodemailer.js";
+import { broadcastAuctionChange, broadcastAuctionRemoved } from "../services/realtimeService.js";
 
 // Create New Auction
 export const createAuction = async (req, res) => {
@@ -341,6 +341,8 @@ export const createAuction = async (req, res) => {
 
     // Populate seller info for response
     await auction.populate("seller", "username firstName lastName");
+
+    if (auction.status === "active") broadcastAuctionChange(auction._id);
 
     res.status(201).json({
       success: true,
@@ -1537,6 +1539,8 @@ export const updateAuction = async (req, res) => {
       }
     }
 
+    broadcastAuctionChange(id);
+
     res.status(200).json({
       success: true,
       message: isEndedAuction
@@ -1594,6 +1598,8 @@ export const deleteAuction = async (req, res) => {
     }
 
     await Auction.findByIdAndDelete(id);
+
+    broadcastAuctionRemoved(id);
 
     res.status(200).json({
       success: true,
@@ -1671,6 +1677,8 @@ export const placeBid = async (req, res) => {
     // Populate the updated auction
     await auction.populate("currentBidder", "username firstName email");
     await auction.populate("seller", "username firstName email");
+
+    broadcastAuctionChange(auction._id);
 
     res.status(200).json({
       success: true,
@@ -2390,6 +2398,8 @@ export const lowerReservePrice = async (req, res) => {
     // Populate seller info for response
     await updatedAuction.populate("seller", "username firstName lastName");
 
+    broadcastAuctionChange(id);
+
     res.status(200).json({
       success: true,
       message: "Reserve price lowered successfully",
@@ -2512,6 +2522,8 @@ export const buyNow = async (req, res) => {
       auction.auctionType === "giveaway"
         ? "🎉 Congratulations! You have claimed this item for free!"
         : "Congratulations! You have purchased this item.";
+
+    broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
@@ -2852,6 +2864,8 @@ export const placeProxyBid = async (req, res) => {
       .populate("currentBidder", "username firstName lastName email")
       .populate("bids.bidder", "username firstName lastName email");
 
+      broadcastAuctionChange(id);
+
     res.status(200).json({
       success: true,
       message: "Proxy bid placed successfully",
@@ -3056,6 +3070,8 @@ export const cancelProxyBid = async (req, res) => {
     proxyBid.updatedAt = new Date();
     await auction.save();
 
+    broadcastAuctionChange(id);
+
     res.status(200).json({
       success: true,
       message: "Proxy bid cancelled successfully",
@@ -3212,6 +3228,8 @@ export const updateProxyBid = async (req, res) => {
       .populate("seller", "username firstName lastName email")
       .populate("currentBidder", "username firstName lastName email")
       .populate("bids.bidder", "username firstName lastName email");
+
+      broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,

@@ -22,6 +22,7 @@ import {
 import User from "../models/user.model.js";
 import { processProxyBids } from "./proxyBidService.js";
 import { generateAndAttachInvoice } from "./invoiceService.js";
+import { broadcastAuctionChange } from "./realtimeService.js";
 
 class AgendaService {
   constructor() {
@@ -44,6 +45,7 @@ class AgendaService {
           auction.status = "active";
           await auction.save();
           await auction.populate("seller", "email username firstName");
+          broadcastAuctionChange(auction._id);
 
           // Send email to seller
           await auctionListedEmail(auction, auction.seller);
@@ -141,6 +143,8 @@ class AgendaService {
               .populate("winner", "email phone username firstName address");
           }
 
+          broadcastAuctionChange(auctionId);
+
           // Send appropriate emails based on the result
           if (result.wasSold) {
             console.log(
@@ -185,6 +189,7 @@ class AgendaService {
         ) {
           // Auction was extended, reschedule the job
           await this.scheduleAuctionEnd(auctionId, auction.endDate);
+          broadcastAuctionChange(auctionId);
           console.log(
             `🔄 Agenda: Rescheduled auction ${auctionId} to ${auction.endDate}`,
           );

@@ -151,7 +151,7 @@ function Header() {
         <header className={`${isScrolled ? 'fixed bg-[#080A0D] bg-opacity-100 shadow-lg shadow-primary/20' : 'absolute bg-opacity-0'} w-full transition-all duration-150 z-50`}>
             <Container className={`flex items-center justify-between py-4`}>
                 <Link to="/">
-                    <img src={(isScrolled || isMenuOpen) ? `${logo}` : `${logo}`} alt="BidNordic's Logo" className="h-12 md:h-14 z-10" />
+                    <img src={(isScrolled || isMenuOpen) ? `${logo}` : `${logo}`} alt="SoldWerX's Logo" className="h-12 md:h-14 z-10" />
                 </Link>
 
                 {/* Navlinks for larger screens */}

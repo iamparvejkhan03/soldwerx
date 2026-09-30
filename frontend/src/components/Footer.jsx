@@ -35,7 +35,7 @@ function Footer() {
             href: "/auctions?status=approved",
         },
         {
-            name: "Sold Collectibles",
+            name: "Sold Auctions",
             href: "/auctions?status=sold",
         },
         {
@@ -197,7 +197,7 @@ function Footer() {
                         </p>
 
                         {/* Socials */}
-                        <div className="mt-6 flex items-center gap-2.5">
+                        {/* <div className="mt-6 flex items-center gap-2.5">
                             {socialLinks.map((social) => {
                                 const Icon = social.icon;
 
@@ -213,7 +213,7 @@ function Footer() {
                                     </Link>
                                 );
                             })}
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* =================================================

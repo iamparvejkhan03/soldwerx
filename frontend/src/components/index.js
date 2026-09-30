@@ -66,6 +66,8 @@ import AiAuctionInputStep from "./AiAuctionInputStep";
 import StaffHeader from "./staff/Header";
 import StaffSidebar from "./staff/Sidebar";
 import StaffContainer from "./staff/Container";
+import HomeAuctionsSection from "./HomeAuctionsSection";
+import HomeEventsSection from "./HomeEventsSection";
 
 export {
     Container,
@@ -136,4 +138,6 @@ export {
     StaffContainer,
     StaffHeader,
     StaffSidebar,
+    HomeAuctionsSection,
+    HomeEventsSection,
 }
