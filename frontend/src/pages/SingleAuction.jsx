@@ -9,6 +9,7 @@ import { useComments } from "../hooks/useComments";
 import { useWatchlist } from "../hooks/useWatchlist";
 import { useAuth } from "../contexts/AuthContext";
 import { socket } from "../utils/socket.js";
+import { reanchorFromSocket } from "../utils/serverClock.js";
 
 const YouTubeEmbed = lazy(() => import('../components/YouTubeEmbed'));
 const ImageLightBox = lazy(() => import('../components/ImageLightBox'));
@@ -85,14 +86,12 @@ function SingleAuction() {
             }
         };
 
-        // if (countdown?.status === 'ended') {
-        //     const timer = setTimeout(() => {
-        //         fetchAuction();
-        //     }, 2000);
-        //     return () => clearTimeout(timer);
-        // } else 
-
-        if (!hasFetchedRef.current) {
+        if (countdown?.status === 'ended') {
+            const timer = setTimeout(() => {
+                fetchAuction();
+            }, 2000);
+            return () => clearTimeout(timer);
+        } else if (!hasFetchedRef.current) {
             hasFetchedRef.current = true;
             fetchAuction();
         }
@@ -116,8 +115,8 @@ function SingleAuction() {
 
         socket.emit("joinAuction", id);
 
-        const onUpdate = (full) => {
-            // full is a populated auction object — same shape as the HTTP response
+        const onUpdate = ({ serverTime, auction: full }) => {
+            if (serverTime) reanchorFromSocket(serverTime);
             setAuction(full);
         };
 
@@ -943,18 +942,36 @@ function SingleAuction() {
                             )}
 
                             {countdown.status === 'ended' && (
-                                <div className="text-center py-4 bg-yellow-100 rounded-lg border border-yellow-200">
-                                    <p className="font-medium text-yellow-700">Auction Ended</p>
-                                    {auction.winner ? (
-                                        <p className="text-sm text-yellow-600 mt-1">Winner: {auction.winner.username}</p>
-                                    ) : auction.status === 'sold' ? (
-                                        <p className="text-sm text-green-600 mt-1">Item Sold</p>
-                                    ) : auction.status === 'reserve_not_met' ? (
-                                        <p className="text-sm text-yellow-600 mt-1">Reserve Not Met</p>
-                                    ) : auction.status === 'sold_buy_now' ? (
-                                        <p className="text-sm text-green-600 mt-1">Sold via Buy Now</p>
-                                    ) : (
-                                        <p className="text-sm text-yellow-600 mt-1">No winning bidder</p>
+                                <div className={`text-center py-4 rounded-lg border ${auction.status === 'sold' || auction.status === 'sold_buy_now'
+                                        ? 'bg-green-100 border-green-200'
+                                        : auction.status === 'reserve_not_met'
+                                            ? 'bg-orange-100 border-orange-200'
+                                            : 'bg-yellow-100 border-yellow-200'
+                                    }`}>
+                                    <p className={`font-medium ${auction.status === 'sold' || auction.status === 'sold_buy_now'
+                                            ? 'text-green-700'
+                                            : auction.status === 'reserve_not_met'
+                                                ? 'text-orange-700'
+                                                : 'text-yellow-700'
+                                        }`}>
+                                        {auction.status === 'sold' ? 'Sold'
+                                            : auction.status === 'sold_buy_now' ? 'Sold via Buy Now'
+                                                : auction.status === 'reserve_not_met' ? 'Reserve Not Met'
+                                                    : auction.status === 'ended' ? 'Auction Ended — No Sale'
+                                                        : auction.status === 'active' ? 'Finalizing results…'
+                                                            : 'Auction Ended'}
+                                    </p>
+
+                                    {auction.winner && (
+                                        <p className="text-sm text-gray-700 mt-1">
+                                            Winner: {auction.winner.username}
+                                        </p>
+                                    )}
+
+                                    {(auction.finalPrice ?? auction.currentPrice) > 0 && auction.winner && (
+                                        <p className="text-sm text-gray-700 mt-0.5">
+                                            Final Price: ${(auction.finalPrice || auction.currentPrice).toLocaleString()}
+                                        </p>
                                     )}
                                 </div>
                             )}

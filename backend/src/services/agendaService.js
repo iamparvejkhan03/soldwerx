@@ -136,14 +136,14 @@ class AgendaService {
           // Use the model's endAuction method to handle the business logic
           const result = await auction.endAuction();
 
+          broadcastAuctionChange(auctionId);
+
           // Re-fetch the auction with populated winner if it was sold
           if (result.wasSold) {
             auction = await Auction.findById(auctionId)
               .populate("seller", "email phone username firstName")
               .populate("winner", "email phone username firstName address");
           }
-
-          broadcastAuctionChange(auctionId);
 
           // Send appropriate emails based on the result
           if (result.wasSold) {

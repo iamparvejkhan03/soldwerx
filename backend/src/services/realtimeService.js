@@ -49,11 +49,20 @@ export const broadcastAuctionChange = async (auctionId) => {
 
         if (!auction) return;
 
+        // One stamp for both emits so the two payloads agree.
+        const serverTime = Date.now();
+
         // 1) Lightweight tick for every connected client
-        io.to("global").emit("auction:tick", pick(auction, TICK_FIELDS));
+        io.to("global").emit("auction:tick", {
+            ...pick(auction, TICK_FIELDS),
+            serverTime,
+        });
 
         // 2) Full doc for the single-auction page
-        io.to(`auction:${auctionId}`).emit("auction:update", auction);
+        io.to(`auction:${auctionId}`).emit("auction:update", {
+            serverTime,
+            auction,
+        });
     } catch (err) {
         console.error("broadcastAuctionChange error:", err);
     }

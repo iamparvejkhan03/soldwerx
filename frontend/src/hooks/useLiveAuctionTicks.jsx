@@ -1,17 +1,22 @@
 import { useEffect } from "react";
 import { socket } from "../utils/socket";
+import {
+    ensureClockStarted,
+    reanchorFromSocket,
+} from "../utils/serverClock";
 
-/**
- * @param {Function} setAuctions  React setState for the auctions array
- *                               (must be the raw setter, e.g. from useState).
- */
 export function useLiveAuctionTicks(setAuctions) {
     useEffect(() => {
-        const onTick = (tick) => {
+        ensureClockStarted();
+
+        const onTick = ({ serverTime, ...tick }) => {
+            // Nudge the site-wide clock with the server's stamp.
+            if (serverTime) reanchorFromSocket(serverTime);
+
             setAuctions((prev) => {
                 if (!Array.isArray(prev) || prev.length === 0) return prev;
                 const idx = prev.findIndex((a) => a._id === tick._id);
-                if (idx === -1) return prev; // not on this page — ignore
+                if (idx === -1) return prev; // not on this page
                 const next = prev.slice();
                 next[idx] = { ...next[idx], ...tick };
                 return next;
@@ -20,7 +25,9 @@ export function useLiveAuctionTicks(setAuctions) {
 
         const onRemoved = ({ _id }) => {
             setAuctions((prev) =>
-                Array.isArray(prev) ? prev.filter((a) => a._id !== _id) : prev
+                Array.isArray(prev)
+                    ? prev.filter((a) => a._id !== _id)
+                    : prev
             );
         };
 

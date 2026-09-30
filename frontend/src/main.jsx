@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PopUpContextProvider } from './contexts/PopUpContextProvider';
 import { Protected, LoadingSpinner } from './components';
 import { AuthProvider } from './contexts/AuthContext.jsx';
+import { ensureClockStarted } from './utils/serverClock.js';
 
 const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -129,6 +130,8 @@ const AdminAllEvents = lazy(() => import('./pages/admin/AllEvents'));
 const AdminCreateEvent = lazy(() => import('./pages/admin/CreateEvent'));
 const AdminEditEvent = lazy(() => import('./pages/admin/EditEvent'));
 const AdminTaxSettings = lazy(() => import('./pages/admin/TaxSettings'));
+
+ensureClockStarted();
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>

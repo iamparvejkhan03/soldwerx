@@ -2842,20 +2842,27 @@ export const placeProxyBid = async (req, res) => {
 
     // --- Immediately place the initial bid if needed ---
     // Check if this proxy bid can become the current highest bid
-    const currentHighest = auction.currentBidder
-      ? auction.currentPrice
-      : auction.startPrice - auction.bidIncrement; // simulate no bid
+    // const currentHighest = auction.currentBidder
+    //   ? auction.currentPrice
+    //   : auction.startPrice - auction.bidIncrement; // simulate no bid
 
-    let nextBid = auction.bidCount === 0
-      ? auction.startPrice
-      : auction.currentPrice + auction.bidIncrement;
+    // let nextBid = auction.bidCount === 0
+    //   ? auction.startPrice
+    //   : auction.currentPrice + auction.bidIncrement;
 
-    if (proxyBid.maxAmount >= nextBid) {
-      // Place the bid using the service function
-      await placeBidDirect(auction._id, bidder._id, bidder.username, nextBid, proxyBid._id);
-    }
+    // if (proxyBid.maxAmount >= nextBid) {
+    //   // Place the bid using the service function
+    //   await placeBidDirect(auction._id, bidder._id, bidder.username, nextBid, proxyBid._id);
+    // }
+
+    // // --- Trigger processing of all proxy bids ---
+    // await processProxyBids(auction._id);
 
     // --- Trigger processing of all proxy bids ---
+    // The newly-added proxy bid is already in auction.proxyBids, so
+    // processProxyBids will pick it up and place the initial bid if its
+    // max allows. Doing it here instead would bypass the outbid-notification
+    // logic that lives inside processProxyBids.
     await processProxyBids(auction._id);
 
     // --- Fetch updated auction ---
@@ -2864,7 +2871,7 @@ export const placeProxyBid = async (req, res) => {
       .populate("currentBidder", "username firstName lastName email")
       .populate("bids.bidder", "username firstName lastName email");
 
-      broadcastAuctionChange(id);
+    broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
@@ -2875,8 +2882,34 @@ export const placeProxyBid = async (req, res) => {
       },
     });
 
-    // --- Send notification to bidder (optional) ---
-    // sendProxyBidPlacedEmail(bidder.email, bidder.username, auction, proxyBid);
+    // 1) If this user is now the highest bidder, send them the same
+    //    confirmation a manual bidder would receive. Outbid users are
+    //    handled separately inside processProxyBids.
+    const bidderIdStr = bidder._id.toString();
+    const userHighestBid = (updatedAuction.bids || []).reduce((max, b) => {
+      const rawId = b.bidder?._id ?? b.bidder;
+      if (!rawId || rawId.toString() !== bidderIdStr) return max;
+      return b.amount > max ? b.amount : max;
+    }, 0);
+
+    const isHighest =
+      updatedAuction.currentBidder &&
+      (updatedAuction.currentBidder._id?.toString?.() ||
+        updatedAuction.currentBidder.toString()) === bidderIdStr;
+
+    const priceChanged = updatedAuction.currentPrice > priceBeforeProxy;
+
+    if (isHighest && priceChanged && userHighestBid > 0) {
+      bidConfirmationEmail(
+        bidder.email,
+        bidder.username,
+        updatedAuction,
+        userHighestBid,               // ← user's real highest bid
+        updatedAuction.currentPrice,  // ← current auction price
+      ).catch((err) =>
+        console.error("Proxy bid confirmation email failed:", err)
+      );
+    }
 
   } catch (error) {
     console.error("Place proxy bid error:", error);
@@ -3220,6 +3253,8 @@ export const updateProxyBid = async (req, res) => {
     // If the new max is higher and the user is not currently the highest, we might need to place a bid.
     await auction.save();
 
+    const priceBeforeProxy = auction.currentPrice;
+
     // Trigger proxy bid processing to potentially place a higher bid immediately
     await processProxyBids(auction._id);
 
@@ -3229,7 +3264,7 @@ export const updateProxyBid = async (req, res) => {
       .populate("currentBidder", "username firstName lastName email")
       .populate("bids.bidder", "username firstName lastName email");
 
-      broadcastAuctionChange(id);
+    broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
@@ -3240,6 +3275,35 @@ export const updateProxyBid = async (req, res) => {
       },
     });
 
+    // --- Email (fire-and-forget) ---
+    // If the user is still/now the highest bidder, confirm.
+
+    const userIdStr = userId.toString();
+    const userHighestBid = (updatedAuction.bids || []).reduce((max, b) => {
+      const rawId = b.bidder?._id ?? b.bidder;
+      if (!rawId || rawId.toString() !== userIdStr) return max;
+      return b.amount > max ? b.amount : max;
+    }, 0);
+
+    const isHighest =
+      updatedAuction.currentBidder &&
+      (updatedAuction.currentBidder._id?.toString?.() ||
+        updatedAuction.currentBidder.toString()) === userIdStr;
+
+    if (isHighest && userHighestBid > 0) {
+      const populatedUser = await User.findById(userId).select("email username");
+      if (populatedUser?.email) {
+        bidConfirmationEmail(
+          populatedUser.email,
+          populatedUser.username,
+          updatedAuction,
+          userHighestBid,
+          updatedAuction.currentPrice,
+        ).catch((err) =>
+          console.error("Proxy bid update confirmation email failed:", err)
+        );
+      }
+    }
   } catch (error) {
     console.error("Update proxy bid error:", error);
     res.status(500).json({

@@ -8,7 +8,7 @@ function HomeEventsSection() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [visible, setVisible] = useState(false);
-    const [activeTab, setActiveTab] = useState("upcoming");
+    const [activeTab, setActiveTab] = useState("ongoing");
 
     const sectionRef = useRef(null);
     const navigate = useNavigate();

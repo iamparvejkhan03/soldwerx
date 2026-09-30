@@ -112,6 +112,22 @@ const getTimeRemaining = (endDate) => {
     return `${minutes}m`;
 };
 
+// Works for manual bids and proxy auto-bids alike.
+const getUserHighestBid = (auction, userId) => {
+    if (!auction?.bids?.length || !userId) return null;
+    const uid = userId.toString();
+    let highest = null;
+    for (const bid of auction.bids) {
+        const rawId = bid.bidder?._id ?? bid.bidder;
+        if (!rawId) continue;
+        if (rawId.toString() !== uid) continue;
+        if (highest === null || bid.amount > highest) {
+            highest = bid.amount;
+        }
+    }
+    return highest;
+};
+
 // Info card
 const createInfoCard = (content, variant = 'default') => {
     const variants = {
@@ -889,16 +905,36 @@ const newOfferNotificationEmail = async (seller, listing, offerAmount, bidder) =
 };
 
 // 15. Outbid notification for bidder
-const outbidNotificationEmail = async (userEmail, userName, listing, newBid, listingUrl) => {
+const outbidNotificationEmail = async (
+    userEmail,
+    userName,
+    listing,
+    newBid,
+    listingUrl,
+    userHighestBid = null
+) => {
     try {
         const content = `
             <h2 style="text-align: center;">You've Been Outbid</h2>
             <p style="text-align: center;">Another bidder has placed a higher bid on an item you were bidding on.</p>
             <div style="background: ${BRAND_COLORS.grayBg}; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.danger};">
-                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing.title}</p>
-                <p style="margin: 15px 0; font-size: 24px; font-weight: bold; color: ${BRAND_COLORS.secondary};">New Highest Bid: ${formatCurrency(newBid)}</p>
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing.title}</p>
+
+                ${userHighestBid !== null ? `
+                    <div style="margin: 0 0 12px 0;">
+                        ${createSummaryRow('Your Highest Bid:', formatCurrency(userHighestBid))}
+                    </div>
+                ` : ''}
+
+                <div style="margin: 12px 0 0 0; padding: 16px; background: #fef2f2; border-radius: 8px; border-left: 4px solid ${BRAND_COLORS.danger};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: ${BRAND_COLORS.secondary};">New Highest Bid:</span>
+                        <span style="font-size: 24px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${formatCurrency(newBid)}</span>
+                    </div>
+                </div>
+
                 ${listing.specifications && listing.specifications.size > 0 ? `
-                    <div style="margin: 20px 0;">
+                    <div style="margin: 20px 0 0 0;">
                         <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
                         ${renderSpecifications(listing.specifications)}
                     </div>
@@ -932,54 +968,137 @@ const outbidNotificationEmail = async (userEmail, userName, listing, newBid, lis
 };
 
 // 16. Bulk outbid notifications
-const DEBOUNCE_DELAY = 5000;
-const lastNotificationTimes = new Map();
+// ============================================
+// OUTBID NOTIFICATION BATCHING
+// ============================================
+//
+// During a proxy cascade, outbid events fire many times per second.
+// We accumulate candidates and flush after a quiet window, so each
+// user gets ONE email with the FINAL prices.
 
-const sendOutbidNotifications = async (auction, previousHighestBidder, previousBidders, currentBidderId, newBidAmount) => {
+const OUTBID_FLUSH_DELAY_MS = 3000;
+const pendingOutbidFlushes = new Map(); // auctionId -> { candidateUserIds: Set, timer }
+
+/**
+ * Schedule outbid notifications. Does NOT send immediately — accumulates
+ * candidates and flushes after a quiet period. Callers can `await` this;
+ * it returns synchronously.
+ */
+const sendOutbidNotifications = (
+    auction,
+    previousHighestBidder,
+    previousBidders,
+    currentBidderId,
+    newBidAmount
+) => {
     try {
         const auctionId = auction._id.toString();
-        const now = Date.now();
-        const lastTime = lastNotificationTimes.get(auctionId) || 0;
-        if (now - lastTime < DEBOUNCE_DELAY) {
-            console.log(`Outbid notifications debounced for auction ${auctionId} - too frequent`);
-            return;
-        }
-        lastNotificationTimes.set(auctionId, now);
 
-        const biddersToNotify = previousBidders.filter(bidderId => bidderId !== currentBidderId.toString());
-        if (biddersToNotify.length === 0) {
-            console.log("No bidders to notify for outbid");
+        let entry = pendingOutbidFlushes.get(auctionId);
+        if (!entry) {
+            entry = { candidateUserIds: new Set(), timer: null };
+            pendingOutbidFlushes.set(auctionId, entry);
+        }
+
+        const currentIdStr = currentBidderId?.toString();
+        for (const bidderId of previousBidders || []) {
+            const idStr = bidderId?.toString();
+            if (idStr && idStr !== currentIdStr) {
+                entry.candidateUserIds.add(idStr);
+            }
+        }
+
+        // Every new outbid event pushes the flush further out, so the
+        // cascade fully settles before any email goes out.
+        if (entry.timer) clearTimeout(entry.timer);
+        entry.timer = setTimeout(() => {
+            const captured = pendingOutbidFlushes.get(auctionId);
+            pendingOutbidFlushes.delete(auctionId);
+            if (captured) {
+                flushOutbidNotifications(
+                    auctionId,
+                    captured.candidateUserIds
+                ).catch((err) =>
+                    console.error("flushOutbidNotifications error:", err)
+                );
+            }
+        }, OUTBID_FLUSH_DELAY_MS);
+    } catch (err) {
+        console.error("sendOutbidNotifications scheduling error:", err);
+    }
+};
+
+/**
+ * Fires the actual emails. Re-fetches the auction for FINAL state and
+ * skips anyone who ended up as the current highest bidder.
+ */
+const flushOutbidNotifications = async (auctionId, candidateUserIds) => {
+    try {
+        if (!candidateUserIds || candidateUserIds.size === 0) return;
+
+        const { default: Auction } = await import("../models/auction.model.js");
+        const auction = await Auction.findById(auctionId).lean();
+        if (!auction) return;
+
+        const currentHighestId = auction.currentBidder?.toString();
+        const toNotify = [...candidateUserIds].filter(
+            (id) => id !== currentHighestId
+        );
+
+        if (toNotify.length === 0) {
+            console.log(
+                `Outbid flush ${auctionId}: no users to notify (candidate(s) regained top spot)`
+            );
             return;
         }
+
         const User = (await import("../models/user.model.js")).default;
         const users = await User.find({
-            _id: { $in: biddersToNotify },
+            _id: { $in: toNotify },
             "preferences.outbidNotifications": true,
         });
         if (users.length === 0) {
-            console.log("No users found with outbid notifications enabled");
+            console.log(`Outbid flush ${auctionId}: no users with notifications enabled`);
             return;
         }
+
+        const latestHighestBid = auction.currentPrice;
         const auctionUrl = `${FRONTEND_URL}/auction/${auction._id}`;
-        const notificationPromises = users.map(async (user) => {
-            try {
-                await outbidNotificationEmail(
-                    user.email,
-                    user.username || user?.companyName || `${user.firstName} ${user.lastName}`,
-                    auction,
-                    newBidAmount,
-                    auctionUrl
-                );
-            } catch (error) {
-                console.error(`Failed to send outbid notification to ${user.email}:`, error.message);
-            }
-        });
-        const results = await Promise.allSettled(notificationPromises);
-        const successful = results.filter(result => result.status === "fulfilled").length;
-        const failed = results.filter(result => result.status === "rejected").length;
-        console.log(`Outbid notifications for auction ${auctionId}: ${successful} successful, ${failed} failed`);
+
+        const results = await Promise.allSettled(
+            users.map(async (user) => {
+                try {
+                    const userHighestBid = getUserHighestBid(auction, user._id);
+                    const userName =
+                        user.username ||
+                        user?.companyName ||
+                        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                        user.email;
+
+                    await outbidNotificationEmail(
+                        user.email,
+                        userName,
+                        auction,
+                        latestHighestBid,
+                        auctionUrl,
+                        userHighestBid
+                    );
+                } catch (error) {
+                    console.error(
+                        `Failed to send outbid notification to ${user.email}:`,
+                        error.message
+                    );
+                }
+            })
+        );
+
+        const successful = results.filter((r) => r.status === "fulfilled").length;
+        const failed = results.filter((r) => r.status === "rejected").length;
+        console.log(
+            `Outbid flush ${auctionId}: ${successful} sent, ${failed} failed, final price $${latestHighestBid}`
+        );
     } catch (error) {
-        console.error("Error sending outbid notifications:", error);
+        console.error("flushOutbidNotifications error:", error);
     }
 };
 

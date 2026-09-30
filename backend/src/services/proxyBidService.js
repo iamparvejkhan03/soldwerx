@@ -1,77 +1,112 @@
 import Auction from "../models/auction.model.js";
 import { placeBidDirect } from "../controllers/auction.controller.js";
+import { sendOutbidNotifications } from "../utils/nodemailer.js";
 
 /**
  * Process all active proxy bids for an auction.
- * This should be called after every bid (manual or proxy) to ensure all proxy bids are evaluated.
+ *
+ * Called after every bid (manual or proxy) so all proxies get re-evaluated.
+ * Also fires outbid emails to users whose top-bidder status is taken by a
+ * proxy-driven bid — which is the path the manual `placeBid` controller
+ * does NOT cover.
  */
 export const processProxyBids = async (auctionId) => {
+    // Shared across all recursive passes so we never email the same user twice.
+    const notifiedUsers = new Set();
+    await runProxyBidPass(auctionId, notifiedUsers);
+};
+
+const runProxyBidPass = async (auctionId, notifiedUsers) => {
     try {
         const auction = await Auction.findById(auctionId);
-        if (!auction || auction.status !== "active") {
-            return;
-        }
+        if (!auction || auction.status !== "active") return;
 
-        // Get all active proxy bids sorted by maxAmount descending
         const activeProxyBids = auction.proxyBids
-            .filter(pb => pb.isActive)
+            .filter((pb) => pb.isActive)
             .sort((a, b) => b.maxAmount - a.maxAmount);
 
-        if (activeProxyBids.length === 0) {
-            return;
-        }
+        if (activeProxyBids.length === 0) return;
 
-        let highestBidder = auction.currentBidder ? auction.currentBidder.toString() : null;
+        let highestBidder = auction.currentBidder
+            ? auction.currentBidder.toString()
+            : null;
         let highestBid = auction.currentPrice;
-
-        // If no current bids, the starting price is the baseline
-        if (auction.bidCount === 0) {
-            // The first bid will be at startPrice, but we need to know who should get it.
-            // The highest maxAmount will place the first bid.
-        }
-
-        // We'll iterate through proxy bids and place bids when possible.
-        // To avoid infinite loops, we'll only place one bid per proxy per cycle.
         let placedAny = false;
 
         for (const proxyBid of activeProxyBids) {
             const bidderId = proxyBid.bidder.toString();
 
-            // Skip if this bidder is already the highest bidder
-            if (highestBidder && highestBidder === bidderId) {
-                continue;
-            }
+            // Skip if this bidder is already on top
+            if (highestBidder && highestBidder === bidderId) continue;
 
-            // Calculate the next bid required to outbid the current highest
             const nextBid = highestBid + auction.bidIncrement;
+            if (proxyBid.maxAmount < nextBid) continue;
 
-            // Check if this proxy bid can afford the next bid
-            if (proxyBid.maxAmount >= nextBid) {
-                // Place the bid
-                await placeBidDirect(
+            // Who is about to lose the top spot?
+            const outbidUserId = highestBidder;
+
+            await placeBidDirect(
+                auctionId,
+                proxyBid.bidder,
+                proxyBid.bidderUsername,
+                nextBid,
+                proxyBid._id
+            );
+
+            // Notify the user who was just outbid — once per cascade.
+            if (
+                outbidUserId &&
+                outbidUserId !== bidderId &&
+                !notifiedUsers.has(outbidUserId)
+            ) {
+                notifiedUsers.add(outbidUserId);
+                // Fire-and-forget so we don't block the bid loop on SMTP.
+                notifyOutbid(
                     auctionId,
-                    proxyBid.bidder,
-                    proxyBid.bidderUsername,
-                    nextBid,
-                    proxyBid._id
+                    outbidUserId,
+                    bidderId,
+                    nextBid
+                ).catch((err) =>
+                    console.error("Outbid notification failed:", err)
                 );
-
-                // Update highestBidder and highestBid for subsequent iterations
-                highestBidder = bidderId;
-                highestBid = nextBid;
-                placedAny = true;
             }
+
+            highestBidder = bidderId;
+            highestBid = nextBid;
+            placedAny = true;
         }
 
-        // If we placed any bids, we need to re-run the processing to handle cascading
-        // (e.g., if a new highest bidder is set, other proxy bids might now be outbid)
+        // Cascade: a new top bidder might now be beatable by other proxies.
         if (placedAny) {
-            // Recursively process again to catch any further bids
-            await processProxyBids(auctionId);
+            await runProxyBidPass(auctionId, notifiedUsers);
         }
-
     } catch (error) {
         console.error("Process proxy bids error:", error);
         throw error;
+    }
+};
+
+/**
+ * Send an outbid notification to a single user.
+ * Reuses the existing `sendOutbidNotifications` helper — we just pass a
+ * one-user list so only that person gets the email.
+ */
+const notifyOutbid = async (auctionId, outbidUserId, newBidderId, newAmount) => {
+    try {
+        const auction = await Auction.findById(auctionId).populate(
+            "seller",
+            "username firstName lastName"
+        );
+        if (!auction) return;
+
+        await sendOutbidNotifications(
+            auction,
+            outbidUserId,
+            [outbidUserId],           // notify only this user
+            newBidderId.toString(),   // excluded from notification (they're the winner)
+            newAmount
+        );
+    } catch (err) {
+        console.error("notifyOutbid failed:", err);
     }
 };

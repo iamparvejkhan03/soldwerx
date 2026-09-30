@@ -89,6 +89,11 @@ app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/tax", taxRouter);
 app.use('/api/v1/ai', aiRouter);
 
+app.get('/api/v1/time', (req, res) => {
+    res.set('Cache-Control', 'no-store'); // never cache
+    res.status(200).json({ serverTime: Date.now() });
+});
+
 // 404 handler - SIMPLIFIED VERSION
 app.use((req, res, next) => {
     res.status(404).json({

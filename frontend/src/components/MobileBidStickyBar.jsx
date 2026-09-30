@@ -1,5 +1,4 @@
 import { Gavel, Zap, PoundSterling, Clock, Gift, Users, ShieldCheck } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 const MobileBidStickyBar = ({
   currentBid,
@@ -15,60 +14,6 @@ const MobileBidStickyBar = ({
 }) => {
   const { days, hours, minutes, seconds, status: timeStatus } = timeRemaining;
   const isActive = timeStatus === 'counting-down' || timeStatus === 'always-available';
-
-  // State for live timer
-  const [liveTimer, setLiveTimer] = useState({
-    days: days || 0,
-    hours: hours || 0,
-    minutes: minutes || 0,
-    seconds: seconds || 0
-  });
-
-  // Update live timer every second
-  useEffect(() => {
-    if (!isActive || timeStatus !== 'counting-down') return;
-
-    const interval = setInterval(() => {
-      setLiveTimer(prev => {
-        let { days, hours, minutes, seconds } = prev;
-
-        if (seconds > 0) {
-          seconds--;
-        } else {
-          seconds = 59;
-          if (minutes > 0) {
-            minutes--;
-          } else {
-            minutes = 59;
-            if (hours > 0) {
-              hours--;
-            } else {
-              hours = 23;
-              if (days > 0) {
-                days--;
-              }
-            }
-          }
-        }
-
-        return { days, hours, minutes, seconds };
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isActive, timeStatus]);
-
-  // Sync with props when they change
-  useEffect(() => {
-    if (isActive && timeStatus === 'counting-down') {
-      setLiveTimer({
-        days: days || 0,
-        hours: hours || 0,
-        minutes: minutes || 0,
-        seconds: seconds || 0
-      });
-    }
-  }, [days, hours, minutes, seconds, isActive, timeStatus]);
 
   // Determine if buttons should be shown
   const showBuyNow = auctionType === 'buy_now' && buyNowPrice && isActive && !auction?.winner && auction?.status === 'active';
@@ -129,13 +74,13 @@ const MobileBidStickyBar = ({
             <div className="flex items-center gap-1">
               <Clock size={16} className="text-gray-500" />
               <div className="flex items-center space-x-1 text-sm font-medium">
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{liveTimer.days}d</span>
+                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{days}d</span>
                 <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{liveTimer.hours}h</span>
+                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{hours}h</span>
                 <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{liveTimer.minutes}m</span>
+                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{minutes}m</span>
                 <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{liveTimer.seconds}s</span>
+                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{seconds}s</span>
               </div>
             </div>
           )}
