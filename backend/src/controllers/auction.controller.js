@@ -2863,6 +2863,8 @@ export const placeProxyBid = async (req, res) => {
     // processProxyBids will pick it up and place the initial bid if its
     // max allows. Doing it here instead would bypass the outbid-notification
     // logic that lives inside processProxyBids.
+    const priceBeforeProxy = auction.currentPrice;
+    
     await processProxyBids(auction._id);
 
     // --- Fetch updated auction ---

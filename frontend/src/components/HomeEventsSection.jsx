@@ -78,7 +78,7 @@ function HomeEventsSection() {
     };
 
     useEffect(() => {
-        fetchEvents("upcoming");
+        fetchEvents("ongoing");
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
