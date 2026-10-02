@@ -136,7 +136,7 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                             </label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                 {/* {['credit_card', 'bank_transfer', 'paypal', 'other'].map((method) => ( */}
-                                {['bank_transfer'].map((method) => (
+                                {['bank_transfer', 'cash'].map((method) => (
                                     <button
                                         key={method}
                                         type="button"
@@ -148,6 +148,7 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                                     >
                                         {/* {method === 'credit_card' && <CreditCard className="h-5 w-5" />} */}
                                         {method === 'bank_transfer' && <Building className="h-5 w-5" />}
+                                        {method === 'cash' && <Banknote className="h-5 w-5" />}
                                         {/* {method === 'paypal' && <Globe className="h-5 w-5" />} */}
                                         {/* {method === 'other' && <Banknote className="h-5 w-5" />} */}
                                         <span className="text-xs capitalize">{method.replace('_', ' ')}</span>

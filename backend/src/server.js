@@ -60,8 +60,8 @@ app.use(cors({
 
 // Health check
 app.get('/api/v1/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok', 
+    res.status(200).json({
+        status: 'ok',
         agenda: agendaStarted ? 'running' : 'failed'
     });
 });
@@ -105,7 +105,7 @@ app.use((req, res, next) => {
 // Global error handler
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
         success: false,
         message: 'Internal server error'
     });
@@ -115,27 +115,45 @@ app.use((error, req, res, next) => {
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: ['https://www.soldwerx.com', 'https://soldwerx.com', 'https://soldwerx-frontend.onrender.com', 'https://soldwerx-backend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'], credentials: true },
-  transports: ["websocket", "polling"],
+    cors: {
+        origin: [
+            'https://www.soldwerx.com',
+            'https://soldwerx.com',
+            'https://soldwerx-frontend.onrender.com',
+            'https://soldwerx-backend.onrender.com',
+            'http://localhost:5173',
+            'http://localhost:3000',
+        ],
+        credentials: true,
+    },
+    transports: ["websocket", "polling"],
+
+    // Give mobile clients more room before we drop them.
+    // Default is pingInterval 25000 / pingTimeout 20000.
+    pingInterval: 20000,
+    pingTimeout: 25000,
+
+    // Fail fast on stale connections so server resources free up.
+    connectTimeout: 20000,
 });
 
 setIO(io);
 
 io.on("connection", (socket) => {
-  // Every connected client auto-joins the global feed
-  socket.join("global");
+    // Every connected client auto-joins the global feed
+    socket.join("global");
 
-  socket.on("joinAuction", (id) => {
-    if (id) socket.join(`auction:${id}`);
-  });
-  socket.on("leaveAuction", (id) => {
-    if (id) socket.leave(`auction:${id}`);
-  });
+    socket.on("joinAuction", (id) => {
+        if (id) socket.join(`auction:${id}`);
+    });
+    socket.on("leaveAuction", (id) => {
+        if (id) socket.leave(`auction:${id}`);
+    });
 });
 
 // Replace: const server = app.listen(PORT, ...)
 server.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🚀 Server is running on port ${PORT}`);
 });
 
 // Graceful shutdown

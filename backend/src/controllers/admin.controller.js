@@ -1975,7 +1975,7 @@ export const updatePaymentStatus = async (req, res) => {
 
     // Only update payment method if provided and status is not pending
     if (paymentMethod && paymentStatus !== "pending") {
-      const validMethods = ["credit_card", "bank_transfer", "paypal", "other"];
+      const validMethods = ["credit_card", "bank_transfer", "cash", "paypal", "other"];
       if (validMethods.includes(paymentMethod)) {
         auction.paymentMethod = paymentMethod;
       }

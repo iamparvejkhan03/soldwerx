@@ -230,7 +230,7 @@ function About() {
                     </div>
 
                     {/* LEDGER */}
-                    <div className="border-t border-[#E7E5DF] py-8">
+                    {/* <div className="border-t border-[#E7E5DF] py-8">
                         <p className="font-ledger mb-4 text-[11px] tracking-wide text-[#F5B51B]">By the numbers</p>
 
                         <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
@@ -246,7 +246,7 @@ function About() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </div> */}
                 </Container>
             </section>
 

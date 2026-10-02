@@ -42,6 +42,7 @@ function SingleAuction() {
     const [showBuyNowModal, setShowBuyNowModal] = useState(false);
     const [claiming, setClaiming] = useState(false);
     const [showProxyBidModal, setShowProxyBidModal] = useState(false);
+    const prevStatusRef = useRef(null);
 
     const updateAuctionState = (updatedAuction) => {
         setAuction(updatedAuction);
@@ -390,6 +391,60 @@ function SingleAuction() {
             auction.auctionType === 'reserve' ||
             auction.auctionType === 'buy_now'); // Include buy_now
 
+    // ---- Derive viewer's bid status ----
+    const userBidStatus = (() => {
+        if (!user || !auction) return null;
+
+        // Sellers never see this
+        if (auction.seller?._id?.toString() === user._id?.toString()) return null;
+
+        // Only for active auctions, and only while the countdown is live
+        if (auction.status !== 'active') return null;
+        if (countdown.status !== 'counting-down' && countdown.status !== 'always-available') {
+            return null;
+        }
+
+        const userIdStr = user._id?.toString();
+
+        // Has this user actually bid? (bids may be populated or raw ObjectIds)
+        const hasBid = (auction.bids || []).some(
+            (b) => (b.bidder?._id ?? b.bidder)?.toString() === userIdStr
+        );
+
+        // Also consider an active proxy bid — user is "in the game" even if
+        // no manual bid exists yet.
+        const userProxy = (auction.proxyBids || []).find(
+            (pb) => (pb.bidder?._id ?? pb.bidder)?.toString() === userIdStr && pb.isActive
+        );
+
+        if (!hasBid && !userProxy) return null;
+
+        // Are they the current leader?
+        const currentBidderId =
+            auction.currentBidder?._id?.toString() ??
+            auction.currentBidder?.toString();
+
+        const isHighest = currentBidderId === userIdStr;
+
+        if (isHighest) return 'highest';
+
+        // Their proxy might still win it for them on the next tick — don't
+        // scare them with "outbid" if their ceiling is above the current price.
+        if (userProxy && userProxy.maxAmount > auction.currentPrice) {
+            return 'proxy-active';
+        }
+
+        return 'outbid';
+    })();
+
+    useEffect(() => {
+        const prev = prevStatusRef.current;
+        if (prev === 'highest' && userBidStatus === 'outbid') {
+            toast.error(`You've been outbid on "${auction?.title}"!`);
+        }
+        prevStatusRef.current = userBidStatus;
+    }, [userBidStatus, auction?.title]);
+
     if (loading) {
         return (
             <Container className="py-32 min-h-[70vh] flex items-center justify-center">
@@ -673,10 +728,36 @@ function SingleAuction() {
                         (auction.auctionType === 'standard' || auction.auctionType === 'reserve') && (
                             <>
                                 <div className="flex flex-col gap-2">
-                                    <p className="font-light">{auction.bidCount > 0 ? 'Current Bid' : 'Start Bidding At'}</p>
-                                    <p className="flex items-center gap-1 text-3xl sm:text-4xl font-medium">
-                                        <span> ${auction.currentPrice.toLocaleString()}</span>
+                                    <p className="font-light">
+                                        {auction.bidCount > 0 ? 'Current Bid' : 'Start Bidding At'}
                                     </p>
+
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <p className="text-3xl sm:text-4xl font-medium">
+                                            ${auction.currentPrice.toLocaleString()}
+                                        </p>
+
+                                        {userBidStatus === 'highest' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                                                <CheckSquare size={13} />
+                                                You're the highest bidder
+                                            </span>
+                                        )}
+
+                                        {userBidStatus === 'outbid' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                                                <Gavel size={13} />
+                                                You've been outbid
+                                            </span>
+                                        )}
+
+                                        {userBidStatus === 'proxy-active' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                                                <Gauge size={13} />
+                                                Your proxy bid is active
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <p className="flex w-full justify-between border-b pb-2">
@@ -943,16 +1024,16 @@ function SingleAuction() {
 
                             {countdown.status === 'ended' && (
                                 <div className={`text-center py-4 rounded-lg border ${auction.status === 'sold' || auction.status === 'sold_buy_now'
-                                        ? 'bg-green-100 border-green-200'
-                                        : auction.status === 'reserve_not_met'
-                                            ? 'bg-orange-100 border-orange-200'
-                                            : 'bg-yellow-100 border-yellow-200'
+                                    ? 'bg-green-100 border-green-200'
+                                    : auction.status === 'reserve_not_met'
+                                        ? 'bg-orange-100 border-orange-200'
+                                        : 'bg-yellow-100 border-yellow-200'
                                     }`}>
                                     <p className={`font-medium ${auction.status === 'sold' || auction.status === 'sold_buy_now'
-                                            ? 'text-green-700'
-                                            : auction.status === 'reserve_not_met'
-                                                ? 'text-orange-700'
-                                                : 'text-yellow-700'
+                                        ? 'text-green-700'
+                                        : auction.status === 'reserve_not_met'
+                                            ? 'text-orange-700'
+                                            : 'text-yellow-700'
                                         }`}>
                                         {auction.status === 'sold' ? 'Sold'
                                             : auction.status === 'sold_buy_now' ? 'Sold via Buy Now'

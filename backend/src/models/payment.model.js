@@ -42,13 +42,13 @@ const paymentSchema = new Schema(
         // Payment type – always bank_transfer for this model
         type: {
             type: String,
-            enum: ['bank_transfer_payment'],
+            enum: ['bank_transfer_payment', 'cash_payment'],
             default: 'bank_transfer_payment',
         },
         // Payment method – could be extended later
         paymentMethod: {
             type: String,
-            enum: ['bank_transfer'],
+            enum: ['bank_transfer', 'cash'],
             default: 'bank_transfer',
         },
         // Bank transfer specific fields

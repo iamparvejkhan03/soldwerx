@@ -406,7 +406,7 @@ const auctionSchema = new Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["credit_card", "bank_transfer", "paypal", "other", null],
+      enum: ["credit_card", "bank_transfer", "cash", "paypal", "other", null],
       default: null,
     },
     paymentDate: {
