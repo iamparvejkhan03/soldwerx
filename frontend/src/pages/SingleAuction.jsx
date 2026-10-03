@@ -114,22 +114,26 @@ function SingleAuction() {
     useEffect(() => {
         if (!id) return;
 
-        socket.emit("joinAuction", id);
-
-        const onUpdate = ({ serverTime, auction: full }) => {
-            if (serverTime) reanchorFromSocket(serverTime);
-            setAuction(full);
+        const joinRoom = () => {
+            socket.emit("joinAuction", id);
         };
 
-        const onRemoved = () => {
-            // optional: show a "removed" state, or redirect
-            setAuction(null);
-        };
+        // Join now, and again on every (re)connect
+        joinRoom();
+        socket.on("connect", joinRoom);
+
+        const onUpdate = ({ auction }) => {
+            // NOTE: server sends { serverTime, auction }
+            setAuction(auction);
+        }; 
+
+        const onRemoved = () => setAuction(null);
 
         socket.on("auction:update", onUpdate);
         socket.on("auction:removed", onRemoved);
 
         return () => {
+            socket.off("connect", joinRoom);
             socket.off("auction:update", onUpdate);
             socket.off("auction:removed", onRemoved);
             socket.emit("leaveAuction", id);

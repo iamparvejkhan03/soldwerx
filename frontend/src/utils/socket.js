@@ -26,59 +26,49 @@ export const socket = io(SOCKET_URL, {
 // ─────────────────────────────────────────────────────────────
 
 let lastServerEventAt = Date.now();
+const markServerEvent = () => { lastServerEventAt = Date.now(); };
 
-const markServerEvent = () => {
-    lastServerEventAt = Date.now();
-};
-
-// Any server → client event resets the timer.
-// Add the ones your app uses; wildcard isn't supported in v4.
-[
-    "auction:tick",
-    "auction:update",
-    "auction:removed",
-].forEach((evt) => socket.on(evt, markServerEvent));
-
-// Also on every pong (socket.io's own heartbeat)
+["auction:tick", "auction:update", "auction:removed"].forEach((evt) =>
+  socket.on(evt, markServerEvent)
+);
 socket.io.on("ping", markServerEvent);
 
-const SILENCE_LIMIT_MS = 45_000;      // 45s without a server event = dead
-const WATCHDOG_INTERVAL_MS = 10_000;  // check every 10s
+const SILENCE_LIMIT_MS = 40_000;
+const WATCHDOG_INTERVAL_MS = 8_000;
 
 const forceReconnect = (reason) => {
-    if (!socket.connected) return;
-    console.warn(`[socket] force reconnect: ${reason}`);
-    socket.disconnect();
-    socket.connect();
+  console.warn(`[socket] force reconnect: ${reason}`);
+  try { socket.disconnect(); } catch (_) {}
+  try { socket.connect(); } catch (_) {}
+  lastServerEventAt = Date.now(); // reset so we don't loop
 };
 
 const watchdog = setInterval(() => {
-    if (typeof document !== "undefined" && document.hidden) return;
-    const silence = Date.now() - lastServerEventAt;
-    if (silence > SILENCE_LIMIT_MS) {
-        forceReconnect(`silent for ${Math.round(silence / 1000)}s`);
-    }
+  if (!socket.connected) {
+    // already reconnecting — reset baseline
+    lastServerEventAt = Date.now();
+    return;
+  }
+  const silence = Date.now() - lastServerEventAt;
+  if (silence > SILENCE_LIMIT_MS) {
+    forceReconnect(`silent for ${Math.round(silence / 1000)}s`);
+  }
 }, WATCHDOG_INTERVAL_MS);
 
 // ─────────────────────────────────────────────────────────────
-// Reconnect immediately when the tab becomes visible again.
-// Covers app-switch, screen-off-then-on, and background returns.
+// On visibility return, don't just poke it — hard-cycle it.
+// (Silent death leaves socket.connected === true, so a plain
+// .connect() is a no-op.)
 // ─────────────────────────────────────────────────────────────
 if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-            // Give the OS a moment to wake the radio before we poke it.
-            setTimeout(() => {
-                if (!socket.connected) {
-                    socket.connect();
-                } else {
-                    // Looks connected but might be a zombie — force a clean cycle.
-                    forceReconnect("visibilitychange");
-                }
-                syncWithServer();
-            }, 300);
-        }
-    });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      setTimeout(() => {
+        forceReconnect("visibilitychange");
+        syncWithServer();
+      }, 200);
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -95,19 +85,21 @@ socket.on("disconnect", (reason) => {
     console.info("[socket] disconnected:", reason);
 });
 
-// Prevent Vite HMR from leaking intervals during development
-if (import.meta.hot) {
-    import.meta.hot.dispose(() => clearInterval(watchdog));
+const isMobile =
+  typeof navigator !== "undefined" &&
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+let mobileCycle = null;
+if (isMobile) {
+  mobileCycle = setInterval(() => {
+    forceReconnect("periodic mobile refresh");
+  }, 4 * 60 * 1000);
 }
 
-// Append to socket.js
-const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-if (isMobile) {
-    setInterval(() => {
-        if (typeof document !== "undefined" && document.hidden) return;
-        if (socket.connected) {
-            forceReconnect("periodic mobile refresh");
-        }
-    }, 5 * 60 * 1000); // every 5 min
+// Cleanup for HMR in dev
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    clearInterval(watchdog);
+    if (mobileCycle) clearInterval(mobileCycle);
+  });
 }
