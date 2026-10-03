@@ -388,3 +388,93 @@ const formatCurrency = (amount) => {
         maximumFractionDigits: 6,
     }).format(amount);
 };
+
+export const createCashPayment = async (req, res) => {
+    try {
+        const { auctionId } = req.body;
+        const userId = req.user.id;
+
+        const auction = await Auction.findById(auctionId);
+        const buyer = await User.findById(userId).select(
+            "firstName lastName username email phone"
+        );
+
+        if (!auction) {
+            return res.status(404).json({ success: false, message: "Auction not found" });
+        }
+
+        if (auction.winner?._id.toString() !== userId) {
+            return res.status(403).json({ success: false, message: "Not authorized" });
+        }
+
+        if (auction.paymentStatus === "completed") {
+            return res.status(400).json({ success: false, message: "Payment already completed" });
+        }
+
+        // Totals
+        const bidAmount = auction.finalPrice || auction.currentPrice;
+        const commissionAmount = auction.buyerFeeAmount || 0;
+        const taxAmount = auction.taxAmount || 0;
+        const totalAmount = bidAmount + commissionAmount + taxAmount;
+
+        // Mark auction as awaiting cash confirmation
+        auction.paymentStatus = "processing";
+        auction.paymentMethod = "cash";
+        await auction.save();
+
+        // Upsert Payment record (avoid duplicate rows if bidder re-clicks)
+        let payment = await Payment.findOne({ auction: auctionId });
+
+        if (!payment) {
+            payment = await Payment.create({
+                auction: auctionId,
+                bidder: userId,
+                bidAmount,
+                commissionAmount,
+                taxAmount,
+                totalAmount,
+                status: "processing",
+                type: "cash_payment",
+                paymentMethod: "cash",
+            });
+        } else {
+            payment.bidAmount = bidAmount;
+            payment.commissionAmount = commissionAmount;
+            payment.taxAmount = taxAmount;
+            payment.totalAmount = totalAmount;
+            payment.status = "processing";
+            payment.type = "cash_payment";
+            payment.paymentMethod = "cash";
+            await payment.save();
+        }
+
+        // Notify admins
+        const adminUsers = await User.find({ userType: "admin" }).select(
+            "payoutMethods firstName lastName email"
+        );
+        for (const admin of adminUsers) {
+            paymentInitiatedAdminEmail(admin.email, payment, buyer, auction).catch(
+                (err) => console.error(`Admin email failed:`, err)
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Cash payment selected. Please arrange cash payment with the admin.",
+            data: {
+                auction: {
+                    id: auction._id,
+                    totalAmount,
+                    title: auction.title,
+                },
+                payment,
+            },
+        });
+    } catch (error) {
+        console.error("Cash payment error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to process cash payment",
+        });
+    }
+};

@@ -2,6 +2,7 @@ import { Router } from "express";
 import express from "express";
 import {
     createBankTransferPayment,
+    createCashPayment,
     fetchBankDetails,
     getAuctionPaymentStatus,
     getBidderPayments,
@@ -17,6 +18,7 @@ paymentRouter.get("/auction/:auctionId/status", getAuctionPaymentStatus);
 
 // Add these new routes
 paymentRouter.post("/create-bank-transfer-payment", createBankTransferPayment);
+paymentRouter.post("/create-cash-payment", createCashPayment)
 paymentRouter.get("/bank-details", fetchBankDetails);
 
 paymentRouter.post('/create-winner-payment-intent', createWinnerPaymentIntent);

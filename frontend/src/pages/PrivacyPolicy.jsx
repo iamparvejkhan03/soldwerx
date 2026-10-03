@@ -15,8 +15,10 @@ const PrivacyPolicy = () => {
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-700 text-sm">
-                            SoldWerX is a digital auction and direct-purchase marketplace for sports and non-sports collectibles operating in United States of America.
-                            This policy explains how we handle your information in accordance with applicable data protection laws.
+                            SoldWerX is a digital auction and direct-purchase marketplace for heavy equipment,
+                            trucks, trailers, vehicles, business assets, estates, and similar assets operating in
+                            the United States of America. This policy explains how we handle your information
+                            in accordance with applicable data protection laws.
                         </p>
                     </div>
                 </div>
@@ -29,7 +31,8 @@ const PrivacyPolicy = () => {
                             <p className="text-gray-700 mb-4">
                                 <strong>SoldWerX</strong> ("we", "our", "us") is committed to protecting
                                 and respecting your privacy. This Privacy Policy explains how we collect, use, and
-                                safeguard your information when you use our collectibles marketplace platform.
+                                safeguard your information when you use our marketplace platform for heavy equipment,
+                                trucks, trailers, vehicles, business assets, estates, and related assets.
                             </p>
                             <p className="text-gray-700">
                                 By registering for, accessing, or using the Platform, you agree to this Privacy Policy.
@@ -44,20 +47,21 @@ const PrivacyPolicy = () => {
                             <ul className="text-gray-700 space-y-1 list-disc pl-5">
                                 <li>Full name and contact details</li>
                                 <li>Email address and telephone number</li>
-                                <li>Physical address</li>
-                                <li>ID number (cédula de identidad)</li>
-                                <li>Photo of yourself</li>
-                                <li>Photo of your ID document</li>
-                                <li>Bank account details for payment processing</li>
+                                <li>Business name, physical address, and, where applicable, registered business details</li>
+                                <li>Government-issued identification</li>
+                                <li>Photo of yourself and, where applicable, of an authorised company representative</li>
+                                <li>Photo of your government-issued ID document</li>
+                                <li>Bank account details for payment and payout processing</li>
                             </ul>
 
                             <h3 className="font-semibold text-gray-800 mb-2 mt-4">Platform & Transaction Data</h3>
                             <ul className="text-gray-700 space-y-1 list-disc pl-5">
                                 <li>Account credentials and login information</li>
-                                <li>Collectibles listings, bids, offers, and purchase history</li>
+                                <li>Listings, bids, offers, and purchase history for equipment, vehicles, and other assets</li>
                                 <li>Communication records with other users</li>
                                 <li>Payment and transaction records</li>
-                                <li>Tracking and shipping information</li>
+                                <li>Shipping, freight, delivery, or pickup information</li>
+                                <li>Inspection reports, condition disclosures, and asset documentation you upload</li>
                             </ul>
 
                             <h3 className="font-semibold text-gray-800 mb-2 mt-4">Automatically Collected Data</h3>
@@ -74,10 +78,10 @@ const PrivacyPolicy = () => {
                             <p className="text-gray-700 mb-3">We process your information for:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Platform operation and account management</li>
-                                <li>Verifying user identity and authenticating accounts</li>
-                                <li>Processing collectibles purchases and payments</li>
+                                <li>Verifying user and business identity and authenticating accounts</li>
+                                <li>Processing purchases, bids, offers, and payments for listed assets</li>
                                 <li>Sending service updates and transaction alerts</li>
-                                <li>Preventing fraud and ensuring platform security</li>
+                                <li>Preventing fraud, verifying asset ownership, and ensuring platform security</li>
                                 <li>Complying with legal obligations</li>
                                 <li>Analysing platform usage and improving experience</li>
                                 <li>Facilitating secure communication between buyers and sellers</li>
@@ -101,8 +105,8 @@ const PrivacyPolicy = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Information Sharing</h2>
                             <p className="text-gray-700 mb-3">We may share your information with:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Service providers (payment processors, IT services, hosting partners)</li>
-                                <li>Other users (limited information necessary for transaction completion)</li>
+                                <li>Service providers (payment processors, IT services, hosting partners, logistics and freight partners)</li>
+                                <li>Other users (limited information necessary for transaction completion, including contact and shipping details)</li>
                                 <li>Legal authorities when required by law</li>
                                 <li>Successors in business transfers (mergers, acquisitions)</li>
                             </ul>
@@ -162,7 +166,7 @@ const PrivacyPolicy = () => {
                             <p className="text-gray-700 mb-3">We retain information as long as necessary for:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Duration of your account activity</li>
-                                <li>Legal requirements</li>
+                                <li>Legal requirements, including tax and transaction record retention</li>
                                 <li>Business needs and operational requirements</li>
                                 <li>Dispute resolution and legal claims</li>
                             </ul>
@@ -172,7 +176,7 @@ const PrivacyPolicy = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. International Transfers</h2>
                             <p className="text-gray-700">
-                                Your information is primarily processed within United States of America. If transferred outside United States of America,
+                                Your information is primarily processed within the United States of America. If transferred outside the United States of America,
                                 we ensure appropriate safeguards are in place to protect your data.
                             </p>
                         </div>
@@ -215,8 +219,8 @@ const PrivacyPolicy = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Privacy Policy is governed by the laws of United States of America. Any disputes
-                                will be subject to the exclusive jurisdiction of the courts of United States of America.
+                                This Privacy Policy is governed by the laws of the United States of America. Any disputes
+                                will be subject to the exclusive jurisdiction of the courts of the United States of America.
                             </p>
                         </div>
                     </div>

@@ -17,7 +17,7 @@ const TermsOfUse = () => {
                         <p className="text-red-800 font-semibold mb-2">IMPORTANT – PLEASE READ</p>
                         <p className="text-red-700 text-sm">
                             These Terms govern your use of SoldWerX. By registering or using our platform,
-                            you confirm your agreement to these Terms. All collectibles are sold on an "as-is"
+                            you confirm your agreement to these Terms. All assets are sold on an "as-is"
                             basis without warranty unless otherwise stated.
                         </p>
                     </div>
@@ -29,9 +29,9 @@ const TermsOfUse = () => {
                         {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
-                                <strong>SoldWerX</strong> ("we", "our", "us") operates an online marketplace for sports
-                                and non-sports collectibles, including cards, signed jerseys, game-used balls, and other
-                                valuable memorabilia. These Terms of Use ("Terms") govern your access to and use
+                                <strong>SoldWerX</strong> ("we", "our", "us") operates an online marketplace for
+                                heavy equipment, trucks, trailers, vehicles, business assets, estates, and similar
+                                assets. These Terms of Use ("Terms") govern your access to and use
                                 of our website, platform, and services.
                             </p>
                             <p className="text-gray-700">
@@ -43,7 +43,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Platform Access</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>SoldWerX is open to both collectors and private buyers</li>
+                                <li>SoldWerX is open to both businesses and private buyers</li>
                                 <li>All users must register and maintain accurate account information</li>
                                 <li>We reserve the right to refuse or terminate access at our discretion</li>
                                 <li>Users must comply with all applicable laws</li>
@@ -55,7 +55,8 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Account Registration</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Registration is free</li>
-                                <li>You must provide accurate and complete information, including your email address, phone number, address, ID number, and a photo of yourself and your ID</li>
+                                <li>You must provide accurate and complete information, including your email address, phone number, address, government-issued identification, and, where applicable, registered business details</li>
+                                <li>You must provide a photo of yourself (or an authorised company representative) and of your government-issued ID</li>
                                 <li>You are responsible for maintaining account security</li>
                                 <li>We may suspend or terminate accounts for misuse or violation of these Terms</li>
                                 <li>Account sharing or transferring is prohibited without consent</li>
@@ -94,7 +95,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. Buyer Fees</h2>
                             <p className="text-gray-700">
-                                A 5% buyer's fee applies to all successful purchases. The fee is clearly displayed
+                                A 10% buyer's fee applies to all successful purchases. The fee is clearly displayed
                                 before you bid or complete a purchase. All fees are in USD unless otherwise stated.
                             </p>
                         </div>
@@ -103,7 +104,7 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">6. Seller Fees</h2>
                             <p className="text-gray-700">
-                                Sellers are charged a 5% commission on the final sale price. There are no listing fees,
+                                Sellers are charged a 8% commission on the final sale price. There are no listing fees,
                                 photography fees, or hidden charges. Sellers are responsible for creating their own listings,
                                 including descriptions and images.
                             </p>
@@ -116,7 +117,7 @@ const TermsOfUse = () => {
                                 <li>Bank transfer in USD is the only accepted payment method</li>
                                 <li>Payment must be completed within 48 hours of winning an auction or confirming a direct purchase</li>
                                 <li>All payments must be made to the SoldWerX collection account</li>
-                                <li>Items will not be released until payment clears in full</li>
+                                <li>Assets will not be released until payment clears in full</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
                             </ul>
                         </div>
@@ -125,10 +126,11 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. Collection & Delivery</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Buyer and seller are responsible for arranging and managing delivery between themselves</li>
+                                <li>Buyer and seller are responsible for arranging and managing pickup, freight, or delivery between themselves</li>
                                 <li>Collection can be arranged directly with the seller after payment is confirmed</li>
                                 <li>Risk transfers to the buyer upon collection or delivery, whichever occurs first</li>
-                                <li>Tracking or shipping labels can be uploaded through our secure communication window</li>
+                                <li>Tracking, bill of lading, or shipping labels can be uploaded through our secure communication window</li>
+                                <li>Buyers are responsible for any applicable transport permits, insurance, and logistics costs</li>
                             </ul>
                         </div>
 
@@ -136,17 +138,19 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Sold As Seen – No Warranty</h2>
                             <div className="bg-yellow-50 p-4 rounded mb-3">
-                                <p className="text-red-600 font-bold text-center mb-2">ALL COLLECTIBLES ARE SOLD:</p>
+                                <p className="text-red-600 font-bold text-center mb-2">ALL ASSETS ARE SOLD:</p>
                                 <div className="text-center space-y-1">
-                                    <p className="text-red-600">As-is / "en el estado en que se encuentran"</p>
-                                    <p className="text-red-600">Without any warranty</p>
+                                    <p className="text-red-600">As-is, where-is, with all faults</p>
+                                    <p className="text-red-600">Without any warranty, express or implied</p>
                                     <p className="text-red-600">Without consumer rights protections</p>
                                 </div>
                             </div>
                             <p className="text-gray-700">
-                                Item descriptions and photographs are provided for guidance only. Buyers are encouraged to ask questions
-                                before bidding or purchasing through our secure communication window. SoldWerX is a marketplace and
-                                does not guarantee condition beyond what is described.
+                                Asset descriptions, photographs, specifications, hours, mileage, and inspection reports
+                                are provided for guidance only. Buyers are encouraged to ask questions and review all
+                                available documentation before bidding or purchasing through our secure communication window.
+                                SoldWerX is a marketplace and does not guarantee the condition, performance, or fitness of
+                                any asset beyond what is described by the seller.
                             </p>
                         </div>
 
@@ -166,7 +170,7 @@ const TermsOfUse = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
-                                <li>Only tracking or shipping labels may be shared through the secure communication window</li>
+                                <li>Only tracking, bill of lading, or shipping labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
                             </ul>
                         </div>
@@ -177,7 +181,8 @@ const TermsOfUse = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Legal title and ownership pass only when full payment is received and confirmed</li>
                                 <li>Risk of loss or damage transfers to the buyer upon collection or delivery</li>
-                                <li>Buyers are responsible for insurance from the moment of collection or delivery</li>
+                                <li>Buyers are responsible for insurance and any applicable transport permits from the moment of collection or delivery</li>
+                                <li>Sellers are responsible for providing title documents, bills of sale, or lien releases as required by law</li>
                             </ul>
                         </div>
 
@@ -186,7 +191,7 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">13. Default & Enforcement</h2>
                             <p className="text-gray-700 mb-2">If payment is not completed, we may:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Cancel the sale and relist the item</li>
+                                <li>Cancel the sale and relist the asset</li>
                                 <li>Seek recovery of any losses or costs incurred</li>
                                 <li>Suspend or permanently terminate the user's account</li>
                                 <li>Report to relevant authorities if fraud is suspected</li>
@@ -198,7 +203,7 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">14. Limitation of Liability</h2>
                             <p className="text-gray-700">
                                 To the extent permitted by law, SoldWerX's total liability is limited to the
-                                purchase price of the collectible in question. We are not liable for indirect or consequential
+                                purchase price of the asset in question. We are not liable for indirect or consequential
                                 losses. This does not limit liability for fraud, death, or personal injury caused by negligence.
                             </p>
                         </div>
@@ -207,8 +212,8 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">15. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>These Terms are governed by the laws of United States of America</li>
-                                <li>Disputes shall be resolved by the courts of United States of America</li>
+                                <li>These Terms are governed by the laws of the United States of America</li>
+                                <li>Disputes shall be resolved by the courts of the United States of America</li>
                             </ul>
                         </div>
 

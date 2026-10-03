@@ -42,13 +42,13 @@ const paymentSchema = new Schema(
         // Payment type – always bank_transfer for this model
         type: {
             type: String,
-            enum: ['bank_transfer_payment', 'cash_payment'],
+            enum: ['bank_transfer_payment', 'cash_payment', 'card_payment'],
             default: 'bank_transfer_payment',
         },
         // Payment method – could be extended later
         paymentMethod: {
             type: String,
-            enum: ['bank_transfer', 'cash'],
+            enum: ['bank_transfer', 'cash', 'credit_card'],
             default: 'bank_transfer',
         },
         // Bank transfer specific fields
@@ -96,6 +96,7 @@ const paymentSchema = new Schema(
 paymentSchema.index({ bidder: 1 });
 paymentSchema.index({ status: 1 });
 paymentSchema.index({ createdAt: -1 });
+paymentSchema.index({ auction: 1 }, { unique: true });
 
 const Payment = model('Payment', paymentSchema);
 

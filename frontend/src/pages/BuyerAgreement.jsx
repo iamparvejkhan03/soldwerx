@@ -29,7 +29,9 @@ const BuyerAgreement = () => {
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
                                 <strong>SoldWerX</strong> ("we", "our", "us") and you, the buyer ("Buyer"),
-                                enter into this Buyer Agreement governing all purchases made through our collectibles marketplace platform.
+                                enter into this Buyer Agreement governing all purchases made through our marketplace
+                                platform for heavy equipment, trucks, trailers, vehicles, business assets, estates,
+                                and similar assets.
                             </p>
                             <p className="text-gray-700">
                                 By placing a bid or confirming a direct purchase, you agree to be bound by this Agreement.
@@ -40,9 +42,9 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>SoldWerX is open to both collectors and private buyers</li>
+                                <li>SoldWerX is open to both businesses and private buyers</li>
                                 <li>All buyers must register and maintain accurate account information</li>
-                                <li>We reserve the right to verify identity and eligibility</li>
+                                <li>We reserve the right to verify identity, business details, and eligibility</li>
                                 <li>Buyers must be at least 18 years of age</li>
                             </ul>
                         </div>
@@ -66,24 +68,25 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Buyer Fees</h2>
                             <p className="text-gray-700">
-                                A 5% buyer's fee applies to all successful purchases. The fee is clearly displayed
+                                A 10% buyer's fee applies to all successful purchases. The fee is clearly displayed
                                 before you bid or confirm a direct purchase. All fees are in USD and are non-refundable.
                             </p>
                         </div>
 
-                        {/* Section 4 - Item Condition */}
+                        {/* Section 4 - Asset Condition */}
                         <div className="border-t pt-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-3">4. Item Condition</h2>
-                            <p className="text-gray-700 mb-3">All collectibles are sold:</p>
+                            <h2 className="text-xl font-bold text-gray-900 mb-3">4. Asset Condition</h2>
+                            <p className="text-gray-700 mb-3">All assets are sold:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>As-is / "en el estado en que se encuentran"</li>
+                                <li>As-is, where-is, with all faults</li>
                                 <li>Without any warranty, express or implied</li>
                                 <li>Without consumer protection rights</li>
                             </ul>
                             <p className="text-gray-600 text-sm">
-                                Descriptions, photographs, and specifications are provided for guidance only and do not
-                                form part of any contractual warranty. SoldWerX is a marketplace and does not guarantee
-                                condition beyond what is described by the seller.
+                                Descriptions, photographs, specifications, hours, mileage, and inspection reports are
+                                provided for guidance only and do not form part of any contractual warranty. SoldWerX
+                                is a marketplace and does not guarantee the condition, performance, or fitness of any
+                                asset beyond what is described by the seller.
                             </p>
                         </div>
 
@@ -93,7 +96,7 @@ const BuyerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>On-site inspections are not available before bidding or purchasing</li>
                                 <li>If you have questions about a listing, please ask the seller through our secure communication window</li>
-                                <li>We recommend asking questions before placing a bid or confirming a purchase</li>
+                                <li>We strongly recommend asking questions and reviewing all available documentation before placing a bid or confirming a purchase</li>
                                 <li>Failure to ask questions before purchasing is at the buyer's sole risk</li>
                             </ul>
                         </div>
@@ -119,7 +122,7 @@ const BuyerAgreement = () => {
                                 <li>Bank transfer in USD is the only accepted payment method</li>
                                 <li>Payment must be completed within 48 hours of winning an auction or confirming a direct purchase</li>
                                 <li>All payments must be made to the SoldWerX collection account</li>
-                                <li>Items will not be released until full payment clears</li>
+                                <li>Assets will not be released until full payment clears</li>
                                 <li>Title and ownership pass only after full payment is received and confirmed</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
                             </ul>
@@ -129,11 +132,11 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. Collection & Delivery</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Buyer and seller are responsible for arranging and managing delivery between themselves</li>
+                                <li>Buyer and seller are responsible for arranging and managing pickup, freight, or delivery between themselves</li>
                                 <li>Collection can be arranged directly with the seller after payment is confirmed</li>
                                 <li>Risk of loss or damage transfers to the buyer upon collection or delivery</li>
-                                <li>Buyers are responsible for insurance from the moment of collection or delivery</li>
-                                <li>Tracking or shipping labels can be shared through our secure communication window</li>
+                                <li>Buyers are responsible for insurance and any applicable transport permits from the moment of collection or delivery</li>
+                                <li>Tracking, bill of lading, or shipping labels can be shared through our secure communication window</li>
                             </ul>
                         </div>
 
@@ -143,7 +146,7 @@ const BuyerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
-                                <li>Only tracking or shipping labels may be shared through the secure communication window</li>
+                                <li>Only tracking, shipping, or bill of lading labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
                             </ul>
                         </div>
@@ -153,7 +156,7 @@ const BuyerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">10. Default & Enforcement</h2>
                             <p className="text-gray-700 mb-2">If payment is not completed within the required timeframe, we may:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Cancel the sale and relist the item</li>
+                                <li>Cancel the sale and relist the asset</li>
                                 <li>Seek recovery of any losses or costs incurred</li>
                                 <li>Suspend or permanently terminate the buyer's account</li>
                                 <li>Report to relevant authorities if fraud is suspected</li>
@@ -165,7 +168,7 @@ const BuyerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Limitation of Liability</h2>
                             <p className="text-gray-700">
                                 To the extent permitted by law, SoldWerX's total liability is limited to the
-                                purchase price of the collectible in question. We are not liable for indirect or consequential
+                                purchase price of the asset in question. We are not liable for indirect or consequential
                                 losses including but not limited to lost profits or business interruption.
                                 This does not limit liability for fraud, death, or personal injury caused by negligence.
                             </p>
@@ -175,8 +178,8 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>This Agreement is governed by the laws of United States of America</li>
-                                <li>Any disputes shall be resolved by the courts of United States of America</li>
+                                <li>This Agreement is governed by the laws of the United States of America</li>
+                                <li>Any disputes shall be resolved by the courts of the United States of America</li>
                             </ul>
                         </div>
 
@@ -210,7 +213,7 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Buyer Agreement was last updated on August 9, 2026. It forms an integral part of
-                                the contract for every collectible purchase made through SoldWerX.
+                                the contract for every asset purchase made through SoldWerX.
                             </p>
                         </div>
                     </div>

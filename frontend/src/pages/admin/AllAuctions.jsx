@@ -197,7 +197,6 @@ function AllAuctions() {
 
     const handleUpdatePaymentStatus = async (auctionId, formData) => {
         try {
-            console.log(formData)
             // Create FormData for file upload
             const formDataToSend = new FormData();
             formDataToSend.append('paymentStatus', formData.paymentStatus);

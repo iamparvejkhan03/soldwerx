@@ -17,7 +17,7 @@ const SellerAgreement = () => {
                         <p className="text-green-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
                         <p className="text-green-700 text-sm">
                             This Seller Agreement governs all listings and sales made through SoldWerX.
-                            By listing collectibles on our platform, you agree to be bound by this Agreement.
+                            By listing assets on our platform, you agree to be bound by this Agreement.
                         </p>
                     </div>
                 </div>
@@ -29,7 +29,9 @@ const SellerAgreement = () => {
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
                                 <strong>SoldWerX</strong> ("we", "our", "us") and you, the seller ("Seller"),
-                                enter into this Seller Agreement governing all collectibles listings and sales made through our platform.
+                                enter into this Seller Agreement governing all listings and sales of heavy equipment,
+                                trucks, trailers, vehicles, business assets, estates, and similar assets made through
+                                our platform.
                             </p>
                             <p className="text-gray-700">
                                 By creating a listing, you agree to be bound by this Agreement.
@@ -41,9 +43,9 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX is open to both trade sellers and private individuals</li>
-                                <li>Trade sellers include dealers, collectors, and memorabilia businesses</li>
+                                <li>Trade sellers include dealers, fleet operators, equipment resellers, and estate representatives</li>
                                 <li>All sellers must register and maintain accurate account information</li>
-                                <li>We reserve the right to verify identity and eligibility</li>
+                                <li>We reserve the right to verify identity, business details, and eligibility</li>
                                 <li>Sellers must be at least 18 years of age</li>
                             </ul>
                         </div>
@@ -53,13 +55,13 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Seller Fees</h2>
                             <p className="text-gray-700 mb-3">SoldWerX charges a simple fee structure for sellers:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li><strong>Commission-based:</strong> 5% of the final sale price</li>
+                                <li><strong>Commission-based:</strong> 8% of the final sale price</li>
                             </ul>
                             <p className="text-gray-700 mb-2">Important notes:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>No listing fees – you only pay when your item sells</li>
+                                <li>No listing fees – you only pay when your asset sells</li>
                                 <li>No photography or listing preparation fees</li>
-                                <li>The 5% commission is clearly displayed before listing</li>
+                                <li>The 8% commission is clearly displayed before listing</li>
                                 <li>Commission is non-negotiable and deducted from sale proceeds</li>
                                 <li>All fees are in USD</li>
                             </ul>
@@ -70,13 +72,14 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Seller Responsibilities</h2>
                             <p className="text-gray-700 mb-2">Sellers are solely responsible for:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Creating accurate and complete collectibles listings</li>
-                                <li>Providing clear, honest photographs</li>
+                                <li>Creating accurate and complete listings for equipment, vehicles, and other assets</li>
+                                <li>Providing clear, honest photographs, including of any defects or damage</li>
                                 <li>Ensuring all descriptions are truthful and not misleading</li>
+                                <li>Disclosing accurate hours, mileage, year, make, model, VIN/serial number, and any known mechanical issues</li>
                                 <li>Responding to buyer questions through our secure communication window</li>
                                 <li>Managing their own listings without additional services from SoldWerX</li>
-                                <li>Complying with all applicable laws</li>
-                                <li>Arranging delivery or collection with the buyer after payment is confirmed</li>
+                                <li>Complying with all applicable laws, including any licensing or title transfer requirements</li>
+                                <li>Arranging pickup, freight, or delivery with the buyer after payment is confirmed</li>
                             </ul>
                             <p className="text-gray-600 text-sm mt-3">
                                 SoldWerX does not provide photography, inspection, or listing preparation services.
@@ -88,10 +91,11 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Listing Accuracy</h2>
                             <p className="text-gray-700 mb-2">Sellers must ensure:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>Descriptions accurately reflect the collectible's condition, age, and authenticity</li>
-                                <li>Photos show the actual item for sale, including any defects</li>
+                                <li>Descriptions accurately reflect the asset's condition, age, hours, mileage, and specifications</li>
+                                <li>Photos show the actual asset for sale, including any defects or wear</li>
                                 <li>All material facts that could affect a buyer's decision are disclosed</li>
-                                <li>Certificates of authenticity or provenance are mentioned if applicable</li>
+                                <li>Service records, inspection reports, or maintenance history are mentioned if applicable</li>
+                                <li>Ownership status, lien information, and title documentation are accurately represented</li>
                             </ul>
                             <div className="bg-yellow-50 p-4 rounded">
                                 <p className="text-red-600 font-semibold mb-2">Consequences of Misleading Listings:</p>
@@ -126,7 +130,7 @@ const SellerAgreement = () => {
                                 <p className="text-gray-700 font-semibold mb-2">Seller's Obligation:</p>
                                 <p className="text-gray-700">
                                     Once a contract is formed, sellers are obligated to complete the sale
-                                    and cooperate with the buyer to arrange delivery or collection.
+                                    and cooperate with the buyer to arrange pickup, freight, or delivery.
                                 </p>
                             </div>
                         </div>
@@ -136,7 +140,7 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">7. Payment to Sellers</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX collects full payment from buyers via USD bank transfer</li>
-                                <li>The 5% commission is deducted from the sale proceeds</li>
+                                <li>The 8% commission is deducted from the sale proceeds</li>
                                 <li>Payment to sellers is processed after:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
                                     <li>• Buyer's payment has fully cleared into the SoldWerX collection account</li>
@@ -147,22 +151,23 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 8 - Transfer of Collectibles */}
+                        {/* Section 8 - Transfer of Assets */}
                         <div className="border-t pt-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-3">8. Transfer of Collectibles</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-3">8. Transfer of Assets</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Sellers must make collectibles available for collection or delivery promptly after payment is confirmed</li>
-                                <li>Sellers must cooperate with buyers to arrange collection or delivery</li>
+                                <li>Sellers must make assets available for pickup, freight, or delivery promptly after payment is confirmed</li>
+                                <li>Sellers must cooperate with buyers to arrange pickup, freight, or delivery</li>
                                 <li>Title and ownership transfer only after full payment is received and confirmed by SoldWerX</li>
                                 <li>Risk transfers to buyer upon collection or delivery, whichever occurs first</li>
-                                <li>Tracking or shipping labels can be shared through our secure communication window</li>
+                                <li>Sellers must provide any applicable title documents, bills of sale, or release of lien as required by law</li>
+                                <li>Tracking, bill of lading, or shipping labels can be shared through our secure communication window</li>
                             </ul>
                         </div>
 
                         {/* Section 9 - Seller Default */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Seller Default</h2>
-                            <p className="text-gray-700 mb-2">If a seller fails to transfer collectibles after a sale:</p>
+                            <p className="text-gray-700 mb-2">If a seller fails to transfer assets after a sale:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
                                 <li>SoldWerX will attempt to mediate and resolve the issue</li>
                                 <li>We will work with both parties to find a fair solution</li>
@@ -177,19 +182,19 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 10 - Collectible Not as Described */}
+                        {/* Section 10 - Asset Not as Described */}
                         <div className="border-t pt-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-3">10. Collectible Not as Described</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-3">10. Asset Not as Described</h2>
                             <p className="text-gray-700 mb-2">
-                                If a buyer claims a collectible is significantly not as described:
+                                If a buyer claims an asset is significantly not as described:
                             </p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX will investigate the claim</li>
-                                <li>We may request evidence from both parties</li>
+                                <li>We may request evidence from both parties, including inspection reports or photos</li>
                                 <li>If the listing was misleading, seller may be liable for:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
                                     <li>• Partial or full refund to buyer</li>
-                                    <li>• Return shipping costs</li>
+                                    <li>• Return freight or transport costs</li>
                                     <li>• Account suspension or ban</li>
                                 </ul>
                             </ul>
@@ -201,7 +206,7 @@ const SellerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
                                 <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
-                                <li>Only tracking or shipping labels may be shared through the secure communication window</li>
+                                <li>Only tracking, bill of lading, or shipping labels may be shared through the secure communication window</li>
                                 <li>Off-platform communication may result in account suspension</li>
                             </ul>
                         </div>
@@ -211,11 +216,12 @@ const SellerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Prohibited Conduct</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Misleading or fraudulent listings</li>
-                                <li>Shill bidding (bidding on your own items)</li>
+                                <li>Shill bidding (bidding on your own listings)</li>
                                 <li>Off-platform transactions to avoid fees</li>
                                 <li>Failing to complete sales without valid reason</li>
                                 <li>Abusive communication with buyers</li>
-                                <li>Listing illegal, stolen, or counterfeit collectibles</li>
+                                <li>Listing illegal, stolen, or counterfeit assets</li>
+                                <li>Listing assets that are subject to undisclosed liens, encumbrances, or ownership disputes</li>
                             </ul>
                         </div>
 
@@ -234,8 +240,8 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">14. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>This Agreement is governed by the laws of United States of America</li>
-                                <li>Any disputes shall be resolved by the courts of United States of America</li>
+                                <li>This Agreement is governed by the laws of the United States of America</li>
+                                <li>Any disputes shall be resolved by the courts of the United States of America</li>
                             </ul>
                         </div>
 
@@ -262,7 +268,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Acceptance & Contact</h2>
                             <p className="text-gray-700 mb-4">
-                                By listing collectibles on SoldWerX, you acknowledge that you have read, understood, and agree
+                                By listing assets on SoldWerX, you acknowledge that you have read, understood, and agree
                                 to this Seller Agreement.
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
@@ -280,7 +286,7 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Seller Agreement was last updated on August 9, 2026. It forms an integral part of
-                                the contract for every collectibles listing made through SoldWerX.
+                                the contract for every asset listing made through SoldWerX.
                             </p>
                         </div>
                     </div>

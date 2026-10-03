@@ -1,197 +1,323 @@
-import { Gavel, Zap, PoundSterling, Clock, Gift, Users, ShieldCheck } from 'lucide-react';
+import { Gavel, Zap, Banknote, Clock, Gift, Users, ShieldCheck, Bell, Gauge } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const MobileBidStickyBar = ({
   currentBid,
   timeRemaining,
   onBidClick,
-  buyNowPrice,
+  onViewDetailsClick,
+  onProxyBidClick,
+  convertedBuyNowPrice,
   onBuyNowClick,
   onMakeOfferClick,
   allowOffers,
   auctionType,
   status,
-  auction // Pass the full auction object to get more details
+  auction,
+  isWatchlisted,
+  watchlistCount,
+  views
 }) => {
   const { days, hours, minutes, seconds, status: timeStatus } = timeRemaining;
   const isActive = timeStatus === 'counting-down' || timeStatus === 'always-available';
 
+  // State for live timer
+  const [liveTimer, setLiveTimer] = useState({
+    days: days || 0,
+    hours: hours || 0,
+    minutes: minutes || 0,
+    seconds: seconds || 0
+  });
+
+  // Update live timer every second
+  useEffect(() => {
+    if (!isActive || timeStatus !== 'counting-down') return;
+
+    const interval = setInterval(() => {
+      setLiveTimer(prev => {
+        let { days, hours, minutes, seconds } = prev;
+
+        if (seconds > 0) {
+          seconds--;
+        } else {
+          seconds = 59;
+          if (minutes > 0) {
+            minutes--;
+          } else {
+            minutes = 59;
+            if (hours > 0) {
+              hours--;
+            } else {
+              hours = 23;
+              if (days > 0) {
+                days--;
+              }
+            }
+          }
+        }
+
+        return { days, hours, minutes, seconds };
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isActive, timeStatus]);
+
+  // Sync with props when they change
+  useEffect(() => {
+    if (isActive && timeStatus === 'counting-down') {
+      setLiveTimer({
+        days: days || 0,
+        hours: hours || 0,
+        minutes: minutes || 0,
+        seconds: seconds || 0
+      });
+    }
+  }, [days, hours, minutes, seconds, isActive, timeStatus]);
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return '0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   // Determine if buttons should be shown
-  const showBuyNow = auctionType === 'buy_now' && buyNowPrice && isActive && !auction?.winner && auction?.status === 'active';
+  const showBuyNow = auctionType === 'buy_now' && convertedBuyNowPrice && isActive && !auction?.winner && auction?.status === 'active';
   const showMakeOffer = allowOffers && isActive && !auction?.winner && auction?.status === 'active';
   const showBidForm = (auctionType === 'standard' || auctionType === 'reserve') && isActive && !auction?.winner && auction?.status === 'active';
   const isGiveaway = auctionType === 'giveaway';
   const showGiveawayClaim = isGiveaway && isActive && !auction?.winner && auction?.status === 'active';
+  const showProxyBid = showBidForm && auction?.allowProxyBidding;
 
-  // Get status display text
-  const getStatusDisplay = () => {
-    if (auction?.winner) {
-      return {
-        text: auctionType === 'giveaway' ? 'Item Claimed' : 'Auction Ended - Sold',
-        color: 'bg-green-100 text-green-800'
-      };
-    }
+  // Reserve status logic
+  const isReserveMet = (auction?.convertedCurrentPrice || auction?.currentPrice || 0) >= (auction?.reservePrice || 0);
 
-    switch (timeStatus) {
-      case 'ended':
-        return { text: 'Auction Ended', color: 'bg-yellow-100 text-yellow-800' };
-      case 'approved':
-        return { text: 'Starting Soon', color: 'bg-blue-100 text-blue-800' };
-      case 'cancelled':
-        return { text: 'Cancelled', color: 'bg-red-100 text-red-800' };
-      case 'draft':
-        return { text: 'Pending Approval', color: 'bg-orange-100 text-orange-800' };
-      case 'always-available':
-        return { text: isGiveaway ? 'Free Giveaway' : 'Available Now', color: 'bg-green-100 text-green-800' };
-      default:
-        return { text: timeStatus, color: 'bg-gray-100 text-gray-800' };
-    }
+  // Format End Date
+  const formatEndDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   };
 
-  const statusDisplay = getStatusDisplay();
-
   return (
-    <div className="lg:hidden bg-white border border-gray-200 rounded-lg shadow-sm mb-6 sticky top-16 z-40">
+    <div className="lg:hidden bg-white border border-gray-200 rounded-lg shadow-sm mb-6 sticky top-16 z-0">
       <div className="p-4">
-        {/* Top Row: Current Bid/Price and Timer */}
-        <div className="flex w-full justify-between items-center mb-3">
-          <div>
-            <p className="text-xs text-gray-500 font-light">
-              {isGiveaway ? 'FREE GIVEAWAY' :
-                auctionType === 'buy_now' ? 'BUY NOW PRICE' :
-                  auction?.bidCount > 0 ? 'CURRENT BID' : 'STARTING BID'}
+
+        {/* Top Row: Price & Timer */}
+        <div className="flex justify-between items-start overflow-hidden mb-4 gap-4">
+          {/* Left Side: Price & Reserve */}
+          <div className="flex flex-col flex-1">
+            <p className="text-xs text-black font-semibold mb-1">
+              {isGiveaway ? '' : auctionType === 'buy_now' ? 'Buy Now Price' : auction.status === 'sold' ? 'Final Bid' : auction?.bidCount > 0 ? 'Current Bid' : 'Starting Bid'}
             </p>
-            <p className="text-lg font-semibold">
+            <p className="text-xl font-bold text-gray-900">
               {isGiveaway ? (
-                <span className="flex items-center gap-1 text-green-600">FREE 🎁</span>
+                <span className="text-green-600">GIVEAWAY 🎁</span>
+              ) : auctionType === 'buy_now' ? (
+                formatCurrency(auction?.convertedBuyNowPrice || convertedBuyNowPrice)
               ) : (
-                `$${currentBid?.toLocaleString() || 0}`
+                formatCurrency(currentBid)
               )}
             </p>
+
+            {/* Reserve Badge */}
+            {auctionType === 'reserve' && auction && (
+              <div className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium w-fit ${isReserveMet
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-orange-50 text-orange-600 border border-orange-200'
+                }`}>
+                {isReserveMet ? '✓ Reserve Met' : '⚠ Reserve Applies'}
+              </div>
+            )}
           </div>
 
-          {/* Timer - Show for counting-down auctions */}
-          {timeStatus === 'counting-down' && (
-            <div className="flex items-center gap-1">
-              <Clock size={16} className="text-gray-500" />
-              <div className="flex items-center space-x-1 text-sm font-medium">
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{days}d</span>
-                <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{hours}h</span>
-                <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{minutes}m</span>
-                <span className="text-gray-400">:</span>
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded">{seconds}s</span>
-              </div>
+          {/* Right Side: Timer (with your requested status handling) */}
+          <div className="flex flex-col items-start flex-shrink-0">
+            <div className="flex items-center gap-1 text-xs text-gray-700 font-medium mb-1">
+              <Clock size={14} />
+              <span>
+                {timeStatus === 'counting-down' && 'Auction Ends In'}
+                {timeStatus === 'always-available' && (auctionType === 'giveaway' ? 'Giveaway Open' : 'Available Now')}
+                {timeStatus === 'approved' && 'Auction Starts Soon'}
+                {timeStatus === 'ended' && (auction?.status === 'reserve_not_met' ? 'Reserve Not Met' : auction?.status === 'sold' ? 'Auction Sold' : 'Auction Ended')}
+                {timeStatus === 'cancelled' && 'Auction Cancelled'}
+                {timeStatus === 'draft' && 'Pending Approval'}
+                {timeStatus === 'loading' && 'Loading Status...'}
+              </span>
             </div>
-          )}
 
-          {/* Show "Always Available" badge for buy_now/giveaway */}
-          {timeStatus === 'always-available' && (
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-              Available Now
-            </span>
-          )}
+            {timeStatus === 'counting-down' && (
+              <>
+                <div className="flex items-end gap-3 text-xl font-bold text-gray-900">
+                  <span>{String(liveTimer.days).padStart(2, '0')}</span>
+                  <span className="text-gray-500 text-lg">:</span>
+                  <span>{String(liveTimer.hours).padStart(2, '0')}</span>
+                  <span className="text-gray-500 text-lg">:</span>
+                  <span>{String(liveTimer.minutes).padStart(2, '0')}</span>
+                  <span className="text-gray-500 text-lg">:</span>
+                  <span>{String(liveTimer.seconds).padStart(2, '0')}</span>
+                </div>
+                <div className="flex justify-between w-full text-[12px] text-gray-500 mt-0.5 gap-2">
+                  <span>Days</span>
+                  <span>Hours</span>
+                  <span>Minutes</span>
+                  <span>Seconds</span>
+                </div>
+                {/* {auction?.endDate && (
+                  <p className="text-[12px] text-gray-500 mt-1">Ends: {formatEndDate(auction.endDate)}</p>
+                )} */}
+              </>
+            )}
+
+            {timeStatus === 'always-available' && (
+              <>
+                <p className="text-sm font-semibold text-green-600">
+                  {auctionType === 'giveaway' ? 'Open for Entry' : 'Ready to Purchase'}
+                </p>
+                <p className="text-[12px] text-gray-500 mt-1">
+                  {auctionType === 'giveaway' ? 'Claim this item anytime' : 'Buy instantly at any time'}
+                </p>
+              </>
+            )}
+
+            {timeStatus === 'approved' && (
+              <>
+                <p className="text-sm font-semibold text-blue-600">Starting Soon</p>
+                {auction?.startDate && (
+                  <p className="text-[12px] text-gray-500 mt-1">Starts: {formatEndDate(auction.startDate)}</p>
+                )}
+              </>
+            )}
+
+            {timeStatus === 'ended' && (
+              <>
+                {auction?.status === 'sold' && <p className="text-sm font-semibold text-green-600">Sold ✓</p>}
+                {auction?.status === 'sold_buy_now' && <p className="text-sm font-semibold text-green-600">Sold via Buy Now ✓</p>}
+                {auction?.status === 'reserve_not_met' && <p className="text-sm font-semibold text-orange-600">Reserve Not Met</p>}
+                {!['sold', 'sold_buy_now', 'reserve_not_met'].includes(auction?.status) && (
+                  <p className="text-sm font-semibold text-gray-600">Ended</p>
+                )}
+                {auction?.endDate && (
+                  <p className="text-[12px] text-gray-500 mt-1">
+                    {auction?.status === 'sold' || auction?.status === 'sold_buy_now'
+                      ? `Sold at: ${formatEndDate(auction.endDate)}`
+                      : `Ended: ${formatEndDate(auction.endDate)}`}
+                  </p>
+                )}
+              </>
+            )}
+
+            {timeStatus === 'cancelled' && (
+              <>
+                <p className="text-sm font-semibold text-red-600">Cancelled</p>
+                <p className="text-[12px] text-gray-500 mt-1">This auction has been cancelled</p>
+              </>
+            )}
+
+            {timeStatus === 'draft' && (
+              <>
+                <p className="text-sm font-semibold text-orange-600">Pending Approval</p>
+                <p className="text-[12px] text-gray-500 mt-1">Awaiting admin review</p>
+              </>
+            )}
+
+            {timeStatus === 'loading' && (
+              <p className="text-sm font-semibold text-gray-500">Loading...</p>
+            )}
+          </div>
         </div>
 
-        {/* Reserve Status - Only for reserve auctions */}
-        {auctionType === 'reserve' && auction && (
-          <div className="mb-3 text-sm">
-            <span className={`${auction.currentPrice >= auction.reservePrice ? 'text-green-600' : 'text-orange-600'}`}>
-              {auction.currentPrice >= auction.reservePrice ? '✓ Reserve Met' : '⚠ Reserve Not Met'}
-            </span>
-          </div>
-        )}
-
-        {/* Winner/Sold Info */}
-        {auction?.winner && (
-          <div className="mb-3 text-sm text-green-600">
-            <span className="font-medium">Winner: {auction.winner.username}</span>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-2 w-full">
-          {/* Giveaway Claim Button */}
-          {showGiveawayClaim && (
-            <button
-              onClick={onBuyNowClick}
-              className="bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-md cursor-pointer flex items-center gap-2 text-sm font-medium w-full justify-center"
-            >
-              <Gift size={18} />
-              <span>Claim for Free 🎁</span>
-            </button>
-          )}
-
-          {/* Buy Now Button */}
-          {showBuyNow && (
-            <button
-              onClick={onBuyNowClick}
-              className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md cursor-pointer flex items-center gap-2 text-sm font-medium w-full justify-center"
-            >
-              <Zap size={18} />
-              <span>Buy Now ${buyNowPrice?.toLocaleString()}</span>
-            </button>
-          )}
-
-          {/* Make Offer Button */}
-          {showMakeOffer && (
-            <button
-              onClick={onMakeOfferClick}
-              className="bg-[#edcd1f] hover:bg-[#edcd1f]/90 text-black py-3 px-4 rounded-md cursor-pointer flex items-center gap-2 text-sm font-medium w-full justify-center"
-            >
-              <PoundSterling size={18} />
-              <span>Make Offer</span>
-            </button>
-          )}
-
-          {/* Place Bid Button */}
-          {showBidForm && !showBuyNow && !showMakeOffer && (
+        {/* Middle Row: Action Buttons */}
+        <div className="flex flex-wrap gap-2 w-full mt-4">
+          {showBidForm && (
             <button
               onClick={onBidClick}
-              className="bg-primary hover:bg-primary-dark text-white py-3 px-4 rounded-md cursor-pointer flex items-center gap-2 text-sm font-medium w-full justify-center"
+              className="flex-1 bg-[#000] hover:bg-[#000]/90 text-white py-2.5 px-4 rounded-md cursor-pointer flex items-center justify-center gap-2 text-sm font-medium transition-colors"
             >
               <Gavel size={18} />
               <span>Place Bid</span>
             </button>
           )}
 
-          {/* View Only Button (for non-active) */}
+          {showMakeOffer && (
+            <button
+              onClick={onMakeOfferClick}
+              className="flex-1 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white hover:from-orange-500 hover:via-orange-600 hover:to-orange-700 border py-2.5 px-4 rounded-md cursor-pointer flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+            >
+              <Banknote size={18} />
+              <span>Make Offer</span>
+            </button>
+          )}
+
+          {showBuyNow && (
+            <button
+              onClick={onBuyNowClick}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 px-4 rounded-md cursor-pointer flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+            >
+              <Zap size={18} />
+              <span>Buy Now</span>
+            </button>
+          )}
+
+          {showGiveawayClaim && (
+            <button
+              onClick={onBuyNowClick}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-4 rounded-md cursor-pointer flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+            >
+              <Gift size={18} />
+              <span>Enter Giveaway 🎁</span>
+            </button>
+          )}
+
+          {/* Fallback for non-active auctions */}
           {!isActive && !auction?.winner && (
             <button
-              onClick={onBidClick}
-              className="bg-gray-400 hover:bg-gray-500 text-white py-3 px-4 rounded-md cursor-pointer flex items-center justify-center text-sm font-medium w-full"
+              onClick={onViewDetailsClick || onBidClick}
+              className="flex-1 bg-gray-700 hover:bg-gray-500 text-white py-2.5 px-4 rounded-md cursor-pointer flex items-center justify-center text-sm font-medium transition-colors"
             >
-              <span>View Auction Details</span>
+              View Auction Details
             </button>
           )}
         </div>
 
-        {/* Status Badge */}
-        {!isActive && !auction?.winner && (
-          <div className="mt-3 text-center">
-            <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${statusDisplay.color}`}>
-              {statusDisplay.text}
-            </span>
+        {/* Secondary actions row — proxy bid */}
+        {showProxyBid && (
+          <div className="mt-2">
+            <button
+              onClick={onProxyBidClick}
+              className="flex items-center justify-center gap-2 w-full border bg-blue-600 border-blue-600 text-white hover:bg-blue-700 py-2.5 px-4 text-sm rounded-md transition-colors"
+            >
+              <Gauge size={18} />
+              <span>Set a Proxy Bid (Auto-bid)</span>
+            </button>
           </div>
         )}
 
-        {/* Stats Row */}
-        {(auction?.watchlistCount > 0 || auction?.views > 0) && (
-          <div className="mt-3 flex justify-center gap-4 text-xs text-gray-500 border-t pt-3">
-            {auction?.watchlistCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Users size={14} />
-                {auction.watchlistCount} watching
-              </span>
-            )}
-            {auction?.views > 0 && (
-              <span className="flex items-center gap-1">
-                <ShieldCheck size={14} />
-                {auction.views} views
-              </span>
-            )}
+        {/* Bottom Row: Stats */}
+        <div className="text-[13px] font-medium text-gray-700 mt-4 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1">
+              <Users size={14} />
+              {watchlistCount || auction?.watchlistCount || 0} watching
+            </span>
+            <span className="flex items-center gap-1">
+              <ShieldCheck size={14} />
+              {views || auction?.views || 0} views
+            </span>
           </div>
-        )}
+        </div>
+
       </div>
     </div>
   );

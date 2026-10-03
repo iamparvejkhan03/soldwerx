@@ -1,5 +1,5 @@
 import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare } from "lucide-react";
-import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, ProxyBidSection, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
+import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, PlaceBidModal, ProxyBidSection, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lazy, Suspense, useRef, useState, useEffect } from "react";
 import useAuctionCountdown from "../hooks/useAuctionCountDown";
@@ -125,7 +125,7 @@ function SingleAuction() {
         const onUpdate = ({ auction }) => {
             // NOTE: server sends { serverTime, auction }
             setAuction(auction);
-        }; 
+        };
 
         const onRemoved = () => setAuction(null);
 
@@ -170,8 +170,50 @@ function SingleAuction() {
     };
 
     // ============= BID HANDLER =============
-    const handleBid = async (e) => {
-        e.preventDefault();
+    // const handleBid = async (e) => {
+    //     e.preventDefault();
+
+    //     if (!user) {
+    //         toast.error('You must login to bid.');
+    //         navigate('/login');
+    //         return;
+    //     }
+
+    //     if (user._id?.toString() === auction?.seller?._id?.toString()) {
+    //         toast.error(`You can't bid on your own auction.`);
+    //         return;
+    //     }
+
+    //     if (!bidAmount || (parseFloat(bidAmount) <= auction.currentPrice && auction.bidCount > 0)) {
+    //         toast.error(`Bid must be higher than current price: $${auction.currentPrice}`);
+    //         return;
+    //     }
+
+    //     try {
+    //         setBidding(true);
+
+    //         // Place the bid after payment is handled
+    //         const { data } = await axiosInstance.post(`/api/v1/auctions/bid/${id}`, {
+    //             amount: parseFloat(bidAmount)
+    //         });
+
+    //         if (data.success) {
+    //             setAuction(data.data.auction);
+    //             setBidAmount('');
+    //             toast.success('Bid placed successfully!');
+    //         }
+    //     } catch (error) {
+    //         toast.error(error?.response?.data?.message || 'Failed to place bid');
+    //         console.error('Bid error:', error);
+    //     } finally {
+    //         setBidding(false);
+    //     }
+    // };
+
+    const handleBid = async (e, amountOverride) => {
+        if (e?.preventDefault) e.preventDefault();
+
+        const amount = amountOverride ?? bidAmount;
 
         if (!user) {
             toast.error('You must login to bid.');
@@ -184,7 +226,7 @@ function SingleAuction() {
             return;
         }
 
-        if (!bidAmount || (parseFloat(bidAmount) <= auction.currentPrice && auction.bidCount > 0)) {
+        if (!amount || (parseFloat(amount) <= auction.currentPrice && auction.bidCount > 0)) {
             toast.error(`Bid must be higher than current price: $${auction.currentPrice}`);
             return;
         }
@@ -192,9 +234,8 @@ function SingleAuction() {
         try {
             setBidding(true);
 
-            // Place the bid after payment is handled
             const { data } = await axiosInstance.post(`/api/v1/auctions/bid/${id}`, {
-                amount: parseFloat(bidAmount)
+                amount: parseFloat(amount),
             });
 
             if (data.success) {
@@ -208,6 +249,11 @@ function SingleAuction() {
         } finally {
             setBidding(false);
         }
+    };
+
+    const handleConfirmBidWithAmount = (amount) => {
+        handleBid(null, amount);
+        setIsBidModalOpen(false);
     };
 
     // ============= BUY NOW HANDLER =============
@@ -486,7 +532,7 @@ function SingleAuction() {
                             </Link>
                         ))}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         <p onClick={toggleWatchlist}
                             className={`flex items-center gap-2 py-1 px-3 border border-gray-200 rounded-full transition-colors ${isWatchlisted
                                 ? 'bg-gray-100 text-black hover:bg-gray-200'
@@ -524,18 +570,25 @@ function SingleAuction() {
                     </div>
                 </div>
 
-                <div className="my-5">
+                <div className="mt-8 mb-5">
                     <MobileBidStickyBar
                         currentBid={auction.currentPrice}
                         timeRemaining={countdown}
-                        onBidClick={() => scrollToBidSection()}
-                        buyNowPrice={auction.buyNowPrice}
+                        // onBidClick={() => scrollToBidSection()}
+                        onBidClick={handleOpenBidModal}
+                        onViewDetailsClick={scrollToBidSection}
+                        onProxyBidClick={() => setShowProxyBidModal(true)}
+                        convertedBuyNowPrice={auction.buyNowPrice}
                         onBuyNowClick={isBuyNowAvailable ? handleBuyNow : null}
                         onMakeOfferClick={isMakeOfferAvailable ? handleOpenMakeOfferModal : null}
+                        // onMakeOfferClick={() => scrollToBidSection()}
                         allowOffers={auction.allowOffers}
                         auctionType={auction.auctionType}
                         status={countdown.status}
                         auction={auction}
+                        isWatchlisted={isWatchlisted}
+                        watchlistCount={watchlistCount || auction?.watchlistCount || 0}
+                        views={auction?.views || 0}
                     />
                 </div>
 
@@ -732,7 +785,7 @@ function SingleAuction() {
                         (auction.auctionType === 'standard' || auction.auctionType === 'reserve') && (
                             <>
                                 <div className="flex flex-col gap-2">
-                                    <p className="font-light">
+                                    <p className=" text-secondary text-sm">
                                         {auction.bidCount > 0 ? 'Current Bid' : 'Start Bidding At'}
                                     </p>
 
@@ -916,40 +969,32 @@ function SingleAuction() {
                                     {/* Bid Form for standard/reserve - only show for timed auctions */}
                                     {(auction.auctionType === 'standard' || auction.auctionType === 'reserve') && (
                                         <>
-                                            <form ref={formRef} onSubmit={handleBid} className="flex flex-col gap-4">
-                                                <input
-                                                    type="number"
-                                                    value={bidAmount}
-                                                    onChange={(e) => setBidAmount(e.target.value)}
-                                                    className="py-3 px-5 w-full rounded-lg focus:outline-2 focus:outline-primary border-2 border-gray-400"
-                                                    placeholder={`Bid $${auction.bidCount > 0 ? minBidAmount : auction.startPrice} or higher`}
-                                                    min={minBidAmount}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    disabled={bidding}
-                                                    onClick={() => handleOpenBidModal(bidAmount)}
-                                                    className="flex items-center justify-center gap-2 w-full bg-primary text-white py-3 px-6 cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
-                                                >
-                                                    {bidding ? (
-                                                        <Loader size={16} className="animate-spin-slow" />
-                                                    ) : (
-                                                        <>
-                                                            <Gavel />
-                                                            <span>Place Bid</span>
-                                                        </>
-                                                    )}
-                                                </button>
+                                            <button
+                                                type="button"
+                                                disabled={bidding}
+                                                onClick={handleOpenBidModal}
+                                                className="flex items-center justify-center gap-2 w-full bg-primary text-white py-3 px-6 cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+                                            >
+                                                {bidding ? (
+                                                    <Loader size={16} className="animate-spin-slow" />
+                                                ) : (
+                                                    <>
+                                                        <Gavel />
+                                                        <span>Place Bid</span>
+                                                    </>
+                                                )}
+                                            </button>
 
-                                                <BidConfirmationModal
+                                            <Suspense fallback={null}>
+                                                <PlaceBidModal
                                                     isOpen={isBidModalOpen}
                                                     onClose={handleCloseBidModal}
-                                                    onConfirm={handleConfirmBid}
+                                                    onConfirm={handleConfirmBidWithAmount}
                                                     bidAmount={bidAmount}
                                                     auction={auction}
-                                                    ref={formRef}
+                                                    loading={bidding}
                                                 />
-                                            </form>
+                                            </Suspense>
 
                                             <button
                                                 type="button"
@@ -1128,7 +1173,7 @@ function SingleAuction() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="flex justify-between items-center py-3 px-6 md:px-6 md:py-3 border-b border-gray-200">
+                        <div className="flex justify-between items-center pt-3 px-6 md:px-6 md:pt-3">
                             <h2 className="text-lg font-semibold text-gray-900">
                                 Set a Proxy Bid
                             </h2>
@@ -1141,7 +1186,7 @@ function SingleAuction() {
                         </div>
 
                         {/* Body */}
-                        <div className="p-6">
+                        <div className="px-3 pb-3">
                             <ProxyBidSection
                                 auction={auction}
                                 onAuctionUpdate={updateAuctionState}

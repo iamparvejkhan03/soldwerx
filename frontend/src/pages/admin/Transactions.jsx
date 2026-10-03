@@ -418,9 +418,9 @@ function Transactions() {
                                                             {transaction.transactionId}
                                                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${transaction.source === 'bank_transfer'
                                                                 ? 'bg-purple-100 text-purple-700'
-                                                                : 'bg-blue-100 text-blue-700'
+                                                                : transaction.source === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                                                                 }`}>
-                                                                {transaction.source === 'bank_transfer' ? 'BANK' : 'CARD'}
+                                                                {transaction.source === 'bank_transfer' ? 'BANK' : transaction.source === 'cash' ? 'CASH' : 'CARD'}
                                                             </span>
                                                         </h4>
                                                         <span className="text-sm font-semibold text-green-600">

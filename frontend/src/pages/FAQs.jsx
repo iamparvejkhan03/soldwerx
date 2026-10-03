@@ -27,7 +27,7 @@ const faqs = [
             },
             {
                 question: "Are there any fees for buyers?",
-                answer: "Yes. A 5% buyer's fee is applied to the final sale price of every successful purchase. It's shown clearly before you bid, and there are no other fees on top of it."
+                answer: "Yes. A 10% buyer's fee is applied to the final sale price of every successful purchase. It's shown clearly before you bid, and there are no other fees on top of it."
             },
             {
                 question: "Can I inspect an item before bidding?",
@@ -117,7 +117,7 @@ const faqs = [
             },
             {
                 question: "What are your seller fees?",
-                answer: "A flat 5% commission on the final sale price. No listing fees, no photography fees, no hidden charges."
+                answer: "A flat 8% commission on the final sale price. No listing fees, no photography fees, no hidden charges."
             },
             {
                 question: "Do you help with listings?",
@@ -125,7 +125,7 @@ const faqs = [
             },
             {
                 question: "How and when do I get paid?",
-                answer: "Once the buyer's payment clears and the item has been picked up or delivered, we release your funds — minus the 5% commission. Payouts go out by bank transfer."
+                answer: "Once the buyer's payment clears and the item has been picked up or delivered, we release your funds — minus the 8% commission. Payouts go out by bank transfer."
             },
             {
                 question: "Do I need to verify my identity to sell?",

@@ -68,6 +68,7 @@ import StaffSidebar from "./staff/Sidebar";
 import StaffContainer from "./staff/Container";
 import HomeAuctionsSection from "./HomeAuctionsSection";
 import HomeEventsSection from "./HomeEventsSection";
+import PlaceBidModal from "./PlaceBidModal";
 
 export {
     Container,
@@ -140,4 +141,5 @@ export {
     StaffSidebar,
     HomeAuctionsSection,
     HomeEventsSection,
+    PlaceBidModal,
 }

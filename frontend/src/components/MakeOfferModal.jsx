@@ -69,8 +69,8 @@ const MakeOfferModal = ({
             <div className="bg-white rounded-lg w-full max-w-md">
 
                 {/* Header */}
-                {/* <div className="flex justify-between items-center p-6 border-b">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                <div className="flex justify-between items-center py-4 px-6 md:pt-6">
+                    <h3 className="text-lg font-semibold text-gray-800">
                         Make an Offer
                     </h3>
                     <button
@@ -79,14 +79,14 @@ const MakeOfferModal = ({
                     >
                         <X size={24} />
                     </button>
-                </div> */}
+                </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                <form onSubmit={handleSubmit} className="px-6 pb-6 pt-1">
 
                     {/* Offer Amount */}
                     <div className="mb-4">
-                        <label className="flex items-center gap-2 justify-start text-lg font-medium text-gray-700 mb-2">
-                            Offer Amount
+                        <label className="flex items-center gap-2 justify-start text-sm font-medium text-gray-700 mb-2">
+                            Your Offer Amount
                         </label>
 
                         <div className="relative">
@@ -100,31 +100,32 @@ const MakeOfferModal = ({
                                 className="pl-10 block w-full border border-gray-300 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Enter your offer amount"
                                 min={auction?.startPrice}
-                                step="0.01"
+                                step="any"
                                 required
+                                autoFocus
                             />
                         </div>
 
-                        {auction?.startPrice && auction?.startPrice > 0 && <p className="text-sm text-gray-500 mt-1">
+                        {auction?.startPrice && auction?.startPrice > 0 && <p className="text-xs text-gray-500 mt-1">
                             Minimum offer: {formatUSD(auction?.startPrice)}
                         </p>}
                     </div>
 
                     {/* Fee Breakdown */}
                     {offerAmount && !isInvalidOffer && (
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+                        <div className="bg-gray-50 rounded-lg mb-6 space-y-2">
                             <div className="flex justify-between text-gray-700">
-                                <span>Offer Amount</span>
+                                <span className="text-sm">Offer Amount</span>
                                 <span>{formatUSD(offerAmount)}</span>
                             </div>
 
                             <div className="flex justify-between text-gray-700">
-                                <span>Buyer's Premium</span>
+                                <span className="text-sm">Buyer's Premium</span>
                                 <span>{formatUSD(serviceFee)}</span>
                             </div>
 
                             <div className="border-t pt-2 flex justify-between font-semibold text-green-600">
-                                <span>Total Payable</span>
+                                <span className="text-sm">Total Payable</span>
                                 <span>{formatUSD(total)}</span>
                             </div>
                         </div>
@@ -159,7 +160,7 @@ const MakeOfferModal = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="flex-1 order-2 md:order-1 border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             Cancel
                         </button>
@@ -167,7 +168,7 @@ const MakeOfferModal = ({
                         <button
                             type="submit"
                             disabled={loading || isInvalidOffer}
-                            className="flex-1 bg-[#edcd1f] text-black py-3 px-4 rounded-lg hover:bg-[#edcd1f]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 order-1 md:order-2 bg-[#edcd1f] text-black py-3 px-4 rounded-lg hover:bg-[#edcd1f]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "Submitting..." : "Submit Offer"}
                         </button>

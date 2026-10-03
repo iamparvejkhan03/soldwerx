@@ -506,27 +506,35 @@ export const getAdminTransactions = async (req, res) => {
             chargeSucceeded: !!t.chargeSucceeded
         }));
 
-        // Normalize Bank Transfer (Payment)
-        const normalizedBank = bankPayments.map((p) => ({
-            id: p._id.toString(),
-            transactionId: p.transactionReference || `BT${p._id.toString().slice(-8).toUpperCase()}`,
-            paymentIntentId: null,
-            source: 'bank_transfer',
-            type: 'bank_transfer_payment',
-            status: normalizeBankStatus(p.status),
-            amount: p.totalAmount || 0,
-            commissionAmount: p.commissionAmount || 0,
-            taxAmount: p?.taxAmount ?? p.auction?.taxAmount ?? 0,
-            buyerFeeAmount: p.auction?.buyerFeeAmount,
-            sellerFeeAmount: p.auction?.sellerFeeAmount,
-            bidAmount: p.bidAmount || 0,
-            createdAt: p.createdAt,
-            updatedAt: p.updatedAt,
-            auction: buildAuction(p.auction, p.createdAt),
-            bidder: buildBidder(p.bidder),
-            chargeAttempted: p.status === 'processing' || p.status === 'completed',
-            chargeSucceeded: p.status === 'completed'
-        }));
+        // Normalize Bank Transfer AND Cash (both come from the Payment collection)
+        const normalizedBank = bankPayments.map((p) => {
+            // Trust what's actually stored — don't assume bank_transfer
+            const method = p.paymentMethod || 'bank_transfer';
+            const isCash = method === 'cash';
+
+            return {
+                id: p._id.toString(),
+                transactionId:
+                    p.transactionReference ||
+                    `${isCash ? 'CSH' : 'BT'}${p._id.toString().slice(-8).toUpperCase()}`,
+                paymentIntentId: null,
+                source: isCash ? 'cash' : 'bank_transfer',
+                type: isCash ? 'cash_payment' : (p.type || 'bank_transfer_payment'),
+                status: normalizeBankStatus(p.status),
+                amount: p.totalAmount || 0,
+                commissionAmount: p.commissionAmount || 0,
+                taxAmount: p?.taxAmount ?? p.auction?.taxAmount ?? 0,
+                buyerFeeAmount: p.auction?.buyerFeeAmount,
+                sellerFeeAmount: p.auction?.sellerFeeAmount,
+                bidAmount: p.bidAmount || 0,
+                createdAt: p.createdAt,
+                updatedAt: p.updatedAt,
+                auction: buildAuction(p.auction, p.createdAt),
+                bidder: buildBidder(p.bidder),
+                chargeAttempted: p.status === 'processing' || p.status === 'completed',
+                chargeSucceeded: p.status === 'completed',
+            };
+        });
 
         let merged = [...normalizedBid, ...normalizedBank];
 
@@ -625,7 +633,8 @@ export const getAdminTransactions = async (req, res) => {
                 { value: 'bid_authorization', label: 'Bid Authorizations' },
                 { value: 'final_commission', label: 'Final Commissions' },
                 { value: 'winner_payment', label: 'Winner Payments' },
-                { value: 'bank_transfer_payment', label: 'Bank Transfers' }
+                { value: 'bank_transfer_payment', label: 'Bank Transfers' },
+                { value: 'cash_payment', label: 'Cash Payments' },
             ],
             dateRanges: [
                 { value: 'all', label: 'All Time' },

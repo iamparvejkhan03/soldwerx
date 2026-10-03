@@ -1901,133 +1901,207 @@ export const updateAuction = async (req, res) => {
   }
 };
 
+/**
+ * Ensure a Payment record exists for a manual payment (bank / cash).
+ * Called from the admin "update payment status" endpoint.
+ */
+export const upsertManualPaymentRecord = async ({
+    auction,
+    paymentStatus,
+    paymentMethod,
+    transactionId,
+    notes,
+    invoiceUrl,          // optional, if you want to attach proof
+    adminUserId,
+}) => {
+    if (!auction || !auction.winner) return null;
+
+    const bidAmount = auction.finalPrice || auction.currentPrice || 0;
+    const commissionAmount = auction.buyerFeeAmount || 0;
+    const taxAmount = auction.taxAmount || 0;
+    const totalAmount = bidAmount + commissionAmount + taxAmount;
+
+    const method = paymentMethod || auction.paymentMethod || "bank_transfer";
+    const typeMap = {
+        bank_transfer: "bank_transfer_payment",
+        cash: "cash_payment",
+    };
+    const type = typeMap[method] || "bank_transfer_payment";
+
+    // Only set completedAt the first time status flips to completed
+    const completedAt = paymentStatus === "completed" ? new Date() : undefined;
+
+    const update = {
+        $set: {
+            auction: auction._id,
+            bidder: auction.winner._id || auction.winner,
+            bidAmount,
+            commissionAmount,
+            taxAmount,
+            totalAmount,
+            status: paymentStatus,
+            type,
+            paymentMethod: method,
+            ...(transactionId ? { transactionReference: transactionId } : {}),
+            ...(notes ? { notes } : {}),
+            ...(invoiceUrl
+                ? {
+                      invoiceReference: invoiceUrl,
+                  }
+                : {}),
+            processedBy: adminUserId,
+            ...(completedAt ? { completedAt } : {}),
+        },
+        $setOnInsert: {
+            // only set createdAt/optional fields on insert (timestamps handles the rest)
+        },
+    };
+
+    const payment = await Payment.findOneAndUpdate(
+        { auction: auction._id },   // unique-per-auction key
+        update,
+        {
+            new: true,
+            upsert: true,
+            setDefaultsOnInsert: true,
+        }
+    );
+
+    return payment;
+};
+
 export const updatePaymentStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const admin = req.user;
-    const { paymentStatus, paymentMethod, transactionId, notes } = req.body;
+    try {
+        const { id } = req.params;
+        const admin = req.user;
+        const { paymentStatus, paymentMethod, transactionId, notes } = req.body;
 
-    // Find auction with populated data
-    const auction = await Auction.findById(id)
-      .populate("seller")
-      .populate("winner");
+        // Find auction with populated data
+        const auction = await Auction.findById(id)
+            .populate("seller")
+            .populate("winner");
 
-    if (!auction) {
-      return res.status(404).json({
-        success: false,
-        message: "Auction not found",
-      });
-    }
+        if (!auction) {
+            return res.status(404).json({
+                success: false,
+                message: "Auction not found",
+            });
+        }
 
-    // Validate auction is sold
-    if (auction.status !== "sold" && auction.status !== "sold_buy_now") {
-      return res.status(400).json({
-        success: false,
-        message: "Payment status can only be updated for sold auctions",
-      });
-    }
+        // Validate auction is sold
+        if (auction.status !== "sold" && auction.status !== "sold_buy_now") {
+            return res.status(400).json({
+                success: false,
+                message: "Payment status can only be updated for sold auctions",
+            });
+        }
 
-    // Validate payment status
-    const validStatuses = [
-      "pending",
-      "processing",
-      "completed",
-      "failed",
-      "refunded",
-      "cancelled",
-    ];
-    if (!validStatuses.includes(paymentStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid payment status",
-      });
-    }
+        // Validate payment status
+        const validStatuses = [
+            "pending",
+            "processing",
+            "completed",
+            "failed",
+            "refunded",
+            "cancelled",
+        ];
+        if (!validStatuses.includes(paymentStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid payment status",
+            });
+        }
 
-    // Handle invoice upload if provided
-    let invoiceData = null;
-    if (req.file) {
-      const invoiceFile = req.file;
-      try {
-        const result = await uploadDocumentToCloudinary(
-          invoiceFile.buffer,
-          invoiceFile.originalname,
-          "auction-invoices",
-        );
+        // Handle invoice upload if provided
+        let invoiceData = null;
+        if (req.file) {
+            const invoiceFile = req.file;
+            try {
+                const result = await uploadDocumentToCloudinary(
+                    invoiceFile.buffer,
+                    invoiceFile.originalname,
+                    "auction-invoices",
+                );
 
-        invoiceData = {
-          url: result.secure_url,
-          publicId: result.public_id,
-          filename: invoiceFile.originalname,
-          uploadedAt: new Date(),
-          uploadedBy: admin._id,
-        };
-      } catch (uploadError) {
-        console.error("Invoice upload error:", uploadError);
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload invoice file",
+                invoiceData = {
+                    url: result.secure_url,
+                    publicId: result.public_id,
+                    filename: invoiceFile.originalname,
+                    uploadedAt: new Date(),
+                    uploadedBy: admin._id,
+                };
+            } catch (uploadError) {
+                console.error("Invoice upload error:", uploadError);
+                return res.status(400).json({
+                    success: false,
+                    message: "Failed to upload invoice file",
+                });
+            }
+        }
+
+        // Update payment status and related fields
+        auction.paymentStatus = paymentStatus;
+
+        if (paymentMethod && paymentStatus !== "pending") {
+            const validMethods = ["credit_card", "bank_transfer", "cash", "paypal", "other"];
+            if (validMethods.includes(paymentMethod)) {
+                auction.paymentMethod = paymentMethod;
+            }
+        }
+
+        if (transactionId && transactionId.trim() !== "") {
+            auction.transactionId = transactionId.trim();
+        }
+
+        if (paymentStatus === "completed") {
+            auction.paymentDate = new Date();
+        }
+
+        if (invoiceData) {
+            auction.invoice = invoiceData;
+        }
+
+        await auction.save();
+
+        // Populate updated auction
+        const updatedAuction = await Auction.findById(id)
+            .populate("seller", "username firstName lastName email phone address")
+            .populate("winner", "username firstName lastName email phone address");
+
+        // ✅ Upsert the Payment row — creates one if none exists
+        const paymentRecord = await upsertManualPaymentRecord({
+            auction: updatedAuction,
+            paymentStatus,
+            paymentMethod: auction.paymentMethod,
+            transactionId: auction.transactionId,
+            notes,
+            invoiceUrl: updatedAuction?.invoice?.url,
+            adminUserId: admin._id,
         });
-      }
+
+        if (paymentStatus === "completed") {
+            agendaService.scheduleInvoiceUpdate(auction._id, admin?._id).catch((err) =>
+                console.error("Failed to schedule invoice update job:", err)
+            );
+        }
+
+        broadcastAuctionChange(id);
+
+        res.status(200).json({
+            success: true,
+            message: `Payment status updated to ${paymentStatus}`,
+            data: {
+                auction: updatedAuction,
+                payment: paymentRecord,
+            },
+        });
+    } catch (error) {
+        console.error("Update payment status error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update payment status",
+        });
     }
-
-    // Update payment status and related fields
-    auction.paymentStatus = paymentStatus;
-
-    // Only update payment method if provided and status is not pending
-    if (paymentMethod && paymentStatus !== "pending") {
-      const validMethods = ["credit_card", "bank_transfer", "cash", "paypal", "other"];
-      if (validMethods.includes(paymentMethod)) {
-        auction.paymentMethod = paymentMethod;
-      }
-    }
-
-    // Update transaction ID if provided
-    if (transactionId && transactionId.trim() !== "") {
-      auction.transactionId = transactionId.trim();
-    }
-
-    // Set payment date for completed status
-    if (paymentStatus === "completed") {
-      auction.paymentDate = new Date();
-    }
-
-    // Attach invoice if uploaded
-    if (invoiceData) {
-      auction.invoice = invoiceData;
-    }
-
-    await auction.save();
-
-    // Populate updated auction
-    const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email phone address")
-      .populate("winner", "username firstName lastName email phone address");
-
-    const updatedPayment = await Payment.findOneAndUpdate({ auction: updatedAuction?._id }, { status: paymentStatus, processedBy: admin })
-
-    if (paymentStatus === 'completed') {
-      // payment completed emails will be sent from here
-      agendaService.scheduleInvoiceUpdate(auction._id, admin?._id).catch(err =>
-        console.error('Failed to schedule invoice update job:', err)
-      );
-    }
-
-    broadcastAuctionChange(id);
-
-    res.status(200).json({
-      success: true,
-      message: `Payment status updated to ${paymentStatus}`,
-      data: {
-        auction: updatedAuction,
-      },
-    });
-  } catch (error) {
-    console.error("Update payment status error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to update payment status",
-    });
-  }
 };
 
 // Verify user identity

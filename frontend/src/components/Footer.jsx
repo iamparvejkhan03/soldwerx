@@ -87,7 +87,7 @@ function Footer() {
     ];
 
     return (
-        <footer className="relative overflow-hidden bg-[#080A0D] text-white">
+        <footer className="relative overflow-hidden bg-[#080A0D] text-white z-0">
 
             {/* =====================================================
                 BACKGROUND
@@ -110,7 +110,7 @@ function Footer() {
                 }}
             />
 
-            <Container className="relative z-10">
+            <Container className="relative z-0">
 
                 {/* =================================================
                     BRAND STATEMENT

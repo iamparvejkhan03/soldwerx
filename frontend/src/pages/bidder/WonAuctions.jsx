@@ -282,6 +282,26 @@ function WonAuctions() {
         }
     };
 
+    const handleCashPayment = async (auction) => {
+        const loadingToast = toast.loading('Recording cash payment selection...');
+        try {
+            const { data } = await axiosInstance.post(
+                '/api/v1/payments/create-cash-payment',
+                { auctionId: auction._id }
+            );
+            toast.dismiss(loadingToast);
+            if (data.success) {
+                toast.success('Cash payment recorded. Please pay the admin in person.');
+                await fetchWonAuctions();
+            } else {
+                toast.error(data.message || 'Failed to record cash payment');
+            }
+        } catch (err) {
+            toast.dismiss(loadingToast);
+            toast.error(err.response?.data?.message || 'Error recording cash payment');
+        }
+    };
+
     const handleCardPayment = async (auction) => {
         const loadingToast = toast.loading('Preparing payment...');
         setCardLoading(true);
@@ -693,6 +713,16 @@ function WonAuctions() {
                                                             Pay {formatCurrency(calculateTotal(auction))} via Bank Transfer
                                                         </>
                                                     )}
+                                                </button>
+
+                                                {/* Cash Payment button */}
+                                                <button
+                                                    onClick={() => handleCashPayment(auction)}
+                                                    disabled={processing}
+                                                    className="w-full bg-emerald-600 text-white hover:bg-emerald-700 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    <Banknote size={18} />
+                                                    Pay {formatCurrency(calculateTotal(auction))} with Cash
                                                 </button>
                                             </>
                                         )}
