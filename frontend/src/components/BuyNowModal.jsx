@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Package, AlertCircle, Gift } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
+import { createPortal } from "react-dom";
 
 const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway }) => {
     const [serviceFee, setServiceFee] = useState(0);
@@ -48,7 +49,7 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
         ? 0
         : Number(auction?.buyNowPrice || 0) + Number(serviceFee);
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
                 <div className="p-6">
@@ -165,7 +166,8 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
 
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

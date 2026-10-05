@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, FileText, CreditCard, Building, Banknote, Globe, AlertCircle, CheckCircle } from 'lucide-react';
+import { createPortal } from "react-dom";
 
 const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => {
     const [formData, setFormData] = useState({
@@ -71,7 +72,7 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 {/* Header */}
@@ -266,7 +267,8 @@ const PaymentStatusModal = ({ isOpen, onClose, auction, onSubmit, loading }) => 
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

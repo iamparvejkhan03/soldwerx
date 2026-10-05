@@ -3,6 +3,7 @@ import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { X, CreditCard, Loader } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import toast from 'react-hot-toast';
+import { createPortal } from "react-dom";
 
 const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentIntentId, onSuccess }) => {
     const stripe = useStripe();
@@ -61,7 +62,7 @@ const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentInten
         );
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
                 <div className="p-6 border-b border-gray-200 flex items-center justify-between">
@@ -109,7 +110,8 @@ const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentInten
                     </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

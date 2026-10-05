@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X, Banknote, MessageSquare, Package, Hand } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
+import { createPortal } from "react-dom";
 
 const MakeOfferModal = ({
     isOpen,
@@ -64,7 +65,7 @@ const MakeOfferModal = ({
     const isInvalidOffer =
         !offerAmount || parseFloat(offerAmount) < auction?.startPrice;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-md">
 
@@ -175,7 +176,8 @@ const MakeOfferModal = ({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

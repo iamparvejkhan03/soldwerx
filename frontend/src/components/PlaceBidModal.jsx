@@ -1,7 +1,7 @@
-// components/PlaceBidModal.jsx
 import { useEffect, useState } from "react";
 import { X, Gavel, Banknote } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
+import { createPortal } from "react-dom";
 
 const PlaceBidModal = ({
     isOpen,
@@ -76,7 +76,7 @@ const PlaceBidModal = ({
         onConfirm?.(amount);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
 
@@ -195,7 +195,8 @@ const PlaceBidModal = ({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

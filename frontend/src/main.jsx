@@ -7,6 +7,8 @@ import { PopUpContextProvider } from './contexts/PopUpContextProvider';
 import { Protected, LoadingSpinner } from './components';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ensureClockStarted } from './utils/serverClock.js';
+import { installTranslationResilience } from 'translation-resilience';
+installTranslationResilience();
 
 const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));

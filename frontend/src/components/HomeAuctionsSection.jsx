@@ -120,7 +120,7 @@ function HomeAuctionsSection() {
     // LOADING SKELETON
     // ============================================================
 
-    if (loading && auctions.length === 0) {
+    if (loading && liveAuctions.length === 0) {
         return (
             <Container className="my-14">
                 <div className="mb-8">
@@ -246,10 +246,10 @@ function HomeAuctionsSection() {
                     AUCTION GRID
                 ================================================== */}
 
-                {auctions.length > 0 ? (
+                {liveAuctions.length > 0 ? (
                     <>
                         <section className="mt-10 grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {auctions.map((auction, index) => (
+                            {liveAuctions.map((auction, index) => (
                                 <div
                                     key={auction._id}
                                     className={`transition-all duration-1000 ease-out ${visible
