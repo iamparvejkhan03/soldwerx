@@ -118,9 +118,23 @@ function SingleAuction() {
             socket.emit("joinAuction", id);
         };
 
-        // Join now, and again on every (re)connect
+        // On (re)connect: rejoin the room, then refetch once to catch up
+        // on any state we missed while the socket was down.
+        const onConnect = async () => {
+            joinRoom();
+            try {
+                const { data } = await axiosInstance.get(`/api/v1/auctions/${id}`);
+                if (data.success) setAuction(data.data.auction);
+            } catch (_) {
+                // silent — the live tick will fill in shortly
+            }
+        };
+
+        // Join immediately (covers the case where socket was already connected)
         joinRoom();
-        socket.on("connect", joinRoom);
+
+        // And again on every (re)connect
+        socket.on("connect", onConnect);
 
         const onUpdate = ({ auction }) => {
             // NOTE: server sends { serverTime, auction }
@@ -133,7 +147,7 @@ function SingleAuction() {
         socket.on("auction:removed", onRemoved);
 
         return () => {
-            socket.off("connect", joinRoom);
+            socket.off("connect", onConnect);
             socket.off("auction:update", onUpdate);
             socket.off("auction:removed", onRemoved);
             socket.emit("leaveAuction", id);
