@@ -8,11 +8,10 @@ export const socket = io(SOCKET_URL, {
     withCredentials: true,
     transports: ["websocket", "polling"],
 
-    // --- Reconnect tuning ---
     reconnection: true,
     reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,       // 1s initial
-    reconnectionDelayMax: 3000,    // cap at 3s instead of 5s default
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 3000,
     randomizationFactor: 0.3,
     timeout: 10000,
 
@@ -20,9 +19,7 @@ export const socket = io(SOCKET_URL, {
 });
 
 // ─────────────────────────────────────────────────────────────
-// Watchdog: force reconnect if no server event for > 45s while
-// the tab is visible. This is what catches the iOS/Android
-// silent death where socket.connected stays true.
+// Watchdog: force reconnect if no server event for > 40s.
 // ─────────────────────────────────────────────────────────────
 
 let lastServerEventAt = Date.now();
@@ -40,12 +37,11 @@ const forceReconnect = (reason) => {
   console.warn(`[socket] force reconnect: ${reason}`);
   try { socket.disconnect(); } catch (_) {}
   try { socket.connect(); } catch (_) {}
-  lastServerEventAt = Date.now(); // reset so we don't loop
+  lastServerEventAt = Date.now();
 };
 
-const watchdog = setInterval(() => {
+const runWatchdogCheck = () => {
   if (!socket.connected) {
-    // already reconnecting — reset baseline
     lastServerEventAt = Date.now();
     return;
   }
@@ -53,36 +49,66 @@ const watchdog = setInterval(() => {
   if (silence > SILENCE_LIMIT_MS) {
     forceReconnect(`silent for ${Math.round(silence / 1000)}s`);
   }
-}, WATCHDOG_INTERVAL_MS);
+};
+
+const watchdog = setInterval(runWatchdogCheck, WATCHDOG_INTERVAL_MS);
 
 // ─────────────────────────────────────────────────────────────
-// On visibility return, don't just poke it — hard-cycle it.
-// (Silent death leaves socket.connected === true, so a plain
-// .connect() is a no-op.)
+// Multi-signal wake detector.
+// rAF double-tick is used instead of setTimeout because setTimeout
+// is throttled on the first beat after a mobile wake.
 // ─────────────────────────────────────────────────────────────
+
+const onWake = (reason) => {
+  if (typeof document !== "undefined" && document.hidden) return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      forceReconnect(reason);
+      syncWithServer();
+      // Also run watchdog immediately — no need to wait up to 8s.
+      runWatchdogCheck();
+    });
+  });
+};
+
 if (typeof document !== "undefined") {
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      setTimeout(() => {
-        forceReconnect("visibilitychange");
-        syncWithServer();
-      }, 200);
-    }
+    if (!document.hidden) onWake("visibilitychange");
   });
+
+  // Any user interaction on a stale socket = instant recovery.
+  document.addEventListener(
+    "touchstart",
+    () => {
+      if (Date.now() - lastServerEventAt > 30_000) {
+        onWake("touchstart");
+      }
+    },
+    { passive: true }
+  );
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("focus", () => onWake("focus"));
+  window.addEventListener("pageshow", (e) => {
+    // persisted === true means restored from bfcache
+    if (e.persisted) onWake("pageshow");
+  });
+  window.addEventListener("online", () => onWake("online"));
 }
 
 // ─────────────────────────────────────────────────────────────
 // Existing hooks
 // ─────────────────────────────────────────────────────────────
 socket.on("connect", () => {
-    lastServerEventAt = Date.now(); // reset watchdog on fresh connect
-    ensureClockStarted();
-    syncWithServer();
+  lastServerEventAt = Date.now();
+  ensureClockStarted();
+  syncWithServer();
 });
 
 socket.on("disconnect", (reason) => {
-    // Only log — reconnection is automatic
-    console.info("[socket] disconnected:", reason);
+  console.info("[socket] disconnected:", reason);
 });
 
 const isMobile =
@@ -96,7 +122,6 @@ if (isMobile) {
   }, 4 * 60 * 1000);
 }
 
-// Cleanup for HMR in dev
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     clearInterval(watchdog);
