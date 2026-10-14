@@ -123,7 +123,8 @@ const Register = () => {
                 if (setupIntent.status !== 'succeeded') {
                     throw new Error(`Card verification status: ${setupIntent.status}`);
                 }
-                await finishRegistration(registrationToken, setupIntent.id);
+                const ok = await finishRegistration(registrationToken, setupIntent.id);
+                if (!ok) setIsCompleting(false);
             } catch (err) {
                 toast.error(err.message || 'Failed to complete registration');
                 setIsCompleting(false);
@@ -139,46 +140,62 @@ const Register = () => {
 
     // ---- Finalize: exchange registrationToken for real auth tokens ----
     const finishRegistration = async (registrationToken, setupIntentId) => {
-        const res = await axios.post(
-            `${import.meta.env.VITE_DOMAIN_URL}/api/v1/users/complete-registration`,
-            { registrationToken, setupIntentId },
-            { withCredentials: true }
-        );
+        const toastId = toast.loading('Completing your registration…');
 
-        const data = res.data;
-        sessionStorage.removeItem('registrationToken');
+        try {
+            const res = await axios.post(
+                `${import.meta.env.VITE_DOMAIN_URL}/api/v1/users/complete-registration`,
+                { registrationToken, setupIntentId },
+                { withCredentials: true }
+            );
 
-        const { accessToken, refreshToken, user: userData } = data.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+            const data = res.data;
+            sessionStorage.removeItem('registrationToken');
 
-        toast.success(data.message || 'Registration successful');
+            const { accessToken, refreshToken, user: userData } = data.data;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
 
-        const path =
-            userData.userType === 'seller'
-                ? '/seller/dashboard'
-                : '/bidder/dashboard';
-        navigate(path);
+            toast.success(data.message || 'Registration successful!', { id: toastId });
+
+            const path =
+                userData.userType === 'seller'
+                    ? '/seller/dashboard'
+                    : '/bidder/dashboard';
+            navigate(path);
+            return true;
+        } catch (err) {
+            toast.error(
+                err?.response?.data?.message || 'Failed to complete registration',
+                { id: toastId }
+            );
+            return false;
+        }
     };
 
     // ---- Submit ----
     const onSubmit = async (data) => {
         setIsLoading(true);
+
+        const toastId = toast.loading(
+            'Registering your account… this may take a few seconds.'
+        );
+
         try {
             let paymentMethodId = null;
 
             // Bidder: create payment method client-side
             if (data.userType === 'bidder') {
                 if (!stripe || !elements) {
-                    toast.error('Payment form not ready. Please wait a moment.');
+                    toast.error('Payment form not ready. Please wait a moment.', { id: toastId });
                     setIsLoading(false);
                     return;
                 }
                 const cardElement = elements.getElement(CardElement);
                 if (!cardElement) {
-                    toast.error('Card element not found');
+                    toast.error('Card element not found', { id: toastId });
                     setIsLoading(false);
                     return;
                 }
@@ -193,7 +210,7 @@ const Register = () => {
                 });
 
                 if (error) {
-                    toast.error(error.message);
+                    toast.error(error.message, { id: toastId });
                     setIsLoading(false);
                     return;
                 }
@@ -243,7 +260,7 @@ const Register = () => {
                     });
 
                 if (confirmError) {
-                    toast.error(confirmError.message);
+                    toast.error(confirmError.message, { id: toastId });
                     setIsLoading(false);
                     return;
                 }
@@ -253,6 +270,7 @@ const Register = () => {
                     setupIntent?.status === 'requires_action' &&
                     setupIntent?.next_action?.redirect_to_url?.url
                 ) {
+                    toast.dismiss(toastId);
                     window.location.href =
                         setupIntent.next_action.redirect_to_url.url;
                     return; // browser navigates away
@@ -260,11 +278,13 @@ const Register = () => {
 
                 // No redirect, already succeeded
                 if (setupIntent?.status === 'succeeded') {
-                    await finishRegistration(resData.registrationToken, setupIntent.id);
+                    toast.dismiss(toastId);
+                    const ok = await finishRegistration(resData.registrationToken, setupIntent.id);
+                    if (!ok) setIsLoading(false);
                     return;
                 }
 
-                toast.error('Card verification failed. Please try again.');
+                toast.error('Card verification failed. Please try again.', { id: toastId });
                 setIsLoading(false);
                 return;
             }
@@ -280,10 +300,15 @@ const Register = () => {
                 userData.userType === 'seller'
                     ? '/seller/dashboard'
                     : '/bidder/dashboard';
+
+            toast.success(resData.message || 'Registration successful!', { id: toastId });
+
             navigate(path);
-            toast.success(resData.message);
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Registration failed');
+            toast.error(
+                error?.response?.data?.message || 'Registration failed',
+                { id: toastId }
+            );
             console.error('Registration error:', error);
             setIsLoading(false);
         }
@@ -573,8 +598,8 @@ const Register = () => {
                                 <div className="grid sm:grid-cols-2 gap-3">
                                     <label
                                         className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer ${userType === 'bidder'
-                                                ? 'border-[#F5B51B] bg-[#F5B51B]/5'
-                                                : 'border-gray-200'
+                                            ? 'border-[#F5B51B] bg-[#F5B51B]/5'
+                                            : 'border-gray-200'
                                             }`}
                                     >
                                         <input
@@ -587,8 +612,8 @@ const Register = () => {
                                         <Gavel
                                             size={40}
                                             className={`p-2 rounded ${userType === 'bidder'
-                                                    ? 'bg-[#F5B51B] text-black'
-                                                    : 'bg-gray-200 text-gray-600'
+                                                ? 'bg-[#F5B51B] text-black'
+                                                : 'bg-gray-200 text-gray-600'
                                                 }`}
                                         />
                                         <div>
@@ -601,8 +626,8 @@ const Register = () => {
 
                                     <label
                                         className={`flex items-center gap-5 border py-3 px-5 rounded cursor-pointer ${userType === 'seller'
-                                                ? 'border-[#F5B51B] bg-[#F5B51B]/5'
-                                                : 'border-gray-200'
+                                            ? 'border-[#F5B51B] bg-[#F5B51B]/5'
+                                            : 'border-gray-200'
                                             }`}
                                     >
                                         <input
@@ -615,8 +640,8 @@ const Register = () => {
                                         <Store
                                             size={40}
                                             className={`p-2 rounded ${userType === 'seller'
-                                                    ? 'bg-[#F5B51B] text-black'
-                                                    : 'bg-gray-200 text-gray-600'
+                                                ? 'bg-[#F5B51B] text-black'
+                                                : 'bg-gray-200 text-gray-600'
                                                 }`}
                                         />
                                         <div>

@@ -24,6 +24,7 @@ export const generateInvoicePDF = async (invoiceData) => {
         hammerPrice = 0,
         buyerPremium = 0,
         taxAmount = 0,
+        depositCredit = 0,
         total = 0,
         paymentStatus = "pending",
         paymentMethod = "N/A",
@@ -36,6 +37,7 @@ export const generateInvoicePDF = async (invoiceData) => {
     const safeHammerPrice = Number(hammerPrice) || 0;
     const safeBuyerPremium = Number(buyerPremium) || 0;
     const safeTaxAmount = Number(taxAmount) || 0;
+    const safeDepositCredit = Number(depositCredit) || 0;
     const safeTotal = Number(total) || 0;
 
     const formattedDate = date
@@ -185,11 +187,21 @@ export const generateInvoicePDF = async (invoiceData) => {
                             ]
                             : []),
 
+                        ...(safeDepositCredit > 0
+                            ? [
+                                [
+                                    { text: "Less: 5% Winning Deposit (already charged)", color: "#22c55e" },
+                                    {
+                                        text: `-$${safeDepositCredit.toFixed(2)}`,
+                                        alignment: "right",
+                                        color: "#22c55e",
+                                    },
+                                ],
+                            ]
+                            : []),
+
                         [
-                            {
-                                text: "Total",
-                                style: "totalLabel",
-                            },
+                            { text: "Total Amount", style: "totalLabel" },
                             {
                                 text: `$${safeTotal.toFixed(2)}`,
                                 style: "totalAmount",

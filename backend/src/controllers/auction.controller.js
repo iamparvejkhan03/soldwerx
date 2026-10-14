@@ -1983,6 +1983,10 @@ export const getWonAuctions = async (req, res) => {
         ? auction.offers.filter((o) => o.status === "pending").length
         : 0,
 
+      // Deposit status and amount
+      depositStatus: auction.depositStatus || 'none',
+      depositAmount: auction.depositAmount || 0,
+
       // Payment & Invoice Info
       paymentStatus: auction.paymentStatus || "pending",
       paymentMethod: auction.paymentMethod,

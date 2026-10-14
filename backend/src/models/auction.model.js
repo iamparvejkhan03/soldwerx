@@ -391,7 +391,29 @@ const auctionSchema = new Schema(
       offerReceived: { type: Boolean, default: false }, // NEW: Offer notifications
       offerExpiring: { type: Boolean, default: false },
     },
-    // In your auction.model.js schema
+
+    // 5% winning deposit (off-session charge)
+    depositAmount: {
+      type: Number,
+      default: 0,
+    },
+    depositPaymentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Deposit",
+    },
+    depositStatus: {
+      type: String,
+      enum: ["none", "charged", "credited", "failed", "refunded"],
+      default: "none",
+    },
+    depositChargedAt: {
+      type: Date,
+    },
+    depositFailureReason: {
+      type: String,
+      trim: true,
+    },
+
     paymentStatus: {
       type: String,
       enum: [

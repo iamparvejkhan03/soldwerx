@@ -7,6 +7,7 @@ import {
   chargeWinningBidder,
   chargeWinningBidderDirect,
 } from "../controllers/bidPayment.controller.js";
+import { chargeWinnerDeposit } from "../controllers/deposit.controller.js";
 import {
   auctionEndedAdminEmail,
   auctionEndingSoonEmail,
@@ -18,6 +19,10 @@ import {
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
   sendBulkAuctionNotifications,
+  depositChargedWinnerEmail,
+  depositFailedWinnerEmail,
+  depositFailedAdminEmail,
+  depositChargedAdminEmail,
 } from "../utils/nodemailer.js";
 import User from "../models/user.model.js";
 import { processProxyBids } from "./proxyBidService.js";
@@ -153,7 +158,7 @@ class AgendaService {
             );
 
             // Send auction won email to buyer
-            await sendAuctionWonEmail(auction);
+            // await sendAuctionWonEmail(auction);
 
             // Send admin email for sold auction
             const adminUsers = await User.find({ userType: "admin" });
@@ -322,11 +327,67 @@ class AgendaService {
 
     this.agenda.define("generate invoice and email", async (job) => {
       const { auctionId } = job.attrs.data;
-      const auction = await Auction.findById(auctionId)
-        .populate('seller')
-        .populate('winner');
-      await generateAndAttachInvoice(auctionId);
-      await sendAuctionWonEmail(auction);
+
+      try {
+        // ---- 1. Charge the 5% winning deposit BEFORE the invoice ----
+        const depositResult = await chargeWinnerDeposit(auctionId);
+        console.log(
+          `🎯 Deposit job for auction ${auctionId}: ${depositResult.status}` +
+          (depositResult.amount ? ` ($${depositResult.amount})` : "")
+        );
+
+        // ---- 2. Reload auction (deposit fields now populated) ----
+        let auction = await Auction.findById(auctionId)
+          .populate("seller")
+          .populate("winner");
+
+        // ---- 3. Generate the invoice PDF (includes deposit credit if charged) ----
+        await generateAndAttachInvoice(auctionId);
+
+        // ---- 4. Reload again to pick up invoice URL ----
+        auction = await Auction.findById(auctionId)
+          .populate("seller")
+          .populate("winner");
+
+        // ---- 5. Send the winner their "You Won" email (invoice attached) ----
+        await sendAuctionWonEmail(auction);
+
+        // ---- 6. Deposit-specific notifications ----
+        if (depositResult.status === "charged") {
+          await depositChargedWinnerEmail(
+            auction.winner,
+            auction,
+            depositResult.amount
+          );
+
+          const adminUsers = await User.find({ userType: "admin" });
+          for (const admin of adminUsers) {
+            await depositChargedAdminEmail(
+              admin.email,
+              auction,
+              depositResult.amount
+            );
+          }
+        } else if (depositResult.status === "failed") {
+          // Notify winner
+          await depositFailedWinnerEmail(
+            auction.winner,
+            auction,
+            depositResult.reason
+          );
+          // Notify all admins
+          const adminUsers = await User.find({ userType: "admin" });
+          for (const admin of adminUsers) {
+            await depositFailedAdminEmail(
+              admin.email,
+              auction,
+              depositResult.reason
+            );
+          }
+        }
+      } catch (error) {
+        console.error("generate invoice and email job error:", error);
+      }
     });
 
     // In defineJobs()

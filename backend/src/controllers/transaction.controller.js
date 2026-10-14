@@ -4,6 +4,7 @@ import Commission from '../models/commission.model.js';
 import Auction from '../models/auction.model.js';
 import User from '../models/user.model.js';
 import mongoose from 'mongoose';
+import Deposit from '../models/deposit.model.js';
 
 // export const getAdminTransactions = async (req, res) => {
 //     try {
@@ -471,7 +472,7 @@ export const getAdminTransactions = async (req, res) => {
 
         // Fetch both in parallel (search/status/type are applied in JS after populate,
         // because they touch populated fields)
-        const [bidPayments, bankPayments] = await Promise.all([
+        const [bidPayments, bankPayments, depositPayments] = await Promise.all([
             BidPayment.find(bidFilter)
                 .populate('auction', 'title category startPrice currentPrice buyerFeeAmount sellerFeeAmount taxAmount status winner startDate endDate')
                 .populate('bidder', 'username firstName lastName email company stripeCustomerId')
@@ -481,7 +482,12 @@ export const getAdminTransactions = async (req, res) => {
                 .populate('auction', 'title category startPrice currentPrice buyerFeeAmount sellerFeeAmount taxAmount status winner startDate endDate')
                 .populate('bidder', 'username firstName lastName email company stripeCustomerId')
                 .sort({ createdAt: -1 })
-                .lean()
+                .lean(),
+            Deposit.find(bankFilter)
+                .populate('auction', 'title category startPrice currentPrice buyerFeeAmount sellerFeeAmount taxAmount status winner startDate endDate')
+                .populate('bidder', 'username firstName lastName email company stripeCustomerId')
+                .sort({ createdAt: -1 })
+                .lean(),
         ]);
 
         // Normalize Stripe (BidPayment)
@@ -536,7 +542,30 @@ export const getAdminTransactions = async (req, res) => {
             };
         });
 
-        let merged = [...normalizedBid, ...normalizedBank];
+        const normalizedDeposits = depositPayments
+        .filter((d) => d.status === 'succeeded')
+        .map((d) => ({
+            id: d._id.toString(),
+            transactionId: `DEP${d._id.toString().slice(-8).toUpperCase()}`,
+            paymentIntentId: d.paymentIntentId || null,
+            source: 'deposit',
+            type: 'bid_deposit',
+            status: d.status,             // already: created | succeeded | processing_failed | canceled | refunded
+            amount: d.amount || 0,
+            commissionAmount: 0,
+            taxAmount: 0,
+            buyerFeeAmount: 0,
+            sellerFeeAmount: 0,
+            bidAmount: 0,
+            createdAt: d.createdAt,
+            updatedAt: d.updatedAt,
+            auction: buildAuction(d.auction, d.createdAt),
+            bidder: buildBidder(d.bidder),
+            chargeAttempted: !!d.chargeAttempted,
+            chargeSucceeded: !!d.chargeSucceeded,
+        }));
+
+        let merged = [...normalizedBid, ...normalizedBank, ...normalizedDeposits];
 
         // Hide pending transactions (Stripe 'created' + bank 'pending' both normalize to 'created')
         const VISIBLE_STATUSES = ['succeeded', 'requires_capture', 'canceled', 'processing_failed', 'refunded'];
@@ -635,6 +664,7 @@ export const getAdminTransactions = async (req, res) => {
                 { value: 'winner_payment', label: 'Winner Payments' },
                 { value: 'bank_transfer_payment', label: 'Bank Transfers' },
                 { value: 'cash_payment', label: 'Cash Payments' },
+                { value: 'bid_deposit', label: 'Winning Deposits' },
             ],
             dateRanges: [
                 { value: 'all', label: 'All Time' },
@@ -699,12 +729,32 @@ export const getTransactionStats = async (req, res) => {
             }
         ]);
 
-        const combinedRevenue = (bidOverall?.totalRevenue || 0) + (bankOverall?.totalRevenue || 0);
-        const combinedCount = (bidOverall?.totalTransactions || 0) + (bankOverall?.totalTransactions || 0);
+        const [depositOverall] = await Deposit.aggregate([
+            { $match: { status: 'succeeded' } },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$amount' },
+                    totalTransactions: { $sum: 1 },
+                    averageTransaction: { $avg: '$amount' },
+                },
+            },
+        ]);
+
+        const combinedRevenue =
+            (bidOverall?.totalRevenue || 0) +
+            (bankOverall?.totalRevenue || 0) +
+            (depositOverall?.totalRevenue || 0);
+
+        const combinedCount =
+            (bidOverall?.totalTransactions || 0) +
+            (bankOverall?.totalTransactions || 0) +
+            (depositOverall?.totalTransactions || 0);
+
         const combinedAvg = combinedCount > 0 ? combinedRevenue / combinedCount : 0;
 
         // Recent activity (last 7 days) — merged
-        const [bidRecent, bankRecent] = await Promise.all([
+        const [bidRecent, bankRecent, depositRecent] = await Promise.all([
             BidPayment.aggregate([
                 { $match: { createdAt: { $gte: lastWeek }, status: 'succeeded' } },
                 {
@@ -724,11 +774,21 @@ export const getTransactionStats = async (req, res) => {
                         transactionCount: { $sum: 1 }
                     }
                 }
+            ]),
+            Deposit.aggregate([
+                { $match: { createdAt: { $gte: lastWeek }, status: 'succeeded' } },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                        dailyRevenue: { $sum: '$amount' },
+                        transactionCount: { $sum: 1 },
+                    },
+                },
             ])
         ]);
 
         const recentMap = {};
-        [...bidRecent, ...bankRecent].forEach((d) => {
+        [...bidRecent, ...bankRecent, ...depositRecent].forEach((d) => {
             if (!recentMap[d._id]) recentMap[d._id] = { dailyRevenue: 0, transactionCount: 0 };
             recentMap[d._id].dailyRevenue += d.dailyRevenue;
             recentMap[d._id].transactionCount += d.transactionCount;
@@ -738,19 +798,22 @@ export const getTransactionStats = async (req, res) => {
             .sort((a, b) => a._id.localeCompare(b._id));
 
         // Status distribution (raw, per collection)
-        const [bidStatusDist, bankStatusDist] = await Promise.all([
+        const [bidStatusDist, bankStatusDist, depositStatusDist] = await Promise.all([
             BidPayment.aggregate([
                 { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$totalAmount' } } }
             ]),
             Payment.aggregate([
                 { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$totalAmount' } } }
+            ]),
+            Deposit.aggregate([
+                { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } },
             ])
         ]);
 
-        const statusDistribution = [...bidStatusDist, ...bankStatusDist];
+        const statusDistribution = [...bidStatusDist, ...bankStatusDist, ...depositStatusDist];
 
         // Top bidders (merged) — matches by bidder id
-        const [bidTop, bankTop] = await Promise.all([
+        const [bidTop, bankTop, depositTop] = await Promise.all([
             BidPayment.aggregate([
                 { $match: { status: 'succeeded' } },
                 {
@@ -770,11 +833,21 @@ export const getTransactionStats = async (req, res) => {
                         transactionCount: { $sum: 1 }
                     }
                 }
+            ]),
+            Deposit.aggregate([
+                { $match: { status: 'succeeded' } },
+                {
+                    $group: {
+                        _id: '$bidder',
+                        totalSpent: { $sum: '$amount' },
+                        transactionCount: { $sum: 1 },
+                    },
+                },
             ])
         ]);
 
         const bidderMap = {};
-        [...bidTop, ...bankTop].forEach((b) => {
+        [...bidTop, ...bankTop, ...depositTop].forEach((b) => {
             const key = b._id.toString();
             if (!bidderMap[key]) bidderMap[key] = { totalSpent: 0, transactionCount: 0 };
             bidderMap[key].totalSpent += b.totalSpent;

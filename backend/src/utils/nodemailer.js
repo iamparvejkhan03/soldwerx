@@ -270,7 +270,7 @@ const baseTemplate = (content, title = BRAND_NAME) => `
 // build invoice table with pdf make
 const buildInvoiceTable = (invoiceData) => {
     const rows = [
-        ['Description', 'Amount'],
+        ["Description", "Amount"],
         [`Hammer Price: `, `$${invoiceData.hammerPrice.toFixed(2)}`],
     ];
     if (invoiceData.buyerPremium > 0) {
@@ -279,20 +279,32 @@ const buildInvoiceTable = (invoiceData) => {
     if (invoiceData.taxAmount > 0) {
         rows.push([`Tax: `, `$${invoiceData.taxAmount.toFixed(2)}`]);
     }
-    rows.push(['Total', `$${invoiceData.total.toFixed(2)}`]);
-    rows.push(['Payment Status', invoiceData.paymentStatus.toUpperCase()]);
-    if (invoiceData.paymentMethod && invoiceData.paymentMethod !== 'N/A') {
-        rows.push(['Payment Method', invoiceData.paymentMethod.replace('_', ' ').toUpperCase()]);
+    // 👇 NEW: deposit credit
+    if (invoiceData.depositCredit > 0) {
+        rows.push([
+            `Less: 5% Deposit Credit: `,
+            `-$${invoiceData.depositCredit.toFixed(2)}`,
+        ]);
+    }
+    rows.push(["Total Amount Due", `$${invoiceData.total.toFixed(2)}`]);
+    rows.push(["Payment Status", invoiceData.paymentStatus.toUpperCase()]);
+    if (invoiceData.paymentMethod && invoiceData.paymentMethod !== "N/A") {
+        rows.push([
+            "Payment Method",
+            invoiceData.paymentMethod.replace("_", " ").toUpperCase(),
+        ]);
     }
 
     let html = `<table style="width:100%; border-collapse: collapse; margin: 20px 0; font-family: sans-serif;">`;
     rows.forEach((row, index) => {
         const isHeader = index === 0;
-        const color = isHeader ? '#EDEDED' : (index % 2 === 0 ? '#f9f9f9' : '#ffffff');
+        const color = isHeader ? "#EDEDED" : index % 2 === 0 ? "#f9f9f9" : "#ffffff";
         html += `<tr style="background-color: ${color};">`;
         row.forEach((cell, cellIndex) => {
-            const style = isHeader ? 'font-weight: bold; border-bottom: 2px solid #ccc;' : 'border-bottom: 1px solid #eee;';
-            const align = cellIndex === 1 ? 'text-align: right;' : 'text-align: left;';
+            const style = isHeader
+                ? "font-weight: bold; border-bottom: 2px solid #ccc;"
+                : "border-bottom: 1px solid #eee;";
+            const align = cellIndex === 1 ? "text-align: right;" : "text-align: left;";
             html += `<td style="padding: 8px 12px; ${style} ${align}">${cell}</td>`;
         });
         html += `</tr>`;
@@ -1204,14 +1216,25 @@ const sendAuctionWonEmail = async (listing) => {
         }
         const finalPrice = listing?.finalPrice || listing?.currentPrice || 0;
 
+        const depositCredit =
+            listing.depositStatus === "charged" && listing.depositAmount > 0
+                ? listing.depositAmount
+                : 0;
+
         const invoiceData = {
             hammerPrice: finalPrice,
             buyerPremium: listing.buyerFeeAmount || 0,
             taxAmount: listing.taxAmount || 0,
-            total: finalPrice + (listing.buyerFeeAmount || 0) + (listing.taxAmount || 0),
-            paymentStatus: listing.paymentStatus || 'pending',
-            paymentMethod: listing.paymentMethod || 'N/A',
+            depositCredit,
+            total:
+                finalPrice +
+                (listing.buyerFeeAmount || 0) +
+                (listing.taxAmount || 0) -
+                depositCredit,
+            paymentStatus: listing.paymentStatus || "pending",
+            paymentMethod: listing.paymentMethod || "N/A",
         };
+
         const invoiceTableHTML = buildInvoiceTable(invoiceData);
 
         const content = `
@@ -2593,6 +2616,239 @@ const sendProxyBidOutbidEmail = async (userEmail, username, auction, newBidAmoun
     }
 };
 
+// ============================================
+// 5% WINNING DEPOSIT EMAILS
+// ============================================
+
+// Deposit charged successfully → winner
+const depositChargedWinnerEmail = async (winner, auction, depositAmount) => {
+    try {
+        const content = `
+      <h2 style="text-align: center;">✅ Winning Deposit Received</h2>
+      <p style="text-align: center;">Hello ${winner.firstName || winner.username},</p>
+
+      <p>Congratulations on winning <strong>${auction.title}</strong>! As outlined during registration, we have charged your saved card a <strong>5% winning deposit</strong> (capped at $5,000) off-session.</p>
+
+      ${createInfoCard(`
+        <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${auction.title}</p>
+        ${createSummaryRow("Winning Bid:", formatCurrency(auction.finalPrice || auction.currentPrice))}
+        ${createSummaryRow("Deposit Charged (5%):", `<strong style="color: #16a34a;">${formatCurrency(depositAmount)}</strong>`)}
+        ${createSummaryRow("Credited Toward:", "Your final balance")}
+      `)}
+
+      <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.success};">
+        <p style="margin: 0; color: #166534;">
+          💡 This deposit will be <strong>deducted from your final amount due</strong> when you complete payment.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 25px 0;">
+        ${createButton('View Your Won Auctions', `${FRONTEND_URL}/bidder/auctions/won`, 'primary')}
+      </div>
+    `;
+        const html = baseTemplate(content, "Winning Deposit Received");
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: winner.email,
+            subject: `Winning Deposit Received - ${auction.title}`,
+            html,
+        });
+        console.log(`✅ Deposit charged email sent to ${winner.email}`);
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send deposit charged email:", error);
+        return false;
+    }
+};
+
+// Deposit charge failed → winner
+const depositFailedWinnerEmail = async (winner, auction, reason) => {
+    try {
+        const content = `
+      <h2 style="text-align: center;">⚠️ Action Required: Deposit Payment Failed</h2>
+      <p style="text-align: center;">Hello ${winner.firstName || winner.username},</p>
+
+      <p>Congratulations on winning <strong>${auction.title}</strong>. However, we were <strong>unable to charge your saved card</strong> for the 5% winning deposit.</p>
+
+      ${createInfoCard(`
+        <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${auction.title}</p>
+        ${createSummaryRow("Winning Bid:", formatCurrency(auction.finalPrice || auction.currentPrice))}
+        ${createSummaryRow("Deposit Attempted:", formatCurrency(auction.depositAmount || 0))}
+        ${createSummaryRow("Reason:", reason || "Card was declined")}
+      `)}
+
+      <div style="background: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.warning};">
+        <p style="margin: 0; color: #92400e;">
+          <strong>Your auction win is still valid.</strong> You can complete the full payment (no deposit credit will be applied) through your won auctions page and update your payment method.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 25px 0;">
+        ${createButton('View Won Auctions', `${FRONTEND_URL}/bidder/auctions/won`, 'primary')}
+      </div>
+      <div style="text-align: center; margin: 10px 0;">
+        ${createButton('Update Payment Method', `${FRONTEND_URL}/bidder/billing`, 'outline')}
+      </div>
+    `;
+        const html = baseTemplate(content, "Deposit Payment Failed");
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: winner.email,
+            subject: `⚠️ Deposit Payment Failed - ${auction.title}`,
+            html,
+        });
+        console.log(`✅ Deposit failed email sent to ${winner.email}`);
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send deposit failed winner email:", error);
+        return false;
+    }
+};
+
+// Deposit charge failed → admin
+const depositFailedAdminEmail = async (adminEmail, auction, reason) => {
+    try {
+        const content = `
+      <h2 style="text-align: center;">⚠️ Winning Deposit Charge Failed</h2>
+      <p style="text-align: center;">The 5% off-session deposit charge failed for a winning bidder.</p>
+
+      ${createInfoCard(`
+        <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${auction.title}</p>
+        ${createSummaryRow("Winning Bid:", formatCurrency(auction.finalPrice || auction.currentPrice))}
+        ${createSummaryRow("Deposit Attempted:", formatCurrency(auction.depositAmount || 0))}
+        ${createSummaryRow("Reason:", reason || "Card was declined")}
+        ${createSummaryRow("Buyer:", auction.winner?.email || "N/A")}
+        ${createSummaryRow("Auction ID:", auction._id?.toString() || "N/A")}
+      `)}
+
+      <div style="background: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.warning};">
+        <p style="margin: 0; color: #92400e;">
+          The sale is proceeding normally. The winner has been notified and can pay the full amount (without the deposit credit) at their convenience.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 25px 0;">
+        ${createButton('View Transaction', `${ADMIN_URL}/transactions`, 'primary')}
+      </div>
+    `;
+        const html = baseTemplate(content, "Winning Deposit Charge Failed");
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `⚠️ Winning Deposit Failed - ${auction.title}`,
+            html,
+        });
+        console.log(`✅ Deposit failed admin email sent to ${adminEmail}`);
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send deposit failed admin email:", error);
+        return false;
+    }
+};
+
+// Deposit charged successfully → admin
+const depositChargedAdminEmail = async (adminEmail, auction, depositAmount) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">✅ Winning Deposit Charged</h2>
+            <p style="text-align: center;">The 5% off-session deposit was successfully charged to the winner's saved card.</p>
+
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${auction.title}</p>
+                ${createSummaryRow("Winning Bid:", formatCurrency(auction.finalPrice || auction.currentPrice))}
+                ${createSummaryRow("Deposit Charged (5%):", `<strong style="color: #16a34a;">${formatCurrency(depositAmount)}</strong>`)}
+                ${createSummaryRow("Buyer:", auction.winner?.email || "N/A")}
+                ${createSummaryRow("Auction ID:", auction._id?.toString() || "N/A")}
+            `)}
+
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.success};">
+                <p style="margin: 0; color: #166534;">This amount will be credited against the winner's final balance on the invoice.</p>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View Transaction', `${ADMIN_URL}/transactions`, 'primary')}
+            </div>
+        `;
+        const html = baseTemplate(content, "Winning Deposit Charged");
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `✅ Winning Deposit Charged - ${auction.title}`,
+            html,
+        });
+        console.log(`✅ Deposit charged admin email sent to ${adminEmail}`);
+        return !!info;
+    } catch (error) {
+        console.error("Failed to send deposit charged admin email:", error);
+        return false;
+    }
+};
+
+// ============================================
+// CARD PAYMENT COMPLETED → ADMIN
+// ============================================
+
+const cardPaymentCompletedAdminEmail = async (adminEmail, payment, buyer, auction) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">💳 Card Payment Completed</h2>
+            <p style="text-align: center;">A winning bidder has successfully paid via card.</p>
+
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${auction?.title}</p>
+                ${auction.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${auction.subTitle}</p>` : ''}
+
+                <div style="margin: 16px 0 0 0;">
+                    ${createSummaryRow('Total Amount Paid:', formatCurrency(payment.totalAmount))}
+                    ${createSummaryRow('Bid Amount:', formatCurrency(payment.bidAmount))}
+                    ${createSummaryRow("Buyer's Premium:", formatCurrency(payment.commissionAmount))}
+                    ${payment.taxAmount ? createSummaryRow('Tax:', formatCurrency(payment.taxAmount)) : ''}
+                    ${auction?.depositAmount > 0 ? createSummaryRow('Deposit Credited:', formatCurrency(payment?.depositAmount) || 0) : ''}
+                    ${createSummaryRow('Payment Method:', 'Credit Card')}
+                    ${payment.paymentIntentId ? createSummaryRow('Payment Intent:', `<code style="background: ${BRAND_COLORS.grayBg}; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${payment.paymentIntentId}</code>`) : ''}
+                </div>
+
+                ${auction.specifications && auction.specifications.size > 0 ? `
+                    <div style="margin: 16px 0 0 0;">
+                        <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
+                        ${renderSpecifications(auction.specifications)}
+                    </div>
+                ` : ''}
+            `)}
+
+            <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                <p style="margin: 0 0 12px 0;"><strong>Buyer Information</strong></p>
+                ${createSummaryRow('Name:', buyer?.firstName || buyer?.companyName || buyer?.username)}
+                ${createSummaryRow('Username:', buyer?.username || buyer?.companyName)}
+                ${createSummaryRow('Email:', buyer?.email)}
+                ${createSummaryRow('Phone:', buyer?.phone || 'Not provided')}
+            </div>
+
+            <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid ${BRAND_COLORS.success};">
+                <p style="margin: 0; color: #166534;"><strong>✅ Payment captured successfully.</strong></p>
+                <p style="margin: 8px 0 0 0; color: #166534;">No further action needed — the funds are in your Stripe account.</p>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View Transaction', `${ADMIN_URL}/transactions`, 'primary')}
+            </div>
+        `;
+
+        const html = baseTemplate(content, 'Card Payment Completed');
+        const info = await transporter.sendMail({
+            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `💳 Card Payment Completed - ${auction?.title}`,
+            html,
+        });
+        console.log(`✅ Card payment completed admin email sent to ${adminEmail}`);
+        return !!info;
+    } catch (error) {
+        console.error('❌ Failed to send card payment completed admin email:', error);
+        return false;
+    }
+};
+
 // Export all
 export {
     contactEmail,
@@ -2642,4 +2898,9 @@ export {
     sellAdminEmail,
     sendProxyBidPlacedEmail,
     sendProxyBidOutbidEmail,
+    depositChargedWinnerEmail,
+    depositFailedWinnerEmail,
+    depositFailedAdminEmail,
+    depositChargedAdminEmail,
+    cardPaymentCompletedAdminEmail,
 };

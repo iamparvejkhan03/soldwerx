@@ -293,7 +293,7 @@ function Transactions() {
                 <AdminHeader />
                 <AdminContainer>
                     <div className="max-w-full pt-16 pb-7 md:pt-0">
-                        <h2 className="text-3xl md:text-4xl font-bold my-5 text-gray-800">Transactions</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold my-5 text-gray-800">Buyer Payments</h2>
                         {/* <p className="text-gray-600">Monitor all payment transactions and revenue.</p> */}
                     </div>
 
@@ -489,10 +489,6 @@ function Transactions() {
                                                         <div className="text-sm text-gray-600">Email</div>
                                                         <div className="font-medium">{selectedTransaction.bidder.email}</div>
                                                     </div>
-                                                    <div>
-                                                        <div className="text-sm text-gray-600">Company</div>
-                                                        <div className="font-medium">{selectedTransaction.bidder.company}</div>
-                                                    </div>
                                                 </div>
                                             </div>
 
@@ -505,16 +501,16 @@ function Transactions() {
                                                         <div className="font-medium line-clamp-2">{selectedTransaction.auction.title}</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm text-gray-600">Category</div>
-                                                        <div className="font-medium">{selectedTransaction.auction.category}</div>
-                                                    </div>
-                                                    <div>
                                                         <div className="text-sm text-gray-600">Status</div>
                                                         <div className="font-medium capitalize">{selectedTransaction.auction.status}</div>
                                                     </div>
-                                                    <div>
+                                                    {selectedTransaction?.bidAmount > 0 && <div>
                                                         <div className="text-sm text-gray-600">Bid Amount</div>
                                                         <div className="font-medium">{formatCurrency(selectedTransaction.bidAmount)}</div>
+                                                    </div>}
+                                                    <div>
+                                                        <div className="text-sm text-gray-600">Payment Type</div>
+                                                        <div className="font-medium capitalize">{selectedTransaction?.source}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -524,14 +520,14 @@ function Transactions() {
                                         <div className="mt-6 bg-blue-50 rounded-lg p-4">
                                             <h3 className="font-semibold text-gray-900 mb-3">Payment Details</h3>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                <div>
+                                                {selectedTransaction?.commissionAmount > 0 && <div>
                                                     <div className="text-sm text-gray-600">Buyer's Premium</div>
                                                     <div className="font-medium">{formatCurrency(selectedTransaction.commissionAmount)}</div>
-                                                </div>
-                                                <div>
+                                                </div>}
+                                                {selectedTransaction?.taxAmount > 0 &&<div>
                                                     <div className="text-sm text-gray-600">Tax</div>
                                                     <div className="font-medium">{formatCurrency(selectedTransaction.taxAmount)}</div>
-                                                </div>
+                                                </div>}
                                                 <div>
                                                     <div className="text-sm text-gray-600">Total Amount</div>
                                                     <div className="font-medium text-green-600">{formatCurrency(selectedTransaction.amount)}</div>

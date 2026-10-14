@@ -9,9 +9,16 @@ export const buildInvoiceData = (auction, options = {}) => {
     const hammerPrice = auction.finalPrice || 0;
     const buyerPremium = auction.buyerFeeAmount || 0;
     const taxAmount = auction.taxAmount || 0;
-    const total = hammerPrice + buyerPremium + taxAmount;
-    const paymentStatus = auction.paymentStatus || 'pending';
-    const paymentMethod = auction.paymentMethod || 'N/A';
+
+    // Only credit if the deposit was actually charged
+    const depositCredit =
+        auction.depositStatus === "charged" && auction.depositAmount > 0
+            ? auction.depositAmount
+            : 0;
+
+    const total = hammerPrice + buyerPremium + taxAmount - depositCredit;
+    const paymentStatus = auction.paymentStatus || "pending";
+    const paymentMethod = auction.paymentMethod || "N/A";
 
     return {
         invoiceNumber: `INV-${auction._id.toString().toUpperCase()}`,
@@ -19,17 +26,20 @@ export const buildInvoiceData = (auction, options = {}) => {
         hammerPrice,
         buyerPremium,
         taxAmount,
+        depositCredit,
+        depositStatus: auction.depositStatus,
         total,
         paymentStatus,
         paymentMethod,
         buyerName: auction.winner?.firstName
-            ? `${auction.winner.firstName} ${auction.winner.lastName || ''}`.trim()
-            : auction.winner?.username || 'Buyer',
+            ? `${auction.winner.firstName} ${auction.winner.lastName || ""}`.trim()
+            : auction.winner?.username || "Buyer",
         sellerName: auction.seller?.firstName
-            ? `${auction.seller.firstName} ${auction.seller.lastName || ''}`.trim()
-            : auction.seller?.username || 'Seller',
+            ? `${auction.seller.firstName} ${auction.seller.lastName || ""}`.trim()
+            : auction.seller?.username || "Seller",
         itemTitle: auction.title,
-        itemDescription: auction.subTitle || auction.description?.slice(0, 100) || '',
+        itemDescription:
+            auction.subTitle || auction.description?.slice(0, 100) || "",
     };
 };
 

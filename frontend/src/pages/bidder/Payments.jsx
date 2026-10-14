@@ -349,20 +349,26 @@ function BidderPayments() {
                                         <h4 className="font-semibold text-gray-900 mb-4">Payment Breakdown</h4>
 
                                         <div className="space-y-3">
-                                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                            {selectedPayment?.source !== 'deposit' && <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                                 <span className="text-gray-600">Bid Amount:</span>
                                                 <span className="font-medium text-green-600">{formatCurrency(selectedPayment.bidAmount)}</span>
-                                            </div>
-                                            {selectedPayment.commissionAmount > 0 && (
+                                            </div>}
+                                            {selectedPayment.commissionAmount > 0 && selectedPayment?.source !== 'deposit' && (
                                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                                     <span className="text-gray-600">Buyer's Premium:</span>
                                                     <span className="font-medium text-blue-600">{formatCurrency(selectedPayment.commissionAmount)}</span>
                                                 </div>
                                             )}
-                                            {(selectedPayment.commissionAmount + selectedPayment.bidAmount) < selectedPayment.totalAmount && (
+                                            {(selectedPayment.commissionAmount + selectedPayment.bidAmount) < selectedPayment.totalAmount && selectedPayment?.source !== 'deposit' && (
                                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                                     <span className="text-gray-600">Tax:</span>
                                                     <span className="font-medium text-blue-600">{formatCurrency(selectedPayment.totalAmount - (selectedPayment.commissionAmount + selectedPayment.bidAmount))}</span>
+                                                </div>
+                                            )}
+                                            {selectedPayment?.source == 'deposit' && (
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                                    <span className="text-gray-600">Deposit:</span>
+                                                    <span className="font-medium text-blue-600">{formatCurrency(selectedPayment?.totalAmount)}</span>
                                                 </div>
                                             )}
                                             <div className="flex justify-between items-center py-2 text-lg">

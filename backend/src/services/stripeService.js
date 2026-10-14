@@ -86,6 +86,15 @@ export class StripeService {
         }
     }
 
+    static async createPaymentIntent(params) {
+        try {
+            const paymentIntent = await stripe.paymentIntents.create(params);
+            return paymentIntent;
+        } catch (error) {
+            throw new Error(`Payment intent creation failed: ${error.message}`);
+        }
+    }
+
     /**
      * Authorize-only (place a hold) — useful if you want to hold 5% and capture later.
      */

@@ -5,7 +5,7 @@ import User from '../models/user.model.js';
 import { StripeService } from '../services/stripeService.js';
 import { calculateCommissions } from '../utils/commissionCalculator.js';
 import Stripe from 'stripe';
-import { paymentCompletedEmail, paymentCompletedSellerEmail } from '../utils/nodemailer.js';
+import { cardPaymentCompletedAdminEmail, paymentCompletedEmail, paymentCompletedSellerEmail } from '../utils/nodemailer.js';
 import agendaService from '../services/agendaService.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -407,8 +407,19 @@ export const createWinnerPaymentIntent = async (req, res) => {
             return res.status(400).json({ success: false, message: 'You have already paid for this auction' });
         }
 
-        // Calculate total amount (finalPrice + buyer fee)
-        const total = (auction.finalPrice || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0);
+        // Calculate total amount, crediting any 5% deposit already charged
+        const depositCredit =
+            auction.depositStatus === "charged" && auction.depositAmount > 0
+                ? auction.depositAmount
+                : 0;
+
+        const total = Math.max(
+            (auction.finalPrice || 0) +
+            (auction.buyerFeeAmount || 0) +
+            (auction.taxAmount || 0) -
+            depositCredit,
+            0
+        );
 
         if (total <= 0) {
             return res.status(400).json({ success: false, message: 'Total amount is zero – no payment required' });
@@ -503,7 +514,34 @@ export const confirmWinnerPayment = async (req, res) => {
             auction.paymentMethod = 'credit_card';
             auction.transactionId = paymentIntentId;
             auction.paymentDate = new Date();
+            if (auction.depositStatus === 'charged') {
+                auction.depositStatus = 'credited';
+            }
             await auction.save();
+
+            // ---- Notify all admins that card payment succeeded ----
+            try {
+                const adminUsers = await User.find({ userType: 'admin' }).select('email');
+                const buyer = await User.findById(userId).select('firstName lastName username email phone companyName');
+                for (const admin of adminUsers) {
+                    cardPaymentCompletedAdminEmail(
+                        admin.email,
+                        {
+                            totalAmount: bidPayment.totalAmount,
+                            bidAmount: bidPayment.bidAmount,
+                            commissionAmount: bidPayment.commissionAmount,
+                            taxAmount: bidPayment.taxAmount,
+                            paymentIntentId: paymentIntentId,
+                        },
+                        buyer,
+                        auction
+                    ).catch((err) =>
+                        console.error(`Failed to send card payment admin email to ${admin.email}:`, err)
+                    );
+                }
+            } catch (err) {
+                console.error('Failed to notify admins for card payment:', err);
+            }
 
             // payment completed emails will be sent from here
             agendaService.scheduleInvoiceUpdate(auction._id, userId).catch(err =>

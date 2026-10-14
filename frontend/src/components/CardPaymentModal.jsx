@@ -79,9 +79,11 @@ const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentInten
                         <p className="text-sm text-gray-600">Amount to pay:</p>
                         <p className="text-2xl font-bold text-green-600">
                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-                                (auction.finalPrice || auction.finalBid || auction.winningBid || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0)
+                                (auction.finalPrice || auction.finalBid || auction.winningBid || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0) - (auction?.depositAmount || 0)
                             )}
                         </p>
+                        {auction?.depositStatus === 'charged' && auction?.depositAmount > 0 && <p className="text-xs text-gray-500">Credited deposit {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(auction.depositAmount || 0)}</p>}
+                        
                         <p className="text-xs text-gray-500">Includes {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(auction.buyerFeeAmount || 0)} buyer fee and {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(auction.taxAmount || 0)} tax</p>
                     </div>
                     <form onSubmit={handleSubmit}>
