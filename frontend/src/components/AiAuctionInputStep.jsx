@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
-import { Sparkles, Image as ImageIcon, X, Loader, ChevronDown, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Sparkles, Image as ImageIcon, X, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { compressAuctionImages } from '../utils/compressImage.js';
 
 const AiAuctionInputStep = ({
     parentCategories,
@@ -14,21 +16,60 @@ const AiAuctionInputStep = ({
     isAnalyzing,
     onSkip,
 }) => {
-    const [images, setImages] = useState([]);
+    const [images, setImages] = useState([]);           // File[] (compressed)
+    const [previews, setPreviews] = useState([]);       // string[] (blob URLs, parallel to images)
     const [prompt, setPrompt] = useState('');
+    const [isCompressing, setIsCompressing] = useState(false);
     const fileInputRef = useRef(null);
 
-    const handleImageUpload = (e) => {
+    // Keep a ref of previews so we can revoke them on unmount without
+    // re-running the cleanup effect on every preview change.
+    const previewsRef = useRef(previews);
+    useEffect(() => { previewsRef.current = previews; }, [previews]);
+
+    useEffect(() => {
+        return () => {
+            previewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+        };
+    }, []);
+
+    const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
-        setImages((prev) => [...prev, ...files]);
+        if (files.length === 0) return;
+
+        // Reset input immediately so the same file can be re-selected later.
         e.target.value = '';
+
+        setIsCompressing(true);
+        try {
+            const compressed = await compressAuctionImages(files);
+            const newPreviews = compressed.map((f) => URL.createObjectURL(f));
+
+            setImages((prev) => [...prev, ...compressed]);
+            setPreviews((prev) => [...prev, ...newPreviews]);
+        } catch (err) {
+            console.error('Image compression failed:', err);
+            toast.error('Could not process one or more images');
+        } finally {
+            setIsCompressing(false);
+        }
     };
 
     const removeImage = (index) => {
+        setPreviews((prev) => {
+            const next = [...prev];
+            if (next[index]) URL.revokeObjectURL(next[index]);
+            next.splice(index, 1);
+            return next;
+        });
         setImages((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleAnalyze = () => {
+        if (isCompressing) {
+            toast.error('Please wait — images are still being optimised');
+            return;
+        }
         onAnalyze(images, selectedParent, selectedCategory, prompt);
     };
 
@@ -57,21 +98,42 @@ const AiAuctionInputStep = ({
                         onChange={handleImageUpload}
                         className="hidden"
                         ref={fileInputRef}
+                        disabled={isCompressing}
                     />
-                    <label htmlFor="ai-image-upload" className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <ImageIcon size={48} className="mx-auto text-gray-400 mb-3" />
-                        <p className="text-gray-600 font-medium">Click to upload images</p>
-                        <p className="text-sm text-gray-400 mt-1">Front, back, sides, close-ups, data plates, hour meters</p>
+                    <label
+                        htmlFor="ai-image-upload"
+                        className={`cursor-pointer ${isCompressing ? 'opacity-60 pointer-events-none' : ''}`}
+                        onClick={() => !isCompressing && fileInputRef.current?.click()}
+                    >
+                        {isCompressing ? (
+                            <>
+                                <Loader size={48} className="mx-auto text-purple-500 mb-3 animate-spin" />
+                                <p className="text-gray-600 font-medium">Optimising images…</p>
+                                <p className="text-sm text-gray-400 mt-1">
+                                    Compressing on your device before upload
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <ImageIcon size={48} className="mx-auto text-gray-400 mb-3" />
+                                <p className="text-gray-600 font-medium">Click to upload images</p>
+                                <p className="text-sm text-gray-400 mt-1">
+                                    Front, back, sides, close-ups, data plates, hour meters
+                                </p>
+                            </>
+                        )}
                     </label>
                 </div>
 
                 {images.length > 0 && (
                     <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-4">
                         {images.map((file, index) => (
-                            <div key={index} className="relative group">
+                            <div key={`${file.name}-${file.size}-${index}`} className="relative group">
                                 <img
-                                    src={URL.createObjectURL(file)}
+                                    src={previews[index]}
                                     alt={`Upload ${index + 1}`}
+                                    loading="lazy"
+                                    decoding="async"
                                     className="w-full h-24 object-cover rounded-lg"
                                 />
                                 <button
@@ -149,13 +211,18 @@ const AiAuctionInputStep = ({
                 <button
                     type="button"
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing || images.length === 0 || !selectedCategory}
+                    disabled={isAnalyzing || isCompressing || images.length === 0 || !selectedCategory}
                     className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                     {isAnalyzing ? (
                         <>
                             <Loader size={20} className="animate-spin" />
                             Analyzing images...
+                        </>
+                    ) : isCompressing ? (
+                        <>
+                            <Loader size={20} className="animate-spin" />
+                            Optimising images...
                         </>
                     ) : (
                         <>
@@ -168,7 +235,8 @@ const AiAuctionInputStep = ({
                 <button
                     type="button"
                     onClick={onSkip}
-                    className="px-6 py-3 text-gray-600 hover:text-gray-800 underline transition-colors"
+                    disabled={isCompressing}
+                    className="px-6 py-3 text-gray-600 hover:text-gray-800 underline transition-colors disabled:opacity-50"
                 >
                     Skip, I'll fill manually
                 </button>

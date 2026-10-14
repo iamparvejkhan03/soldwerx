@@ -178,6 +178,10 @@ const auctionSchema = new Schema(
         filename: String,
         order: { type: Number, default: 0 },
         caption: { type: String, default: "" },
+        width: { type: Number },
+        height: { type: Number },
+        format: { type: String, default: "webp" },
+        bytes: { type: Number },
       },
     ],
     documents: [
@@ -198,6 +202,10 @@ const auctionSchema = new Schema(
         originalName: String,
         order: { type: Number, default: 0 },
         caption: { type: String, default: "" },
+        width: { type: Number },
+        height: { type: Number },
+        format: { type: String, default: "webp" },
+        bytes: { type: Number },
       },
     ],
 

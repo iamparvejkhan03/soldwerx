@@ -37,6 +37,7 @@ import axiosInstance from '../../utils/axiosInstance.js';
 import { useNavigate } from 'react-router-dom';
 import { useAiListingAssistant } from '../../hooks/useAiListingAssistant.jsx';
 import { extractYouTubeId } from '../../components/YouTubeEmbed.jsx';
+import { compressAuctionImages } from '../../utils/compressImage.js';
 
 // Drag and Drop item types
 const ItemTypes = {
@@ -367,6 +368,8 @@ const CreateAuction = () => {
     const [aiStepCompleted, setAiStepCompleted] = useState(false);
     const { isAnalyzing, aiResult, analyzeImages, clearResult } = useAiListingAssistant();
 
+    const [isCompressing, setIsCompressing] = useState(false);
+
     const {
         register,
         handleSubmit,
@@ -645,10 +648,22 @@ const CreateAuction = () => {
         setAiStepCompleted(false);
     };
 
-    const handlePhotoUpload = (e) => {
+    const handlePhotoUpload = async (e) => {
         const files = Array.from(e.target.files);
-        setUploadedPhotos([...files, ...uploadedPhotos]);
-        clearErrors('photos');
+        if (files.length === 0) return;
+
+        setIsCompressing(true);
+        try {
+            const compressed = await compressAuctionImages(files);
+            setUploadedPhotos((prev) => [...compressed, ...prev]);
+            clearErrors('photos');
+        } catch (err) {
+            console.error('Image processing failed:', err);
+            toast.error('Could not process one or more images');
+        } finally {
+            setIsCompressing(false);
+            e.target.value = ''; // allow re-selecting the same file
+        }
     };
 
     const handleDocumentUpload = (e) => {
@@ -981,7 +996,9 @@ const CreateAuction = () => {
                                                 />
                                                 <label htmlFor="photo-upload" className="cursor-pointer">
                                                     <Image size={40} className="mx-auto text-gray-400 mb-2" />
-                                                    <p className="text-gray-600">Browse photo(s) to upload</p>
+                                                    <p className="text-gray-600">
+                                                        {isCompressing ? 'Optimising images…' : 'Browse photo(s) to upload'}
+                                                    </p>
                                                 </label>
                                             </div>
                                             {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos.message}</p>}
@@ -1518,7 +1535,9 @@ const CreateAuction = () => {
                                                 e.preventDefault();
                                                 nextStep();
                                             }}
-                                            className="flex items-center px-6 py-2 bg-black text-white hover:bg-black/80 rounded-lg transition-colors"
+                                            disabled={isCompressing}
+
+                                            className="flex items-center px-6 py-2 bg-black text-white hover:bg-black/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Next
                                             <ArrowRight size={18} className="ml-2" />

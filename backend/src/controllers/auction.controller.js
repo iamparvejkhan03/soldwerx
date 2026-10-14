@@ -175,7 +175,11 @@ export const createAuction = async (req, res) => {
             publicId: result.public_id,
             filename: photo.originalname,
             order: index,
-            caption: photoCaptions[index] || "", // ADD THIS LINE
+            caption: photoCaptions[index] || "",
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
           });
         } catch (uploadError) {
           console.error("Photo upload error:", uploadError);
@@ -246,7 +250,11 @@ export const createAuction = async (req, res) => {
             filename: record.originalname,
             originalName: record.originalname,
             order: index,
-            caption: serviceRecordCaptions[index] || "", // ADD THIS
+            caption: serviceRecordCaptions[index] || "",
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
           });
         } catch (uploadError) {
           console.error("Service record upload error:", uploadError);
@@ -1162,6 +1170,10 @@ export const updateAuction = async (req, res) => {
             filename: photo.originalname,
             order: finalPhotos.length + newPhotos.length,
             caption: photoCaptionsArray[index] || "",
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
           });
         } catch (uploadError) {
           console.error("Photo upload error:", uploadError);
@@ -1310,6 +1322,10 @@ export const updateAuction = async (req, res) => {
             originalName: record.originalname,
             order: finalServiceRecords.length + newServiceRecords.length,
             caption: serviceRecordCaptionsArray[index] || "",
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
           });
         } catch (uploadError) {
           console.error("Service record upload error:", uploadError);
