@@ -519,14 +519,14 @@ createRoot(document.getElementById('root')).render(
                         />
 
                         {/* Bidder Billing */}
-                        {/* <Route
+                        <Route
                                 path='/bidder/billing'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
                                         <BidderBilling />
                                     </Suspense>
                                 }
-                            /> */}
+                            />
 
                         {/* Bidder Watchlist */}
                         <Route

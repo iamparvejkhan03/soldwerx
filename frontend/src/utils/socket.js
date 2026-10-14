@@ -34,7 +34,7 @@ const SILENCE_LIMIT_MS = 40_000;
 const WATCHDOG_INTERVAL_MS = 8_000;
 
 const forceReconnect = (reason) => {
-  console.warn(`[socket] force reconnect: ${reason}`);
+  // console.warn(`[socket] force reconnect: ${reason}`);
   try { socket.disconnect(); } catch (_) {}
   try { socket.connect(); } catch (_) {}
   lastServerEventAt = Date.now();
@@ -108,7 +108,7 @@ socket.on("connect", () => {
 });
 
 socket.on("disconnect", (reason) => {
-  console.info("[socket] disconnected:", reason);
+  // console.info("[socket] disconnected:", reason);
 });
 
 const isMobile =

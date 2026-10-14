@@ -112,6 +112,32 @@ const userSchema = new Schema(
         "manage_events",
       ],
     },
+
+    // Stripe / Payment fields
+    stripeCustomerId: {
+      type: String,
+      trim: true,
+    },
+    paymentMethodId: {
+      type: String,
+      trim: true,
+    },
+    pendingSetupIntentId: {
+      type: String,
+      trim: true,
+    },
+    cardLast4: { type: String, trim: true },
+    cardBrand: { type: String, trim: true },
+    cardExpMonth: { type: Number },
+    cardExpYear: { type: Number },
+    isPaymentVerified: {
+      type: Boolean,
+      default: false,
+    },
+    // Consent audit trail
+    cardSaveConsentAt: { type: Date },
+    cardSaveConsentIp: { type: String, trim: true },
+
     // Payout Methods for Sellers
     payoutMethods: {
       paypal: {

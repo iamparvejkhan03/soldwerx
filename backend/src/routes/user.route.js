@@ -1,6 +1,8 @@
 import { Router } from "express";
 import upload from "../middlewares/multer.middleware.js";
 import { 
+    completeCardUpdate,
+    completeRegistration,
     deleteIdentification,
     forgotPassword,
     getBillingInfo,
@@ -27,6 +29,7 @@ const userRouter = Router();
 
 // Public routes
 userRouter.post('/register', upload.single('identificationDocument'), registerUser);
+userRouter.post('/complete-registration', completeRegistration);
 userRouter.post('/login', loginUser);
 userRouter.post('/refresh-token', refreshAccessToken);
 userRouter.post('/forgot-password', forgotPassword);
@@ -40,6 +43,7 @@ userRouter.put('/preferences', auth, updatePreferences);
 userRouter.get('/stats/:userType', auth, getUserStats);
 userRouter.get('/billing', auth, getBillingInfo);
 userRouter.put('/billing/update-card', auth, updatePaymentMethod);
+userRouter.post('/billing/complete-card-update', auth, completeCardUpdate);
 
 // ID Verification routes (Protected)
 userRouter.post('/upload-identification', 

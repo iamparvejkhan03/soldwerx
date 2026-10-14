@@ -9,6 +9,10 @@ import {
 import crypto from "crypto";
 import BidPayment from "../models/bidPayment.model.js";
 import { deleteFromCloudinary, uploadDocumentToCloudinary, uploadImageToCloudinary } from "../utils/cloudinary.js";
+import Stripe from 'stripe';
+
+// Initialize Stripe with your secret key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Helper function to generate tokens and set cookies
 const generateTokensAndRespond = async (user, req, res, message) => {
@@ -69,20 +73,19 @@ export const registerUser = async (req, res) => {
       countryName,
       phone = "",
       image = "",
-      // Add new address fields
       dealershipName = "",
       buildingNameNo = "",
       street = "",
       city = "",
       county = "",
       postCode = "",
+      paymentMethodId,
+      cardSaveConsent,
     } = req.body;
 
-    // Normalize email to lowercase
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedUsername = username.toLowerCase().trim();
 
-    // Check if user already exists with normalized email or username
     const existingUser = await User.findOne({
       $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
     });
@@ -94,13 +97,31 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Handle ID document upload
+    // ---- Validate bidder payment requirements ----
+    if (userType === "bidder") {
+      if (!paymentMethodId) {
+        return res.status(400).json({
+          success: false,
+          message: "Payment method is required for bidders",
+        });
+      }
+      const consentGiven = cardSaveConsent === "true" || cardSaveConsent === true;
+      if (!consentGiven) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "You must consent to card storage and off-session deposit charges",
+        });
+      }
+    }
+
+    // ---- Handle ID document upload ----
     const identificationDocumentFile = req.file;
     let identificationDocumentUrl = null;
     let identificationDocumentPublicId = null;
 
     if (identificationDocumentFile) {
-      const isImage = identificationDocumentFile.mimetype.startsWith('image/');
+      const isImage = identificationDocumentFile.mimetype.startsWith("image/");
       const uploadFn = isImage
         ? uploadImageToCloudinary
         : uploadDocumentToCloudinary;
@@ -108,13 +129,50 @@ export const registerUser = async (req, res) => {
       const uploadResult = await uploadFn(
         identificationDocumentFile.buffer,
         isImage ? undefined : identificationDocumentFile.originalname,
-        'identification-documents'
+        "identification-documents"
       );
       identificationDocumentUrl = uploadResult.secure_url;
       identificationDocumentPublicId = uploadResult.public_id;
     }
 
-    // Create user in database
+    // ---- Stripe setup for bidders ----
+    let stripeCustomerId = null;
+    let setupIntentId = null;
+    let setupIntentClientSecret = null;
+
+    if (userType === "bidder") {
+      try {
+        const customer = await StripeService.createCustomer(
+          normalizedEmail,
+          `${firstName} ${lastName}`,
+          { userType, source: "registration" }
+        );
+        stripeCustomerId = customer.id;
+
+        await StripeService.attachPaymentMethod(
+          stripeCustomerId,
+          paymentMethodId
+        );
+
+        const setupIntent = await StripeService.createSetupIntent(
+          stripeCustomerId,
+          paymentMethodId,
+          { email: normalizedEmail, userType }
+        );
+        setupIntentId = setupIntent.id;
+        setupIntentClientSecret = setupIntent.client_secret;
+      } catch (stripeError) {
+        console.error("Stripe setup failed during registration:", stripeError);
+        return res.status(400).json({
+          success: false,
+          message:
+            stripeError.message ||
+            "Failed to set up payment method. Please try a different card.",
+        });
+      }
+    }
+
+    // ---- Build user data ----
     const userData = {
       firstName,
       lastName,
@@ -129,8 +187,7 @@ export const registerUser = async (req, res) => {
       isVerified: true,
       identificationDocument: identificationDocumentUrl,
       identificationDocumentPublicId,
-      identificationStatus: identificationDocumentUrl ? 'pending' : undefined,
-      // Add address object
+      identificationStatus: identificationDocumentUrl ? "pending" : "verified",
       address: {
         dealershipName,
         buildingNameNo,
@@ -138,23 +195,42 @@ export const registerUser = async (req, res) => {
         city,
         county,
         postCode,
-        country: countryName, // Use the countryName from request
+        country: countryName,
       },
     };
 
+    if (userType === "bidder") {
+      userData.stripeCustomerId = stripeCustomerId;
+      userData.paymentMethodId = paymentMethodId;
+      userData.pendingSetupIntentId = setupIntentId;
+      userData.isPaymentVerified = false;
+      userData.cardSaveConsentAt = new Date();
+      userData.cardSaveConsentIp =
+        req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress;
+    }
+
     const user = await User.create(userData);
 
-    if (!user) {
-      return res.status(500).json({
-        success: false,
-        message: "User registration failed",
+    // ---- Bidder: return client secret, client must confirm ----
+    if (userType === "bidder") {
+      const registrationToken = jwt.sign(
+        { userId: user._id, purpose: "registration" },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "30m" }
+      );
+
+      return res.status(201).json({
+        success: true,
+        requiresAction: true,
+        clientSecret: setupIntentClientSecret,
+        setupIntentId,
+        registrationToken,
+        message: "Please verify your card to complete registration",
       });
     }
 
-    // await generateTokensAndRespond(user, res, 'Registration successful');
+    // ---- Non-bidder: complete immediately ----
     await generateTokensAndRespond(user, req, res, "Registration successful");
-
-    //send registration email
     await welcomeEmail(user);
 
     const adminUsers = await User.find({ userType: "admin" });
@@ -165,7 +241,91 @@ export const registerUser = async (req, res) => {
     console.error("Registration error:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error during registration",
+      message: error.message || "Internal server error during registration",
+    });
+  }
+};
+
+// Complete Registration (called after 3DS)
+export const completeRegistration = async (req, res) => {
+  try {
+    const { registrationToken, setupIntentId } = req.body;
+
+    if (!registrationToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Registration token required",
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(registrationToken, process.env.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired registration token",
+      });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Already completed — just issue tokens
+    if (user.isPaymentVerified) {
+      return generateTokensAndRespond(
+        user,
+        req,
+        res,
+        "Registration already complete"
+      );
+    }
+
+    const intentId = setupIntentId || user.pendingSetupIntentId;
+    if (!intentId) {
+      return res.status(400).json({
+        success: false,
+        message: "No pending SetupIntent found for this user",
+      });
+    }
+
+    const setupIntent = await StripeService.retrieveSetupIntent(intentId);
+
+    if (setupIntent.status !== "succeeded") {
+      return res.status(400).json({
+        success: false,
+        message: `Card verification status: ${setupIntent.status}. Please try again.`,
+      });
+    }
+
+    const pmId = setupIntent.payment_method;
+    const paymentMethod = await stripe.paymentMethods.retrieve(pmId);
+
+    await StripeService.setDefaultPaymentMethod(user.stripeCustomerId, pmId);
+
+    user.paymentMethodId = pmId;
+    user.cardLast4 = paymentMethod.card?.last4;
+    user.cardBrand = paymentMethod.card?.brand;
+    user.cardExpMonth = paymentMethod.card?.exp_month;
+    user.cardExpYear = paymentMethod.card?.exp_year;
+    user.isPaymentVerified = true;
+    user.pendingSetupIntentId = undefined;
+    await user.save();
+
+    await welcomeEmail(user);
+    const adminUsers = await User.find({ userType: "admin" });
+    for (const admin of adminUsers) {
+      await newUserRegistrationEmail(admin.email, user);
+    }
+
+    await generateTokensAndRespond(user, req, res, "Registration successful");
+  } catch (error) {
+    console.error("Complete registration error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to complete registration",
     });
   }
 };
@@ -430,7 +590,7 @@ export const getBillingInfo = async (req, res) => {
   }
 };
 
-export const updatePaymentMethod = async (req, res) => {
+export const createPaymentMethod = async (req, res) => {
   try {
     const { paymentMethodId } = req.body;
     const userId = req.user._id;
@@ -451,24 +611,208 @@ export const updatePaymentMethod = async (req, res) => {
       });
     }
 
-    if (!user.stripeCustomerId) {
+    // Check if user already has a Stripe customer
+    if (user.stripeCustomerId) {
       return res.status(400).json({
         success: false,
-        message: "No Stripe customer found",
+        message: "User already has a Stripe customer. Use update endpoint instead.",
       });
     }
 
-    // ✅ STEP 1: Cancel ONLY pending authorizations (requires_capture) on old card
-    // DO NOT cancel succeeded payments (already charged commissions)
+    // Create Stripe customer
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+      metadata: {
+        userId: user._id.toString(),
+        userType: user.userType,
+      },
+    });
+
+    // Attach payment method to customer
+    const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customer.id,
+    });
+
+    // Set as default payment method
+    await stripe.customers.update(customer.id, {
+      invoice_settings: {
+        default_payment_method: paymentMethod.id,
+      },
+    });
+
+    // Update user with card details
+    user.stripeCustomerId = customer.id;
+    user.paymentMethodId = paymentMethod.id;
+    user.cardLast4 = paymentMethod.card.last4;
+    user.cardBrand = paymentMethod.card.brand;
+    user.cardExpMonth = paymentMethod.card.exp_month;
+    user.cardExpYear = paymentMethod.card.exp_year;
+    user.isPaymentVerified = true;
+
+    await user.save();
+
+    const cardInfo = {
+      last4: user.cardLast4,
+      brand: user.cardBrand,
+      expMonth: user.cardExpMonth,
+      expYear: user.cardExpYear,
+    };
+
+    res.status(201).json({
+      success: true,
+      message: "Payment method added successfully!",
+      data: {
+        card: cardInfo,
+        isPaymentVerified: true,
+        userType: user.userType,
+        stripeCustomerId: user.stripeCustomerId,
+      },
+    });
+  } catch (error) {
+    console.error("Create payment method error:", error);
+
+    // Handle specific Stripe errors
+    if (error.type === 'StripeCardError') {
+      return res.status(400).json({
+        success: false,
+        message: error.message || "Your card was declined. Please try a different card.",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to add payment method",
+    });
+  }
+};
+
+// -------- Step 1: Start card update (returns clientSecret for 3DS) --------
+export const updatePaymentMethod = async (req, res) => {
+  try {
+    const { paymentMethodId, cardSaveConsent } = req.body;
+    const userId = req.user._id;
+
+    if (!paymentMethodId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method ID is required",
+      });
+    }
+
+    const consentGiven =
+      cardSaveConsent === "true" || cardSaveConsent === true;
+    if (!consentGiven) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "You must consent to card storage and off-session deposit charges",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Edge case: user has no Stripe customer yet (e.g. registered as seller)
+    if (!user.stripeCustomerId) {
+      const customer = await StripeService.createCustomer(
+        user.email,
+        `${user.firstName} ${user.lastName}`,
+        { userId: user._id.toString(), userType: user.userType }
+      );
+      user.stripeCustomerId = customer.id;
+      await user.save();
+    }
+
+    // Attach new PM to customer (required before SetupIntent can use it)
+    await StripeService.attachPaymentMethod(
+      user.stripeCustomerId,
+      paymentMethodId
+    );
+
+    // Create UNCONFIRMED SetupIntent for verification + 3DS
+    const setupIntent = await StripeService.createSetupIntent(
+      user.stripeCustomerId,
+      paymentMethodId,
+      { userId: user._id.toString(), purpose: "card_update" }
+    );
+
+    // Record consent + remember the pending intent
+    user.cardSaveConsentAt = new Date();
+    user.cardSaveConsentIp =
+      req.ip ||
+      req.headers["x-forwarded-for"] ||
+      req.socket?.remoteAddress;
+    user.pendingSetupIntentId = setupIntent.id;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      requiresAction: true,
+      clientSecret: setupIntent.client_secret,
+      setupIntentId: setupIntent.id,
+      message: "Please verify your card to complete the update",
+    });
+  } catch (error) {
+    console.error("Update payment method error:", error);
+    if (error.type === "StripeCardError") {
+      return res.status(400).json({
+        success: false,
+        message:
+          error.message ||
+          "Your card was declined. Please try a different card.",
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update payment method",
+    });
+  }
+};
+
+// -------- Step 2: Finalize after 3DS (or immediately if no 3DS) --------
+export const completeCardUpdate = async (req, res) => {
+  try {
+    const { setupIntentId } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const intentId = setupIntentId || user.pendingSetupIntentId;
+    if (!intentId) {
+      return res.status(400).json({
+        success: false,
+        message: "No pending SetupIntent found for this user",
+      });
+    }
+
+    const setupIntent = await StripeService.retrieveSetupIntent(intentId);
+
+    if (setupIntent.status !== "succeeded") {
+      return res.status(400).json({
+        success: false,
+        message: `Card verification status: ${setupIntent.status}. Please try again.`,
+      });
+    }
+
+    const pmId = setupIntent.payment_method;
+
+    // ---- Cancel PENDING authorizations on old card ----
     const pendingAuthorizations = await BidPayment.find({
       bidder: userId,
       type: "bid_authorization",
-      status: "requires_capture", // ONLY this status!
+      status: "requires_capture",
     });
-
-    console.log(
-      `🔄 Cancelling ${pendingAuthorizations.length} PENDING authorizations for user ${userId}`
-    );
 
     let cancelledCount = 0;
     for (const payment of pendingAuthorizations) {
@@ -477,67 +821,47 @@ export const updatePaymentMethod = async (req, res) => {
         payment.status = "canceled";
         await payment.save();
         cancelledCount++;
-        console.log(
-          `✅ Cancelled PENDING authorization for auction: ${payment.auction}`
-        );
       } catch (error) {
         console.error(
-          `❌ Failed to cancel authorization ${payment.paymentIntentId}:`,
+          `Failed to cancel authorization ${payment.paymentIntentId}:`,
           error.message
         );
       }
     }
 
-    // ✅ STEP 2: Also mark any 'succeeded' bid_authorizations as 'replaced'
-    // These are the old $2500 authorizations that were replaced by final commissions
-    const succeededAuthorizations = await BidPayment.find({
-      bidder: userId,
-      type: "bid_authorization",
-      status: "succeeded",
-    });
-
-    for (const payment of succeededAuthorizations) {
-      payment.status = "replaced"; // Mark as replaced for clarity
-      await payment.save();
-      console.log(
-        `📝 Marked succeeded authorization as replaced for auction: ${payment.auction}`
-      );
-    }
-
-    // ✅ STEP 3: Verify and update card with Stripe
-    const verificationResult = await StripeService.verifyAndSaveCard(
-      user.stripeCustomerId,
-      paymentMethodId
+    // ---- Mark succeeded authorizations as replaced ----
+    await BidPayment.updateMany(
+      { bidder: userId, type: "bid_authorization", status: "succeeded" },
+      { status: "replaced" }
     );
 
-    if (!verificationResult.success) {
-      throw new Error("Card verification failed");
-    }
+    // ---- Make new PM the default ----
+    await StripeService.setDefaultPaymentMethod(
+      user.stripeCustomerId,
+      pmId
+    );
 
-    const paymentMethodDetails = verificationResult.paymentMethod;
+    const paymentMethod = await stripe.paymentMethods.retrieve(pmId);
 
-    // ✅ STEP 4: Update user in database
-    user.paymentMethodId = paymentMethodDetails.id;
-    user.cardLast4 = paymentMethodDetails.last4;
-    user.cardBrand = paymentMethodDetails.brand;
-    user.cardExpMonth = paymentMethodDetails.expMonth;
-    user.cardExpYear = paymentMethodDetails.expYear;
+    user.paymentMethodId = pmId;
+    user.cardLast4 = paymentMethod.card?.last4;
+    user.cardBrand = paymentMethod.card?.brand;
+    user.cardExpMonth = paymentMethod.card?.exp_month;
+    user.cardExpYear = paymentMethod.card?.exp_year;
     user.isPaymentVerified = true;
-
+    user.pendingSetupIntentId = undefined;
     await user.save();
-
-    const updatedCardInfo = {
-      last4: user.cardLast4,
-      brand: user.cardBrand,
-      expMonth: user.cardExpMonth,
-      expYear: user.cardExpYear,
-    };
 
     res.status(200).json({
       success: true,
       message: `Payment method updated successfully. ${cancelledCount} pending authorizations cancelled.`,
       data: {
-        card: updatedCardInfo,
+        card: {
+          last4: user.cardLast4,
+          brand: user.cardBrand,
+          expMonth: user.cardExpMonth,
+          expYear: user.cardExpYear,
+        },
         isPaymentVerified: true,
         userType: user.userType,
         stripeCustomerId: user.stripeCustomerId,
@@ -545,10 +869,10 @@ export const updatePaymentMethod = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Update payment method error:", error);
-    res.status(400).json({
+    console.error("Complete card update error:", error);
+    res.status(500).json({
       success: false,
-      message: error.message || "Failed to update payment method",
+      message: error.message || "Failed to complete card update",
     });
   }
 };
