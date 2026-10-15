@@ -23,6 +23,10 @@ import {
 } from "../utils/nodemailer.js";
 import Payment from "../models/payment.model.js";
 import { broadcastAuctionChange, broadcastAuctionRemoved } from "../services/realtimeService.js";
+import {
+  resolveCommissionInput,
+  isCommissionLocked,
+} from "../utils/auctionCommission.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -1203,6 +1207,10 @@ export const updateAuction = async (req, res) => {
         buyerFeeValue: 0,
         sellerFeeType: null,
         sellerFeeValue: 0,
+        buyerFeeBreakdown: [],
+        sellerFeeBreakdown: [],
+        buyerFeeStructureName: null,
+        sellerFeeStructureName: null,
         bidPaymentRequired: true,
         taxAmount: 0,
       };
@@ -1861,11 +1869,46 @@ export const updateAuction = async (req, res) => {
       updateData.buyerFeeValue = 0;
       updateData.sellerFeeType = null;
       updateData.sellerFeeValue = 0;
+      updateData.buyerFeeBreakdown = [];
+      updateData.sellerFeeBreakdown = [];
+      updateData.buyerFeeStructureName = null;
+      updateData.sellerFeeStructureName = null;
       updateData.bidPaymentRequired = true;
       updateData.taxAmount = 0;
     }
 
-    const updatedAuction = await Auction.findByIdAndUpdate(id, updateData, {
+    // Per-auction commission changes
+    const commissionUnset = {};
+    if (req.body.commission !== undefined) {
+      if (isCommissionLocked(auction.status)) {
+        return res.status(400).json({
+          success: false,
+          message: "This auction is sold. Its commission can't be changed.",
+        });
+      }
+
+      const { error, sides } = await resolveCommissionInput(req.body.commission);
+      if (error) {
+        return res.status(400).json({ success: false, message: error });
+      }
+
+      for (const side of ["buyer", "seller"]) {
+        const result = sides[side];
+        if (result.action === "keep") continue;
+        if (result.action === "global") {
+          commissionUnset[`commission.${side}`] = "";
+        } else if (result.action === "set") {
+          updateData[`commission.${side}`] = result.value;
+        }
+      }
+    }
+
+    const updateQuery = { $set: updateData };
+    if (Object.keys(commissionUnset).length > 0) {
+      updateQuery.$unset = commissionUnset;
+    }
+
+    const updatedAuction = await Auction.findByIdAndUpdate(id, updateQuery, {
       new: true,
       runValidators: true,
     }).populate("seller", "username firstName lastName");

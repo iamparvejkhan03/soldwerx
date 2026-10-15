@@ -38,6 +38,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAiListingAssistant } from '../../hooks/useAiListingAssistant.jsx';
 import { extractYouTubeId } from '../../components/YouTubeEmbed.jsx';
 import { compressAuctionImages } from '../../utils/compressImage.js';
+import AuctionCommissionPicker, {
+    initialCommissionState,
+    validateCommissionState,
+    buildCommissionPayload,
+} from '../../components/AuctionCommissionPicker';
 
 // Drag and Drop item types
 const ItemTypes = {
@@ -369,6 +374,7 @@ const CreateAuction = () => {
     const { isAnalyzing, aiResult, analyzeImages, clearResult } = useAiListingAssistant();
 
     const [isCompressing, setIsCompressing] = useState(false);
+    const [commission, setCommission] = useState(initialCommissionState('create'));
 
     const {
         register,
@@ -633,6 +639,12 @@ const CreateAuction = () => {
             if (!overallValidationPassed) {
                 isValid = false;
             }
+
+            const commissionError = validateCommissionState(commission);
+            if (commissionError) {
+                toast.error(commissionError);
+                isValid = false;
+            }
         }
 
         if (!isValid) {
@@ -750,6 +762,11 @@ const CreateAuction = () => {
             uploadedDocuments.forEach((doc) => formData.append('documents', doc));
             uploadedServiceRecords.forEach((record) => formData.append('serviceRecords', record));
 
+            const commissionPayload = buildCommissionPayload(commission, 'create');
+            if (commissionPayload) {
+                formData.append('commission', commissionPayload);
+            }
+
             const { data } = await axiosInstance.post(
                 '/api/v1/auctions/create',
                 formData,
@@ -767,6 +784,7 @@ const CreateAuction = () => {
                 setSubCategories([]);
                 setSelectedParent(null);
                 reset();
+                setCommission(initialCommissionState('create'));
                 navigate('/admin/auctions/all');
             }
         } catch (error) {
@@ -1320,6 +1338,12 @@ const CreateAuction = () => {
                                                 {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
                                             </div>
                                         </div>}
+
+                                        <AuctionCommissionPicker
+                                            value={commission}
+                                            onChange={setCommission}
+                                            mode="create"
+                                        />
                                     </div>
                                 )}
 

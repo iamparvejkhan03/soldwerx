@@ -69,6 +69,7 @@ import StaffContainer from "./staff/Container";
 import HomeAuctionsSection from "./HomeAuctionsSection";
 import HomeEventsSection from "./HomeEventsSection";
 import PlaceBidModal from "./PlaceBidModal";
+import AuctionCommissionPicker from "./AuctionCommissionPicker";
 
 export {
     Container,
@@ -142,4 +143,5 @@ export {
     HomeAuctionsSection,
     HomeEventsSection,
     PlaceBidModal,
+    AuctionCommissionPicker,
 }

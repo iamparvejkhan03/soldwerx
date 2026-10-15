@@ -564,7 +564,7 @@ function WonAuctions() {
                                                 {auction?.depositStatus == "charged" && auction?.depositAmount > 0 && (
                                                     <span className="text-sm font-semibold text-green-600"> (- {formatCurrency(auction.depositAmount)})</span>
                                                 )}
-                                                {auction?.buyerFeeAmount && (
+                                                {auction?.buyerFeeAmount > 0 && auction?.buyerFeeType !== null && (
                                                     <span className="text-sm font-semibold text-green-600"> (+ {formatCurrency(auction.buyerFeeAmount)})</span>
                                                 )}
                                                 {auction?.taxAmount > 0 && (
@@ -572,7 +572,7 @@ function WonAuctions() {
                                                 )}
                                             </div>
                                             {/* <div className="text-sm text-gray-500">Winning Bid</div> */}
-                                            <div className="text-xs text-gray-500 max-w-sm">{auction?.depositStatus == "charged" && auction?.depositAmount > 0 && ' - Bid Deposit +'} Winning Amount + Buyer's Premimum + Tax</div>
+                                            <div className="text-xs text-gray-500 max-w-sm">Winning Amount {auction?.depositStatus == "charged" && auction?.depositAmount > 0 && ' - Bid Deposit'} {auction?.buyerFeeAmount > 0 && auction?.buyerFeeType !== null && " + Buyer's Premimum"} + Tax</div>
                                         </div>
                                     </div>
 

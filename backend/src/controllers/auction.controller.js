@@ -16,9 +16,14 @@ import {
   sendOutbidNotifications,
 } from "../utils/nodemailer.js";
 import Category from "../models/category.model.js";
-import Commission from "../models/commission.model.js";
+import { getGlobalCommissionSettings } from "../utils/commissionCalculator.js";
 import { processProxyBids } from "../services/proxyBidService.js";
 import { broadcastAuctionChange, broadcastAuctionRemoved } from "../services/realtimeService.js";
+import {
+  resolveCommissionInput,
+  buildGlobalCommission,
+  isCommissionLocked,
+} from "../utils/auctionCommission.js";
 
 // Create New Auction
 export const createAuction = async (req, res) => {
@@ -261,6 +266,29 @@ export const createAuction = async (req, res) => {
         }
       }
     }
+
+    // Resolve per-auction commission:
+    //   - Start from the live global snapshot for BOTH sides.
+    //   - Overlay any sides the admin explicitly set (saved / custom / none).
+    const globalCommission = await buildGlobalCommission();
+    const commission = {
+      buyer: globalCommission.buyer,
+      seller: globalCommission.seller,
+    };
+
+    if (req.body.commission !== undefined) {
+      const { error, sides } = await resolveCommissionInput(req.body.commission);
+      if (error) {
+        return res.status(400).json({ success: false, message: error });
+      }
+      for (const side of ["buyer", "seller"]) {
+        if (sides[side].action === "set") {
+          commission[side] = sides[side].value;
+        }
+        // 'keep' / 'global' on create means: keep the global snapshot above
+      }
+    }
+
     // Validate dates
     let start = null;
     let end = null;
@@ -311,6 +339,7 @@ export const createAuction = async (req, res) => {
         if (isAdmin && start > now) return "approved";
         return "draft";
       })(),
+      commission,
     };
 
     // Add bid increment for standard and reserve auctions
@@ -908,6 +937,10 @@ export const updateAuction = async (req, res) => {
         buyerFeeValue: 0,
         sellerFeeType: null,
         sellerFeeValue: 0,
+        buyerFeeBreakdown: [],
+        sellerFeeBreakdown: [],
+        buyerFeeStructureName: null,
+        sellerFeeStructureName: null,
         bidPaymentRequired: true,
         taxAmount: 0,
       };
@@ -1523,11 +1556,47 @@ export const updateAuction = async (req, res) => {
       updateData.buyerFeeValue = 0;
       updateData.sellerFeeType = null;
       updateData.sellerFeeValue = 0;
+      updateData.buyerFeeBreakdown = [];
+      updateData.sellerFeeBreakdown = [];
+      updateData.buyerFeeStructureName = null;
+      updateData.sellerFeeStructureName = null;
       updateData.bidPaymentRequired = true;
       updateData.taxAmount = 0;
     }
 
-    const updatedAuction = await Auction.findByIdAndUpdate(id, updateData, {
+    // Per-auction commission changes
+    const commissionUnset = {};
+    if (req.body.commission !== undefined) {
+      if (isCommissionLocked(auction.status)) {
+        return res.status(400).json({
+          success: false,
+          message: "This auction is sold. Its commission can't be changed.",
+        });
+      }
+
+      const { error, sides } = await resolveCommissionInput(req.body.commission);
+      if (error) {
+        return res.status(400).json({ success: false, message: error });
+      }
+
+      for (const side of ["buyer", "seller"]) {
+        const result = sides[side];
+        if (result.action === "keep") continue;
+        if (result.action === "global") {
+          // Remove this side's override so the auction follows the live global default again
+          commissionUnset[`commission.${side}`] = "";
+        } else if (result.action === "set") {
+          updateData[`commission.${side}`] = result.value;
+        }
+      }
+    }
+
+    const updateQuery = { $set: updateData };
+    if (Object.keys(commissionUnset).length > 0) {
+      updateQuery.$unset = commissionUnset;
+    }
+
+    const updatedAuction = await Auction.findByIdAndUpdate(id, updateQuery, {
       new: true,
       runValidators: true,
     }).populate("seller", "username firstName lastName");
@@ -2661,20 +2730,30 @@ export const getAuctionCommission = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Auction not found' });
     }
 
-    // Get global commission settings
-    const commission = await Commission.findOne();
+    const commission = await getGlobalCommissionSettings();
 
     res.status(200).json({
       success: true,
       data: {
         auctionId: auction._id,
         finalPrice: auction.finalPrice,
+
+        // What was actually charged (post-sale)
         buyerFeeAmount: auction.buyerFeeAmount,
         sellerFeeAmount: auction.sellerFeeAmount,
         buyerFeeType: auction.buyerFeeType,
         buyerFeeValue: auction.buyerFeeValue,
         sellerFeeType: auction.sellerFeeType,
         sellerFeeValue: auction.sellerFeeValue,
+        buyerFeeBreakdown: auction.buyerFeeBreakdown || [],
+        sellerFeeBreakdown: auction.sellerFeeBreakdown || [],
+        buyerFeeStructureName: auction.buyerFeeStructureName || null,
+        sellerFeeStructureName: auction.sellerFeeStructureName || null,
+
+        // Per-auction override (what the picker saved), if any
+        auctionCommission: auction.commission || null,
+
+        // Global defaults (for fallback / display)
         globalSettings: commission,
       },
     });

@@ -28,6 +28,7 @@ import { authAdmin } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/multer.middleware.js';
 import { getAdminTransactions, getTransactionStats } from '../controllers/transaction.controller.js';
 import { requirePermission } from '../middlewares/permission.middleware.js';
+import { guardCommissionInput } from '../middlewares/commissionInput.middleware.js';
 
 const AdminRouter = Router();
 
@@ -55,8 +56,7 @@ AdminRouter.put('/auctions/:id', authAdmin, requirePermission("manage_auctions")
     { name: 'photos' },
     { name: 'documents' },
     { name: 'serviceRecords' },
-]), updateAuction);
-
+]), guardCommissionInput, updateAuction);
 
 // Transaction Management - requires manage_transactions permission
 AdminRouter.get('/transactions', authAdmin, requirePermission("manage_transactions"), getAdminTransactions);

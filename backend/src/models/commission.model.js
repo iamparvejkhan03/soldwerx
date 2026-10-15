@@ -1,37 +1,34 @@
 import { Schema, model } from 'mongoose';
 
+/**
+ * GLOBAL commission settings (a single document).
+ * For each side (buyer / seller) the admin picks one CommissionStructure
+ * and can enable or disable the commission for that side.
+ *
+ * The old fields (buyerType, buyerValue, sellerType, sellerValue) have been removed.
+ * They are cleaned out of the existing document automatically the first time
+ * getGlobalCommissionSettings() runs (see utils/commissionCalculator.js).
+ */
 const commissionSchema = new Schema(
     {
-        // Buyer (bidder) commission settings
+        // Buyer (bidder) commission
         buyerEnabled: {
             type: Boolean,
             default: true,
         },
-        buyerType: {
-            type: String,
-            enum: ['fixed', 'percentage'],
-            default: 'percentage',
-        },
-        buyerValue: {
-            type: Number,
-            default: 5,
-            min: 0,
+        buyerStructure: {
+            type: Schema.Types.ObjectId,
+            ref: 'CommissionStructure',
         },
 
-        // Seller commission settings
+        // Seller commission
         sellerEnabled: {
             type: Boolean,
             default: true,
         },
-        sellerType: {
-            type: String,
-            enum: ['fixed', 'percentage'],
-            default: 'percentage',
-        },
-        sellerValue: {
-            type: Number,
-            default: 5,
-            min: 0,
+        sellerStructure: {
+            type: Schema.Types.ObjectId,
+            ref: 'CommissionStructure',
         },
 
         // Metadata

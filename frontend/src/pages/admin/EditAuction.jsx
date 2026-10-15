@@ -27,6 +27,11 @@ import toast from 'react-hot-toast';
 import axiosInstance from '../../utils/axiosInstance';
 import { extractYouTubeId } from '../../components/YouTubeEmbed';
 import { compressAuctionImages } from '../../utils/compressImage.js';
+import AuctionCommissionPicker, {
+    initialCommissionState,
+    validateCommissionState,
+    buildCommissionPayload,
+} from '../../components/AuctionCommissionPicker';
 
 // Drag and Drop item types
 const ItemTypes = {
@@ -404,6 +409,9 @@ const EditAuction = () => {
     const [uploadedDocumentCaptions, setUploadedDocumentCaptions] = useState([]);
 
     const [isCompressing, setIsCompressing] = useState(false);
+    const [commission, setCommission] = useState(initialCommissionState('edit'));
+    const [storedCommission, setStoredCommission] = useState(null);
+    const [auctionStatus, setAuctionStatus] = useState(null);
 
     const { auctionId } = useParams();
     const navigate = useNavigate();
@@ -642,6 +650,9 @@ const EditAuction = () => {
                         url: record.url
                     }));
                     setAllServiceRecords(existingServiceRecordsWithFlag);
+                    setStoredCommission(auction.commission || null);
+                    setAuctionStatus(auction.status);
+                    setCommission(initialCommissionState('edit'));
 
                     toast.success('Auction data loaded successfully');
                 }
@@ -726,6 +737,12 @@ const EditAuction = () => {
             const overallValidationPassed = await trigger(fieldsToValidate);
 
             if (!overallValidationPassed) {
+                isValid = false;
+            }
+
+            const commissionError = validateCommissionState(commission);
+            if (commissionError) {
+                toast.error(commissionError);
                 isValid = false;
             }
         }
@@ -1058,6 +1075,11 @@ const EditAuction = () => {
                     formDataToSend.append('serviceRecords', record.file);
                 }
             });
+
+            const commissionPayload = buildCommissionPayload(commission, 'edit');
+            if (commissionPayload) {
+                formDataToSend.append('commission', commissionPayload);
+            }
 
             const { data } = await axiosInstance.put(
                 `/api/v1/admin/auctions/${auctionId}`,
@@ -1692,6 +1714,14 @@ const EditAuction = () => {
                                                 {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>}
                                             </div>
                                         </div>}
+
+                                        <AuctionCommissionPicker
+                                            value={commission}
+                                            onChange={setCommission}
+                                            mode="edit"
+                                            status={auctionStatus}
+                                            stored={storedCommission}
+                                        />
                                     </div>
                                 )}
 

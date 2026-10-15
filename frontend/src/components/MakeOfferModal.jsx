@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { X, Banknote, MessageSquare, Package, Hand } from "lucide-react";
+import { X, Banknote } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { createPortal } from "react-dom";
+import {
+    fetchBuyerRule,
+    calculateBuyerFee,
+    formatCommissionLabel,
+} from "../utils/buyerCommission";
 
 const MakeOfferModal = ({
     isOpen,
@@ -12,41 +17,38 @@ const MakeOfferModal = ({
     offerMessage,
     setOfferMessage,
     loading,
-    auction
+    auction,
 }) => {
+    const [rule, setRule] = useState(null);
     const [serviceFee, setServiceFee] = useState(0);
-    const [commissionType, setCommissionType] = useState("percentage");
-    const [commissionValue, setCommissionValue] = useState(0);
 
+    // Fetch the effective buyer rule for THIS auction
     useEffect(() => {
-        if (!isOpen || !offerAmount) return;
+        if (!isOpen) return;
 
-        const getCommission = async () => {
+        let cancelled = false;
+        (async () => {
             try {
-                const { data } = await axiosInstance.get("/api/v1/commissions");
-                const commission = data?.data?.commission;
-
-                if (!commission) return;
-
-                setCommissionType(commission.commissionType);
-                setCommissionValue(commission.commissionValue);
-
-                const price = Number(offerAmount);
-
-                if (commission.commissionType === "fixed") {
-                    setServiceFee(Number(commission.commissionValue));
-                } else {
-                    setServiceFee(
-                        (price * Number(commission.commissionValue)) / 100
-                    );
-                }
+                const resolved = await fetchBuyerRule(auction, axiosInstance);
+                if (!cancelled) setRule(resolved);
             } catch (error) {
-                console.error("Error fetching commission:", error);
+                console.error("Failed to resolve buyer commission:", error);
+                if (!cancelled) setRule({ enabled: false, structure: null });
             }
-        };
+        })();
 
-        getCommission();
-    }, [isOpen, offerAmount]);
+        return () => { cancelled = true; };
+    }, [isOpen, auction]);
+
+    // Recalculate the fee as the user types
+    useEffect(() => {
+        if (!rule?.enabled || !rule.structure || !offerAmount) {
+            setServiceFee(0);
+            return;
+        }
+        const price = Number(offerAmount) || 0;
+        setServiceFee(calculateBuyerFee(rule.structure, price).amount);
+    }, [offerAmount, rule]);
 
     if (!isOpen) return null;
 
@@ -64,6 +66,8 @@ const MakeOfferModal = ({
 
     const isInvalidOffer =
         !offerAmount || parseFloat(offerAmount) < auction?.startPrice;
+
+    const commissionLabel = formatCommissionLabel(rule?.structure);
 
     return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -107,21 +111,25 @@ const MakeOfferModal = ({
                             />
                         </div>
 
-                        {auction?.startPrice && auction?.startPrice > 0 && <p className="text-xs text-gray-500 mt-1">
-                            Minimum offer: {formatUSD(auction?.startPrice)}
-                        </p>}
+                        {auction?.startPrice && auction?.startPrice > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Minimum offer: {formatUSD(auction?.startPrice)}
+                            </p>
+                        )}
                     </div>
 
                     {/* Fee Breakdown */}
-                    {offerAmount && !isInvalidOffer && (
-                        <div className="bg-gray-50 rounded-lg mb-6 space-y-2">
+                    {offerAmount && !isInvalidOffer && rule?.enabled && (
+                        <div className="bg-gray-50 rounded-lg mb-6 space-y-2 p-3">
                             <div className="flex justify-between text-gray-700">
                                 <span className="text-sm">Offer Amount</span>
                                 <span>{formatUSD(offerAmount)}</span>
                             </div>
 
                             <div className="flex justify-between text-gray-700">
-                                <span className="text-sm">Buyer's Premium</span>
+                                <span className="text-sm">
+                                    Buyer's Premium ({commissionLabel})
+                                </span>
                                 <span>{formatUSD(serviceFee)}</span>
                             </div>
 
@@ -131,30 +139,6 @@ const MakeOfferModal = ({
                             </div>
                         </div>
                     )}
-
-                    {/* Message */}
-                    {/* <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Message to Seller (Optional)
-                        </label>
-
-                        <div className="relative">
-                            <div className="absolute top-3 left-3">
-                                <MessageSquare className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <textarea
-                                value={offerMessage}
-                                onChange={(e) => setOfferMessage(e.target.value)}
-                                className="pl-10 block w-full border border-gray-300 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Add a message to the seller..."
-                                rows="2"
-                            />
-                        </div>
-
-                        <p className="text-sm text-gray-500 mt-1">
-                            Your offer will expire in 48 hours if not responded to.
-                        </p>
-                    </div> */}
 
                     {/* Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3">

@@ -286,7 +286,7 @@ const buildInvoiceTable = (invoiceData) => {
             `-$${invoiceData.depositCredit.toFixed(2)}`,
         ]);
     }
-    rows.push(["Total Amount Due", `$${invoiceData.total.toFixed(2)}`]);
+    rows.push(["Total Amount", `$${invoiceData.total.toFixed(2)}`]);
     rows.push(["Payment Status", invoiceData.paymentStatus.toUpperCase()]);
     if (invoiceData.paymentMethod && invoiceData.paymentMethod !== "N/A") {
         rows.push([

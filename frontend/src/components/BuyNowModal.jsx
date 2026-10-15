@@ -1,42 +1,52 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Package, AlertCircle, Gift } from "lucide-react";
+import { CheckCircle, XCircle, Package, Gift } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { createPortal } from "react-dom";
+import {
+    fetchBuyerRule,
+    calculateBuyerFee,
+    formatCommissionLabel,
+} from "../utils/buyerCommission";
 
 const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway }) => {
+    const [rule, setRule] = useState(null);
     const [serviceFee, setServiceFee] = useState(0);
-    const [commissionType, setCommissionType] = useState("percentage");
-    const [commissionValue, setCommissionValue] = useState(0);
 
     useEffect(() => {
-        // Don't fetch commission for giveaways
+        // Giveaways never carry a buyer fee — skip everything.
         if (isGiveaway) {
             setServiceFee(0);
+            setRule({ enabled: false, structure: null });
             return;
         }
 
         if (!isOpen || !auction?.buyNowPrice) return;
 
-        const fetchCommission = async () => {
+        let cancelled = false;
+        (async () => {
             try {
-                const { data } = await axiosInstance.get('/api/v1/commissions');
-                const commission = data.data.commission;
-                if (commission.buyerEnabled) {
-                    const fee = commission.buyerType === 'fixed'
-                        ? commission.buyerValue
-                        : (Number(auction?.buyNowPrice) * commission.buyerValue) / 100;
-                    setServiceFee(fee);
-                    setCommissionType(commission.buyerType);
-                    setCommissionValue(commission.buyerValue);
-                } else {
+                const resolved = await fetchBuyerRule(auction, axiosInstance);
+                if (cancelled) return;
+                setRule(resolved);
+
+                if (!resolved.enabled || !resolved.structure) {
+                    setServiceFee(0);
+                    return;
+                }
+                setServiceFee(
+                    calculateBuyerFee(resolved.structure, auction.buyNowPrice).amount
+                );
+            } catch (error) {
+                console.error("Failed to resolve buyer commission:", error);
+                if (!cancelled) {
+                    setRule({ enabled: false, structure: null });
                     setServiceFee(0);
                 }
-            } catch (error) {
-                console.error('Failed to fetch commission', error);
             }
-        };
-        fetchCommission();
-    }, [isOpen, auction?.buyNowPrice, isGiveaway]);
+        })();
+
+        return () => { cancelled = true; };
+    }, [isOpen, auction, auction?.buyNowPrice, isGiveaway]);
 
     if (!isOpen) return null;
 
@@ -49,12 +59,14 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
         ? 0
         : Number(auction?.buyNowPrice || 0) + Number(serviceFee);
 
+    const commissionLabel = formatCommissionLabel(rule?.structure);
+
     return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
                 <div className="p-6">
 
-                    {/* Header - Changes based on giveaway or buy now */}
+                    {/* Header */}
                     <div className="flex items-center gap-3 mb-4">
                         <div className={`p-2 rounded-full ${isGiveaway ? 'bg-purple-100' : 'bg-green-100'}`}>
                             {isGiveaway ? (
@@ -73,7 +85,7 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
                         </div>
                     </div>
 
-                    {/* Special Giveaway Message */}
+                    {/* Giveaway message */}
                     {isGiveaway && (
                         <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                             <p className="text-purple-700 text-sm">
@@ -83,7 +95,7 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
                         </div>
                     )}
 
-                    {/* Price Breakdown - Only show for non-giveaway */}
+                    {/* Price breakdown */}
                     {!isGiveaway && (
                         <div className="bg-gray-50 p-4 rounded-lg mb-6 space-y-3">
                             <div className="flex justify-between text-gray-700">
@@ -93,12 +105,14 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
                                 </span>
                             </div>
 
-                            <div className="flex justify-between text-gray-700">
-                                <span>Buyer's Premium</span>
-                                <span className="font-semibold">
-                                    {formatUSD(serviceFee)}
-                                </span>
-                            </div>
+                            {rule?.enabled && (
+                                <div className="flex justify-between text-gray-700">
+                                    <span>Buyer's Premium ({commissionLabel})</span>
+                                    <span className="font-semibold">
+                                        {formatUSD(serviceFee)}
+                                    </span>
+                                </div>
+                            )}
 
                             <div className="border-t pt-2 flex justify-between text-lg font-bold text-green-600">
                                 <span>Total Payable</span>
@@ -107,11 +121,9 @@ const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway 
                         </div>
                     )}
 
-                    {/* Action List - Updated for giveaway */}
+                    {/* Action List */}
                     <div className="mb-6">
-                        <p className="font-medium text-gray-700 mb-2">
-                            {isGiveaway ? 'This will:' : 'This will:'}
-                        </p>
+                        <p className="font-medium text-gray-700 mb-2">This will:</p>
                         <ul className="space-y-2 text-sm text-gray-600">
                             <li className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-green-500" />

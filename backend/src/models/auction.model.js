@@ -1,8 +1,9 @@
 import { model, Schema } from "mongoose";
 import mongoose from "mongoose";
 import agendaService from "../services/agendaService.js";
-import { calculateCommissions } from "../utils/commissionCalculator.js";
+import { applyCommissionToAuction } from "../utils/commissionCalculator.js";
 import { calculateTax } from "../utils/taxCalculator.js";
+import { commissionSideSchema } from "./commissionSide.model.js";
 
 // Create a separate schema for offers
 
@@ -68,6 +69,20 @@ const offerSchema = new Schema(
   {
     timestamps: true,
   },
+);
+
+/**
+ * Per-auction commission:
+ *   { buyer: {...}, seller: {...} }   — either side may be absent.
+ *   A side that is present is a SNAPSHOT (enabled + structure) and overrides the global.
+ *   A side that is absent follows the live global default.
+ */
+const auctionCommissionSchema = new Schema(
+  {
+    buyer: { type: commissionSideSchema, default: undefined },
+    seller: { type: commissionSideSchema, default: undefined },
+  },
+  { _id: false }
 );
 
 const auctionSchema = new Schema(
@@ -337,7 +352,7 @@ const auctionSchema = new Schema(
     },
     buyerFeeType: {
       type: String,
-      enum: ['fixed', 'percentage', null],
+      enum: ['fixed', 'percentage', 'tiered', null],
       default: null,
     },
     buyerFeeValue: {
@@ -346,12 +361,30 @@ const auctionSchema = new Schema(
     },
     sellerFeeType: {
       type: String,
-      enum: ['fixed', 'percentage', null],
+      enum: ['fixed', 'percentage', 'tiered', null],
       default: null,
     },
     sellerFeeValue: {
       type: Number,
       default: 0,
+    },
+    // Per-tier details of the fee that was charged (empty for flat commissions)
+    buyerFeeBreakdown: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    sellerFeeBreakdown: {
+      type: [Schema.Types.Mixed],
+      default: [],
+    },
+    // Name of the structure that was used when the fee was calculated
+    buyerFeeStructureName: {
+      type: String,
+      default: null,
+    },
+    sellerFeeStructureName: {
+      type: String,
+      default: null,
     },
 
     bidPaymentRequired: {
@@ -371,6 +404,10 @@ const auctionSchema = new Schema(
     taxValue: {
       type: Number,
       default: 0,
+    },
+    commission: {
+      type: auctionCommissionSchema,
+      default: undefined,
     },
 
     // Metadata
@@ -634,21 +671,7 @@ auctionSchema.methods.buyNow = async function (buyerId, buyerUsername) {
 
   // Calculate and store commission (only for non-giveaway)
   if (this.auctionType !== "giveaway") {
-    const {
-      buyerFeeAmount,
-      sellerFeeAmount,
-      buyerFeeType,
-      buyerFeeValue,
-      sellerFeeType,
-      sellerFeeValue,
-    } = await calculateCommissions(this.finalPrice);
-
-    this.buyerFeeAmount = buyerFeeAmount;
-    this.sellerFeeAmount = sellerFeeAmount;
-    this.buyerFeeType = buyerFeeType;
-    this.buyerFeeValue = buyerFeeValue;
-    this.sellerFeeType = sellerFeeType;
-    this.sellerFeeValue = sellerFeeValue;
+    await applyCommissionToAuction(this);
 
     const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
     this.taxAmount = taxAmount;
@@ -760,21 +783,7 @@ auctionSchema.methods.respondToOffer = async function (
       this.paymentStatus = 'pending';
 
       // Calculate and store commission
-      const {
-        buyerFeeAmount,
-        sellerFeeAmount,
-        buyerFeeType,
-        buyerFeeValue,
-        sellerFeeType,
-        sellerFeeValue,
-      } = await calculateCommissions(this.finalPrice);
-
-      this.buyerFeeAmount = buyerFeeAmount;
-      this.sellerFeeAmount = sellerFeeAmount;
-      this.buyerFeeType = buyerFeeType;
-      this.buyerFeeValue = buyerFeeValue;
-      this.sellerFeeType = sellerFeeType;
-      this.sellerFeeValue = sellerFeeValue;
+      await applyCommissionToAuction(this);
 
       const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
       this.taxAmount = taxAmount;
@@ -855,21 +864,7 @@ auctionSchema.methods.respondToCounterOffer = async function (offerId, accept) {
     this.paymentStatus = 'pending';
 
     // Calculate and store commission
-    const {
-      buyerFeeAmount,
-      sellerFeeAmount,
-      buyerFeeType,
-      buyerFeeValue,
-      sellerFeeType,
-      sellerFeeValue,
-    } = await calculateCommissions(this.finalPrice);
-
-    this.buyerFeeAmount = buyerFeeAmount;
-    this.sellerFeeAmount = sellerFeeAmount;
-    this.buyerFeeType = buyerFeeType;
-    this.buyerFeeValue = buyerFeeValue;
-    this.sellerFeeType = sellerFeeType;
-    this.sellerFeeValue = sellerFeeValue;
+    await applyCommissionToAuction(this);
 
     const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
     this.taxAmount = taxAmount;
@@ -972,21 +967,7 @@ auctionSchema.methods.reactivateAndAcceptOffer = async function (
   this.paymentStatus = 'pending';
 
   // Calculate and store commission
-  const {
-    buyerFeeAmount,
-    sellerFeeAmount,
-    buyerFeeType,
-    buyerFeeValue,
-    sellerFeeType,
-    sellerFeeValue,
-  } = await calculateCommissions(this.finalPrice);
-
-  this.buyerFeeAmount = buyerFeeAmount;
-  this.sellerFeeAmount = sellerFeeAmount;
-  this.buyerFeeType = buyerFeeType;
-  this.buyerFeeValue = buyerFeeValue;
-  this.sellerFeeType = sellerFeeType;
-  this.sellerFeeValue = sellerFeeValue;
+  await applyCommissionToAuction(this);
 
   // Calculate and store tax
   const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
@@ -1095,21 +1076,7 @@ auctionSchema.methods.endAuction = async function () {
       wasSold = true;
       this.paymentStatus = 'pending';
 
-      const {
-        buyerFeeAmount,
-        sellerFeeAmount,
-        buyerFeeType,
-        buyerFeeValue,
-        sellerFeeType,
-        sellerFeeValue,
-      } = await calculateCommissions(this.finalPrice);
-
-      this.buyerFeeAmount = buyerFeeAmount;
-      this.sellerFeeAmount = sellerFeeAmount;
-      this.buyerFeeType = buyerFeeType;
-      this.buyerFeeValue = buyerFeeValue;
-      this.sellerFeeType = sellerFeeType;
-      this.sellerFeeValue = sellerFeeValue;
+      await applyCommissionToAuction(this);
 
       const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
       this.taxAmount = taxAmount;
@@ -1124,21 +1091,7 @@ auctionSchema.methods.endAuction = async function () {
         wasSold = true;
         this.paymentStatus = 'pending';
 
-        const {
-          buyerFeeAmount,
-          sellerFeeAmount,
-          buyerFeeType,
-          buyerFeeValue,
-          sellerFeeType,
-          sellerFeeValue,
-        } = await calculateCommissions(this.finalPrice);
-
-        this.buyerFeeAmount = buyerFeeAmount;
-        this.sellerFeeAmount = sellerFeeAmount;
-        this.buyerFeeType = buyerFeeType;
-        this.buyerFeeValue = buyerFeeValue;
-        this.sellerFeeType = sellerFeeType;
-        this.sellerFeeValue = sellerFeeValue;
+        await applyCommissionToAuction(this);
 
         const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
         this.taxAmount = taxAmount;
@@ -1156,21 +1109,7 @@ auctionSchema.methods.endAuction = async function () {
         wasSold = true;
         this.paymentStatus = 'pending';
 
-        const {
-          buyerFeeAmount,
-          sellerFeeAmount,
-          buyerFeeType,
-          buyerFeeValue,
-          sellerFeeType,
-          sellerFeeValue,
-        } = await calculateCommissions(this.finalPrice);
-
-        this.buyerFeeAmount = buyerFeeAmount;
-        this.sellerFeeAmount = sellerFeeAmount;
-        this.buyerFeeType = buyerFeeType;
-        this.buyerFeeValue = buyerFeeValue;
-        this.sellerFeeType = sellerFeeType;
-        this.sellerFeeValue = sellerFeeValue;
+        await applyCommissionToAuction(this);
 
         const { taxAmount, taxType, taxValue } = await calculateTax(this.finalPrice);
         this.taxAmount = taxAmount;

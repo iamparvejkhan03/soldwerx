@@ -1,43 +1,44 @@
 import { forwardRef, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { createPortal } from "react-dom";
+import {
+    fetchBuyerRule,
+    calculateBuyerFee,
+    formatCommissionLabel,
+} from "../utils/buyerCommission";
 
 const BidConfirmationModal = forwardRef((props, ref) => {
-    const {
-        isOpen,
-        onClose,
-        onConfirm,
-        auction,
-        bidAmount
-    } = props;
+    const { isOpen, onClose, onConfirm, auction, bidAmount } = props;
 
-    const [commissionType, setCommissionType] = useState("percentage");
-    const [commissionValue, setCommissionValue] = useState(0);
+    const [rule, setRule] = useState(null);
     const [serviceFee, setServiceFee] = useState(0);
 
-    // Inside component
     useEffect(() => {
         if (!isOpen) return;
-        const fetchCommission = async () => {
+
+        let cancelled = false;
+        (async () => {
             try {
-                const { data } = await axiosInstance.get('/api/v1/commissions');
-                const commission = data.data.commission;
-                if (commission.buyerEnabled) {
-                    const fee = commission.buyerType === 'fixed'
-                        ? commission.buyerValue
-                        : (Number(bidAmount) * commission.buyerValue) / 100;
-                    setServiceFee(fee);
-                    setCommissionType(commission.buyerType);
-                    setCommissionValue(commission.buyerValue);
-                } else {
+                const resolved = await fetchBuyerRule(auction, axiosInstance);
+                if (cancelled) return;
+                setRule(resolved);
+
+                if (!resolved.enabled || !resolved.structure) {
+                    setServiceFee(0);
+                    return;
+                }
+                setServiceFee(calculateBuyerFee(resolved.structure, bidAmount).amount);
+            } catch (error) {
+                console.error("Failed to resolve buyer commission:", error);
+                if (!cancelled) {
+                    setRule({ enabled: false, structure: null });
                     setServiceFee(0);
                 }
-            } catch (error) {
-                console.error('Failed to fetch commission', error);
             }
-        };
-        fetchCommission();
-    }, [isOpen, bidAmount]);
+        })();
+
+        return () => { cancelled = true; };
+    }, [isOpen, bidAmount, auction]);
 
     if (!isOpen) return null;
 
@@ -47,6 +48,7 @@ const BidConfirmationModal = forwardRef((props, ref) => {
     };
 
     const total = Number(bidAmount) + Number(serviceFee);
+    const commissionLabel = formatCommissionLabel(rule?.structure);
 
     return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
@@ -83,12 +85,16 @@ const BidConfirmationModal = forwardRef((props, ref) => {
                                     {formatUSD(bidAmount)}
                                 </td>
                             </tr>
-                            <tr>
-                                <td className="py-2 text-gray-600">Buyer's Premium ({commissionType == 'percentage' ? `${commissionValue}%` : `$${commissionValue}`}):</td>
-                                <td className="py-2 text-right text-gray-900">
-                                    {formatUSD(serviceFee)}
-                                </td>
-                            </tr>
+                            {rule?.enabled && (
+                                <tr>
+                                    <td className="py-2 text-gray-600">
+                                        Buyer's Premium ({commissionLabel}):
+                                    </td>
+                                    <td className="py-2 text-right text-gray-900">
+                                        {formatUSD(serviceFee)}
+                                    </td>
+                                </tr>
+                            )}
                             <tr className="border-t border-gray-200">
                                 <td className="py-3 font-semibold text-gray-900">Total:</td>
                                 <td className="py-3 text-right font-semibold text-gray-900">
@@ -97,7 +103,11 @@ const BidConfirmationModal = forwardRef((props, ref) => {
                             </tr>
                         </tbody>
                     </table>
-                    <p className="text-xs text-gray-500 text-center">Note: {commissionType == 'percentage' ? `${commissionValue}%` : `$${commissionValue}`} buyer's premium will be applied on the winning bid amount.</p>
+                    {rule?.enabled && (
+                        <p className="text-xs text-gray-500 text-center">
+                            Note: {commissionLabel} buyer's premium will be applied on the winning bid amount.
+                        </p>
+                    )}
                 </div>
 
                 {/* Information Text */}

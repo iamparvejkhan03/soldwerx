@@ -21,6 +21,7 @@ import {
 } from '../controllers/auction.controller.js';
 import upload from '../middlewares/multer.middleware.js';
 import { auth, authBidder, authSeller } from '../middlewares/auth.middleware.js';
+import { guardCommissionInput } from '../middlewares/commissionInput.middleware.js';
 
 const auctionRouter = Router();
 
@@ -29,13 +30,13 @@ auctionRouter.post('/create', authSeller, upload.fields([
     { name: 'photos' },
     { name: 'documents' },
     { name: 'serviceRecords' },
-]), createAuction);
+]), guardCommissionInput, createAuction);
 
 auctionRouter.put('/update/:id', authSeller, upload.fields([
     { name: 'photos' },
     { name: 'documents' },
     { name: 'serviceRecords' },
-]), updateAuction);
+]), guardCommissionInput, updateAuction);
 auctionRouter.delete('/delete/:id', authSeller, deleteAuction);
 auctionRouter.post('/bid/:id', authBidder, placeBid);
 auctionRouter.get('/user/my-auctions', authSeller, getUserAuctions);

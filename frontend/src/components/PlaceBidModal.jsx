@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { X, Gavel, Banknote } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { createPortal } from "react-dom";
+import {
+    fetchBuyerRule,
+    calculateBuyerFee,
+    formatCommissionLabel,
+} from "../utils/buyerCommission";
 
 const PlaceBidModal = ({
     isOpen,
@@ -12,8 +17,7 @@ const PlaceBidModal = ({
     loading = false,
 }) => {
     const [amount, setAmount] = useState("");
-    const [commissionType, setCommissionType] = useState("percentage");
-    const [commissionValue, setCommissionValue] = useState(0);
+    const [rule, setRule] = useState(null);          // { enabled, structure, source }
     const [serviceFee, setServiceFee] = useState(0);
 
     // Seed input when modal opens
@@ -23,35 +27,33 @@ const PlaceBidModal = ({
         }
     }, [isOpen, bidAmount]);
 
-    // Fetch commission settings once per open
+    // Fetch the effective buyer rule for THIS auction (per-auction or global)
     useEffect(() => {
         if (!isOpen) return;
 
-        const fetchCommission = async () => {
+        let cancelled = false;
+        (async () => {
             try {
-                const { data } = await axiosInstance.get("/api/v1/commissions");
-                const commission = data?.data?.commission;
-                if (!commission) return;
-
-                setCommissionType(commission.buyerType || commission.commissionType || "percentage");
-                setCommissionValue(commission.buyerValue ?? commission.commissionValue ?? 0);
+                const resolved = await fetchBuyerRule(auction, axiosInstance);
+                if (!cancelled) setRule(resolved);
             } catch (error) {
-                console.error("Failed to fetch commission:", error);
+                console.error("Failed to resolve buyer commission:", error);
+                if (!cancelled) setRule({ enabled: false, structure: null });
             }
-        };
+        })();
 
-        fetchCommission();
-    }, [isOpen]);
+        return () => { cancelled = true; };
+    }, [isOpen, auction]);
 
     // Recalculate fee client-side as user types
     useEffect(() => {
-        const price = Number(amount) || 0;
-        if (commissionType === "fixed") {
-            setServiceFee(Number(commissionValue));
-        } else {
-            setServiceFee((price * Number(commissionValue)) / 100);
+        if (!rule?.enabled || !rule.structure) {
+            setServiceFee(0);
+            return;
         }
-    }, [amount, commissionType, commissionValue]);
+        const price = Number(amount) || 0;
+        setServiceFee(calculateBuyerFee(rule.structure, price).amount);
+    }, [amount, rule]);
 
     if (!isOpen) return null;
 
@@ -75,6 +77,8 @@ const PlaceBidModal = ({
         if (isInvalidBid) return;
         onConfirm?.(amount);
     };
+
+    const commissionLabel = formatCommissionLabel(rule?.structure);
 
     return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
@@ -125,7 +129,7 @@ const PlaceBidModal = ({
                     </div>
 
                     {/* Fee Breakdown */}
-                    {amount && !isInvalidBid && (
+                    {amount && !isInvalidBid && rule?.enabled && (
                         <div className="bg-gray-50 rounded-lg mb-6 space-y-2">
                             <div className="flex justify-between text-gray-700">
                                 <span className="text-sm">Bid Amount</span>
@@ -134,11 +138,7 @@ const PlaceBidModal = ({
 
                             <div className="flex justify-between text-gray-700">
                                 <span className="text-sm">
-                                    Buyer's Premium (
-                                    {commissionType === "percentage"
-                                        ? `${commissionValue}%`
-                                        : formatUSD(commissionValue)}
-                                    )
+                                    Buyer's Premium ({commissionLabel})
                                 </span>
                                 <span>{formatUSD(serviceFee)}</span>
                             </div>
@@ -153,19 +153,6 @@ const PlaceBidModal = ({
                             </p>
                         </div>
                     )}
-
-                    {/* Info text */}
-                    {/* <p className="text-sm text-gray-600 mb-6">
-                        For more info,{" "}
-                        <a href="/faqs" className="text-blue-600 hover:text-blue-800 underline">
-                            read about FAQs
-                        </a>{" "}
-                        or{" "}
-                        <a href="/contact" className="text-blue-600 hover:text-blue-800 underline">
-                            contact us
-                        </a>{" "}
-                        with any questions.
-                    </p> */}
 
                     {/* Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3">
