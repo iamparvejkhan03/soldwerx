@@ -6,7 +6,7 @@ import {
     fetchBuyerRule,
     calculateBuyerFee,
     formatCommissionLabel,
-} from "../utils/buyerCommission";
+} from "../utils/buyerCommission.js";
 
 const MakeOfferModal = ({
     isOpen,

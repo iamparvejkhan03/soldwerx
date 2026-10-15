@@ -6,7 +6,7 @@ import {
     fetchBuyerRule,
     calculateBuyerFee,
     formatCommissionLabel,
-} from "../utils/buyerCommission";
+} from "../utils/buyerCommission.js";
 
 const BuyNowModal = ({ isOpen, onClose, onConfirm, auction, loading, isGiveaway }) => {
     const [rule, setRule] = useState(null);
