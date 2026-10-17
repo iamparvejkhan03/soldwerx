@@ -11,6 +11,7 @@ import {
     uploadDocumentToCloudinary,
     deleteFromCloudinary,
 } from "../utils/cloudinary.js";
+import { notifyUser } from '../services/notificationService.js';
 
 // Get seller payout methods
 export const getPayoutMethods = async (req, res) => {
@@ -703,6 +704,14 @@ export const initiatePayout = async (req, res) => {
             console.error("Failed to send payout initiated email:", error),
         );
 
+        notifyUser(seller._id, 'PAYOUT_INITIATED', {
+            title: 'Payout initiated',
+            message: `Your payout of $${sellerAmount.toLocaleString()} for "${auction.title}" is being processed.`,
+            actionUrl: `/seller/payouts`,
+            relatedEntity: { type: 'Payout', id: payout._id },
+            metadata: { amount: sellerAmount, auctionId: auction._id, method: payoutMethod },
+        }).catch((err) => console.error('notify PAYOUT_INITIATED:', err));
+
         res.status(201).json({
             success: true,
             message: "Payout initiated successfully",
@@ -776,6 +785,14 @@ export const completePayout = async (req, res) => {
 
         await payout.save();
 
+        notifyUser(payout.seller._id || payout.seller, 'PAYOUT_COMPLETED', {
+            title: 'Payout completed',
+            message: `$${payout.sellerAmount.toLocaleString()} has been sent to your ${payout.payoutMethod} account.`,
+            actionUrl: `/seller/payouts`,
+            relatedEntity: { type: 'Payout', id: payout._id },
+            metadata: { amount: payout.sellerAmount, method: payout.payoutMethod, transactionId: payout.transactionId },
+        }).catch((err) => console.error('notify PAYOUT_COMPLETED:', err));
+
         // Send email notification to seller
         payoutCompletedEmail(payout.seller, payout.auction, payout).catch((error) =>
             console.error("Failed to send payout completed email:", error),
@@ -832,6 +849,14 @@ export const failPayout = async (req, res) => {
         payoutFailedEmail(payout.seller, payout).catch((error) =>
             console.error("Failed to send payout failed email:", error),
         );
+
+        notifyUser(payout.seller._id || payout.seller, 'PAYOUT_FAILED', {
+            title: 'Payout issue',
+            message: `We couldn't process your payout. Reason: ${payout.failureReason}.`,
+            actionUrl: `/seller/payout-methods`,
+            relatedEntity: { type: 'Payout', id: payout._id },
+            metadata: { failureReason: payout.failureReason, amount: payout.sellerAmount },
+        }).catch((err) => console.error('notify PAYOUT_FAILED:', err));
 
         res.status(200).json({
             success: true,

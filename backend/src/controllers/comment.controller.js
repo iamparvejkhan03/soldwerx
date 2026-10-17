@@ -2,6 +2,11 @@ import Comment from '../models/comment.model.js';
 import Auction from '../models/auction.model.js';
 import { flaggedCommentAdminEmail, newCommentBidderEmail, newCommentSellerEmail } from '../utils/nodemailer.js';
 import User from '../models/user.model.js';
+import {
+    notifyUser,
+    createBulkNotifications,
+    notifyAdminsAndStaffWithPermission,
+} from '../services/notificationService.js';
 
 // Add a new comment
 export const addComment = async (req, res) => {
@@ -71,14 +76,47 @@ export const addComment = async (req, res) => {
         // Populate the auction's seller
         await populatedComment.auction.populate('seller', 'email username firstName');
 
+        // ─── In-app notifications ────────────────────────────
+        const auctionUrl = `/auction/${auctionId}#comments`;
+        const sellerId = populatedComment.auction.seller._id;
+
+        // Notify seller if commenter is not the seller
+        if (sellerId.toString() !== userId.toString()) {
+            notifyUser(sellerId, 'NEW_COMMENT', {
+                title: `New comment on "${populatedComment.auction.title}"`,
+                message: `${req.user.username}: "${content.slice(0, 120)}"`,
+                actionUrl: auctionUrl,
+                relatedEntity: { type: 'Comment', id: comment._id },
+                metadata: { commentId: comment._id, auctionId },
+            }).catch((err) => console.error('notify NEW_COMMENT (seller):', err));
+        }
+
+        // Notify previous commenters (excluding seller & current user)
+        const otherIds = commenterUsers
+            .map((u) => u._id)
+            .filter(
+                (uid) =>
+                    uid.toString() !== userId.toString() &&
+                    uid.toString() !== sellerId.toString()
+            );
+        if (otherIds.length > 0) {
+            createBulkNotifications(otherIds, 'NEW_COMMENT', {
+                title: `New reply on "${populatedComment.auction.title}"`,
+                message: `${req.user.username}: "${content.slice(0, 120)}"`,
+                actionUrl: auctionUrl,
+                relatedEntity: { type: 'Comment', id: comment._id },
+                metadata: { commentId: comment._id, auctionId },
+            }).catch((err) => console.error('notify NEW_COMMENT (others):', err));
+        }
+
         // 1. Notify the seller (if comment author is not the seller)
         if (populatedComment.auction.seller._id.toString() !== userId.toString()) {
-            await newCommentSellerEmail(
+            newCommentSellerEmail(
                 populatedComment.auction.seller,
                 populatedComment.auction,
                 populatedComment,
                 populatedComment.user
-            );
+            ).catch(err => console.log(`failed to send new comment seller email: `, err));
         }
 
         // Get previous commenters
@@ -91,8 +129,6 @@ export const addComment = async (req, res) => {
             _id: { $in: previousCommenters },
         });
 
-        console.log(`Found ${commenterUsers.length} commenters with alerts enabled`);
-
         for (const commenter of commenterUsers) {
             // Simple check - just make sure it's not the seller or current user
             const isSeller = commenter._id.toString() === populatedComment.auction.seller._id.toString();
@@ -100,12 +136,12 @@ export const addComment = async (req, res) => {
 
             if (!isSeller && !isCurrentUser) {
                 console.log(`Sending comment notification to: ${commenter.email}`);
-                await newCommentBidderEmail(
+                newCommentBidderEmail(
                     commenter,
                     populatedComment.auction,
                     populatedComment,
                     populatedComment.user
-                );
+                ).catch(err => console.log(`failed to send new comment bidder email to ${commenter.email}: `, err));
             }
         }
 
@@ -391,6 +427,15 @@ export const flagComment = async (req, res) => {
 
         await comment.save();
 
+        // ─── In-app admin notification ───────────────────────────
+        notifyAdminsAndStaffWithPermission('ADMIN_FLAGGED_COMMENT', {
+            title: 'Comment flagged for review',
+            message: `Reason: ${reason || 'Inappropriate content'}`,
+            actionUrl: `/admin/comments`,
+            relatedEntity: { type: 'Comment', id: commentId },
+            metadata: { reason: reason || 'Inappropriate content', auctionId: comment.auction },
+        }).catch((err) => console.error('notify ADMIN_FLAGGED_COMMENT:', err));
+
         res.status(200).json({
             success: true,
             message: 'Comment flagged for moderation',
@@ -406,13 +451,13 @@ export const flagComment = async (req, res) => {
         const reportedByUser = req.user;
 
         for (const admin of adminUsers) {
-            await flaggedCommentAdminEmail(
+            flaggedCommentAdminEmail(
                 admin.email,
                 reason || 'Inappropriate content',
                 commentWithAuction,
                 commentWithAuction.auction,
                 reportedByUser
-            );
+            ).catch(err => console.log(`failed to send flagged comment admin email to ${admin.email}: `, err));
         }
 
     } catch (error) {

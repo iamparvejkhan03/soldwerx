@@ -5,9 +5,13 @@ import User from '../models/user.model.js';
 import { StripeService } from '../services/stripeService.js';
 import { calculateCommissions } from '../utils/commissionCalculator.js';
 import Stripe from 'stripe';
-import { cardPaymentCompletedAdminEmail, paymentCompletedEmail, paymentCompletedSellerEmail } from '../utils/nodemailer.js';
+import { cardPaymentCompletedAdminEmail } from '../utils/nodemailer.js';
 import agendaService from '../services/agendaService.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import {
+    notifyUser,
+    notifyAdminsAndStaffWithPermission,
+} from '../services/notificationService.js';
 
 export const createBidPaymentIntent = async (req, res) => {
     try {
@@ -518,6 +522,38 @@ export const confirmWinnerPayment = async (req, res) => {
                 auction.depositStatus = 'credited';
             }
             await auction.save();
+
+            // ─── In-app notifications ────────────────────────────
+            const buyerId = userId;
+            const sellerId = auction.seller?._id || auction.seller;
+            const totalAmount = bidPayment.totalAmount;
+
+            // Buyer
+            notifyUser(buyerId, 'PAYMENT_CONFIRMED', {
+                title: 'Payment confirmed',
+                message: `Your payment of $${totalAmount.toLocaleString()} for "${auction.title}" was successful.`,
+                actionUrl: `/bidder/payments`,
+                relatedEntity: { type: 'Auction', id: auction._id },
+                metadata: { amount: totalAmount, paymentIntentId },
+            }).catch((err) => console.error('notify PAYMENT_CONFIRMED:', err));
+
+            // Seller
+            notifyUser(sellerId, 'BUYER_PAID', {
+                title: `Buyer paid for "${auction.title}"`,
+                message: `The buyer has completed payment. Funds are ready for payout.`,
+                actionUrl: `/seller/payouts`,
+                relatedEntity: { type: 'Auction', id: auction._id },
+                metadata: { amount: totalAmount },
+            }).catch((err) => console.error('notify BUYER_PAID:', err));
+
+            // Admins
+            notifyAdminsAndStaffWithPermission('ADMIN_CARD_PAYMENT_COMPLETED', {
+                title: `Card payment completed — "${auction.title}"`,
+                message: `$${totalAmount.toLocaleString()} via Stripe`,
+                actionUrl: `/admin/transactions`,
+                relatedEntity: { type: 'Auction', id: auction._id },
+                metadata: { amount: totalAmount, paymentIntentId, buyerId },
+            }).catch((err) => console.error('notify ADMIN_CARD_PAYMENT_COMPLETED:', err));
 
             // ---- Notify all admins that card payment succeeded ----
             try {

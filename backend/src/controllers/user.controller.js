@@ -10,6 +10,7 @@ import crypto from "crypto";
 import BidPayment from "../models/bidPayment.model.js";
 import { deleteFromCloudinary, uploadDocumentToCloudinary, uploadImageToCloudinary } from "../utils/cloudinary.js";
 import Stripe from 'stripe';
+import { notifyAdminsAndStaffWithPermission } from '../services/notificationService.js';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -231,12 +232,25 @@ export const registerUser = async (req, res) => {
 
     // ---- Non-bidder: complete immediately ----
     await generateTokensAndRespond(user, req, res, "Registration successful");
-    await welcomeEmail(user);
+    welcomeEmail(user).catch((err) =>
+      console.error(`Failed to send user welcome email to ${user?.email}:`, err)
+    );;
 
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
-      await newUserRegistrationEmail(admin.email, user);
+      newUserRegistrationEmail(admin.email, user).catch((err) =>
+        console.error(`Failed to send new use admin email to ${admin?.email}:`, err)
+      );
     }
+
+    // In-app admin notification
+    notifyAdminsAndStaffWithPermission('ADMIN_NEW_USER_REGISTERED', {
+      title: 'New user registered',
+      message: `${user.firstName} ${user.lastName} (${user.userType}) — ${user.email}`,
+      actionUrl: `/admin/users`,
+      relatedEntity: { type: 'User', id: user._id },
+      metadata: { userId: user._id, userType: user.userType, email: user.email },
+    }).catch((err) => console.error('notify ADMIN_NEW_USER_REGISTERED:', err));
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
@@ -314,11 +328,23 @@ export const completeRegistration = async (req, res) => {
     user.pendingSetupIntentId = undefined;
     await user.save();
 
-    await welcomeEmail(user);
+    welcomeEmail(user).catch((err) =>
+      console.error(`Failed to send welcome email to ${user?.email}:`, err)
+    );
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
-      await newUserRegistrationEmail(admin.email, user);
+      newUserRegistrationEmail(admin.email, user).catch((err) =>
+        console.error(`Failed to send new user admin email to ${admin.email}:`, err)
+      );
     }
+
+    notifyAdminsAndStaffWithPermission('ADMIN_NEW_USER_REGISTERED', {
+      title: 'New user registered',
+      message: `${user.firstName} ${user.lastName} — ${user.email}`,
+      actionUrl: `/admin/users`,
+      relatedEntity: { type: 'User', id: user._id },
+      metadata: { userId: user._id, userType: user.userType, email: user.email },
+    }).catch((err) => console.error('notify ADMIN_NEW_USER_REGISTERED (bidder):', err));
 
     await generateTokensAndRespond(user, req, res, "Registration successful");
   } catch (error) {
@@ -434,14 +460,33 @@ export const refreshAccessToken = async (req, res) => {
     user.refreshToken = newRefreshToken;
     await user.save({ validateBeforeSave: false });
 
-    res.status(200).json({
-      success: true,
-      message: "Access token refreshed",
-      data: {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      },
-    });
+    // ← FIX B: mirror the login behaviour — set httpOnly cookies too.
+    // The frontend also stores tokens in localStorage (Bearer auth), so
+    // this is a belt-and-braces addition that makes the cookies always
+    // match the freshest tokens. Sockets and any cookie-authenticated
+    // path now stay in sync across silent refreshes.
+    res
+      .status(200)
+      .cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 60 * 1000, // 30 minutes
+      })
+      .cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      })
+      .json({
+        success: true,
+        message: "Access token refreshed",
+        data: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        },
+      });
   } catch (error) {
     console.error("Token refresh error:", error);
 

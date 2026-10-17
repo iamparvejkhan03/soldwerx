@@ -21,6 +21,7 @@ import { Link, NavLink } from "react-router-dom";
 import { logo } from "../../assets";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../hooks/useNotifications";
 
 const navigation = [
     { name: 'Dashboard', path: '/seller/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -35,6 +36,7 @@ const navigation = [
     { name: 'Payout Methods', path: '/seller/payout-methods', icon: <BanknoteArrowUp size={20} /> },
     { name: 'Payouts', path: '/seller/payouts', icon: <BanknoteArrowDown size={20} /> },
     // { name: 'Billing', path: '/seller/billing', icon: <CreditCard size={20} /> },
+    { name: 'Notifications', path: '/seller/notifications', icon: <Bell size={20} /> },
     { name: 'Profile', path: '/seller/profile', icon: <User size={20} /> },
 ];
 
@@ -42,6 +44,7 @@ function Sidebar() {
     const { logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const { unreadCount } = useNotifications();
 
     // Handle window resize
     useEffect(() => {
@@ -94,62 +97,68 @@ function Sidebar() {
 
             {/* Sidebar */}
             <aside
-    className={`
+                className={`
         fixed md:relative w-64 bg-[#080A0D] text-white
         h-dvh md:h-auto md:min-h-screen
         flex flex-col z-50
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}
->
-    {/* ── Fixed header ── */}
-    <div className="shrink-0 px-4 pt-4 pb-3 mb-2 border-b border-white/10 flex items-center justify-between">
-        <Link to="/">
-            <img src={logo} className="h-12 md:h-14" alt="logo" />
-        </Link>
-        <button
-            onClick={() => setIsOpen(false)}
-            className="md:hidden text-white"
-        >
-            <X size={24} />
-        </button>
-    </div>
-
-    {/* ── Scrollable middle: the link list ── */}
-    <nav className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 [-webkit-overflow-scrolling:touch]">
-        <ul className="space-y-2">
-            {navigation.map((link, i) => (
-                <li key={i}>
-                    <NavLink
-                        to={link.path}
-                        onClick={() => isMobile && setIsOpen(false)}
-                        className={({ isActive }) =>
-                            `flex items-center p-3 rounded-lg transition-all duration-200 ${
-                                isActive
-                                    ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
-                                    : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
-                            }`
-                        }
+            >
+                {/* ── Fixed header ── */}
+                <div className="shrink-0 px-4 pt-4 pb-3 mb-2 border-b border-white/10 flex items-center justify-between">
+                    <Link to="/">
+                        <img src={logo} className="h-12 md:h-14" alt="logo" />
+                    </Link>
+                    <button
+                        onClick={() => setIsOpen(false)}
+                        className="md:hidden text-white"
                     >
-                        <span className="mr-3">{link.icon}</span>
-                        <span>{link.name}</span>
-                    </NavLink>
-                </li>
-            ))}
-        </ul>
-    </nav>
+                        <X size={24} />
+                    </button>
+                </div>
 
-    {/* ── Fixed footer: Logout ── */}
-    <div className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-white/10">
-        <button
-            onClick={logout}
-            className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
-        >
-            <LogOut size={20} className="mr-3" />
-            <span>Log Out</span>
-        </button>
-    </div>
-</aside>
+                {/* ── Scrollable middle: the link list ── */}
+                <nav className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 [-webkit-overflow-scrolling:touch]">
+                    <ul className="space-y-2">
+                        {navigation.map((link, i) => (
+                            <li key={i}>
+                                <NavLink
+                                    to={link.path}
+                                    onClick={() => isMobile && setIsOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center p-3 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-[#F5B51B] text-black shadow-lg shadow-[#F5B51B]/20'
+                                            : 'text-white hover:bg-[#F5B51B]/90 hover:text-black'
+                                        }`
+                                    }
+                                >
+                                    <span className="mr-3">{link.icon}</span>
+                                    <span className="flex items-center justify-between flex-1">
+                                        <span>{link.name}</span>
+                                        {link.name === 'Notifications' && unreadCount > 0 && (
+                                            <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold rounded-full bg-[#F5B51B] text-black">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </NavLink>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
+                {/* ── Fixed footer: Logout ── */}
+                <div className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-white/10">
+                    <button
+                        onClick={logout}
+                        className="flex items-center w-full p-3 rounded-lg text-white hover:bg-red-600 transition-all duration-200"
+                    >
+                        <LogOut size={20} className="mr-3" />
+                        <span>Log Out</span>
+                    </button>
+                </div>
+            </aside>
         </>
     );
 }

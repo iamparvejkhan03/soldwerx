@@ -99,7 +99,7 @@ const notifyOutbid = async (auctionId, outbidUserId, newBidderId, newAmount) => 
         );
         if (!auction) return;
 
-        await sendOutbidNotifications(
+        sendOutbidNotifications(
             auction,
             outbidUserId,
             [outbidUserId],           // notify only this user

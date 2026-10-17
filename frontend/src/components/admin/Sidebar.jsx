@@ -37,6 +37,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { logo } from "../../assets";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../hooks/useNotifications";
 
 const navigation = [
     {
@@ -148,6 +149,11 @@ const navigation = [
         permission: 'manage_inquiries'
     },
     {
+        name: 'Notifications',
+        path: '/admin/notifications',
+        icon: <Bell size={20} />,
+    },
+    {
         name: 'Profile',
         path: '/admin/profile',
         icon: <UserCircle size={20} />,
@@ -161,6 +167,7 @@ function Sidebar() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [expandedMenus, setExpandedMenus] = useState([]);
     const { logout } = useAuth();
+    const { unreadCount } = useNotifications();
 
     // Handle window resize
     useEffect(() => {
@@ -268,7 +275,14 @@ function Sidebar() {
                                         >
                                             <div className="flex items-center">
                                                 <span className="mr-3">{link.icon}</span>
-                                                <span>{link.name}</span>
+                                                <span className="flex items-center justify-between flex-1">
+                                                    <span>{link.name}</span>
+                                                    {link.name === 'Notifications' && unreadCount > 0 && (
+                                                        <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold rounded-full bg-[#F5B51B] text-black">
+                                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </div>
                                             <svg
                                                 className={`w-4 h-4 transition-transform duration-200 ${isMenuExpanded(link.name) ? 'rotate-180' : ''
@@ -314,7 +328,14 @@ function Sidebar() {
                                         }
                                     >
                                         <span className="mr-3">{link.icon}</span>
-                                        <span>{link.name}</span>
+                                        <span className="flex items-center justify-between flex-1">
+                                            <span>{link.name}</span>
+                                            {link.name === 'Notifications' && unreadCount > 0 && (
+                                                <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold rounded-full bg-[#F5B51B] text-black">
+                                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </span>
                                     </NavLink>
                                 )}
                             </li>

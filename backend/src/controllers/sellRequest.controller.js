@@ -1,6 +1,7 @@
 import SellRequest from '../models/sellRequest.model.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import { sellConfirmationEmail, sellAdminEmail } from '../utils/nodemailer.js';
+import { notifyAdminsAndStaffWithPermission } from '../services/notificationService.js';
 
 // Helper: Upload photos to Cloudinary
 const uploadPhotosToCloudinary = async (files) => {
@@ -77,6 +78,15 @@ export const submitSellRequest = async (req, res) => {
                 console.error('Sell admin email error:', err)
             );
         }
+
+        // ─── In-app admin notification ───────────────────────────
+        notifyAdminsAndStaffWithPermission('ADMIN_NEW_SELL_REQUEST', {
+            title: 'New sell request',
+            message: `${name} — "${itemType}"`,
+            actionUrl: `/admin/sell-requests`,
+            relatedEntity: { type: 'SellRequest', id: sellRequest._id },
+            metadata: { requestId: sellRequest.requestId, itemType, email },
+        }).catch((err) => console.error('notify ADMIN_NEW_SELL_REQUEST:', err));
 
     } catch (error) {
         console.error('Submit sell request error:', error);

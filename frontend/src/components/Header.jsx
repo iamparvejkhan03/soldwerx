@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usePopUp } from "../contexts/PopUpContextProvider";
 import axiosInstance from "../utils/axiosInstance";
 import LanguageSwitcher from "./LanguageSwitcher";
+import NotificationBell from "./NotificationBell";
 
 const navLinks = [
     {
@@ -156,7 +157,7 @@ function Header() {
 
                 {/* Navlinks for larger screens */}
                 <nav className="hidden lg:block">
-                    <ul className="flex items-center gap-7">
+                    <ul className="flex items-center gap-5">
                         {/* Nav links */}
                         {navLinks.map((link, i) => (
                             <li key={link.name} className="flex items-center">
@@ -306,6 +307,12 @@ function Header() {
                                 </div>
                             )}
                         </li> */}
+
+                        {user && (
+                            <li>
+                                <NotificationBell variant="dark" />
+                            </li>
+                        )}
 
                         <li>
                             <LanguageSwitcher isScrolled={isScrolled} />
@@ -512,7 +519,14 @@ function Header() {
                 </div>
 
                 <div className="lg:hidden z-50 flex items-center gap-5">
+                    {user && (
+                        <li>
+                            <NotificationBell variant="dark" />
+                        </li>
+                    )}
+
                     <LanguageSwitcher />
+
                     {
                         isMenuOpen ? (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={closeMenu} alt="menu icon" className={`h-7 cursor-pointer invert-25 z-50 ${isScrolled}`} />) : (<img onClick={() => setIsMenuOpen(!isMenuOpen)} src={menuIcon} alt="menu icon" className={`h-5 cursor-pointer ${isScrolled && 'invert-25'} z-50`} />)
                     }

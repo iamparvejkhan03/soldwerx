@@ -70,6 +70,11 @@ import HomeAuctionsSection from "./HomeAuctionsSection";
 import HomeEventsSection from "./HomeEventsSection";
 import PlaceBidModal from "./PlaceBidModal";
 import AuctionCommissionPicker from "./AuctionCommissionPicker";
+import { NotificationIcon } from "./NotificationIcon";
+import NotificationItem from "./NotificationItem";
+import NotificationBell from "./NotificationBell";
+import NotificationPopup from "./NotificationPopup";
+import NotificationPreferencesCard from "./NotificationPreferencesCard";
 
 export {
     Container,
@@ -144,4 +149,9 @@ export {
     HomeEventsSection,
     PlaceBidModal,
     AuctionCommissionPicker,
+    NotificationIcon,
+    NotificationItem,
+    NotificationBell,
+    NotificationPopup,
+    NotificationPreferencesCard,
 }

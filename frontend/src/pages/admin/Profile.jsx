@@ -8,6 +8,7 @@ import {
     BarChart3
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
+import NotificationPreferencesCard from '../../components/NotificationPreferencesCard';
 
 // Default preferences
 const defaultPreferences = {
@@ -194,6 +195,7 @@ function Profile() {
         { id: "personal", label: "Personal Info", icon: <User size={18} /> },
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
+        { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 
@@ -285,7 +287,7 @@ function Profile() {
                                     <h3 className="text-xl font-semibold">
                                         {sections.find(s => s.id === activeSection)?.label}
                                     </h3>
-                                    {activeSection !== 'preferences' && activeSection !== 'security' && (
+                                    {activeSection !== 'preferences' && activeSection !== 'security' && activeSection !== 'notifications' && (
                                         <div className="flex gap-2">
                                             {isEditing ? (
                                                 <>
@@ -478,7 +480,7 @@ function Profile() {
                                                 disabled={!isEditing}
                                                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:bg-gray-100"
                                             />
-                                                {/* <option value="United States">United States</option>
+                                            {/* <option value="United States">United States</option>
                                                 <option value="Canada">Canada</option>
                                                 <option value="United Kingdom">United Kingdom</option>
                                                 <option value="Germany">Germany</option>
@@ -586,6 +588,11 @@ function Profile() {
                                         </div>
                                     </div>
                                 )} */}
+
+                                {/* Notification Preferences Section */}
+                                {activeSection === "notifications" && (
+                                    <NotificationPreferencesCard />
+                                )}
 
                                 {/* Security Section */}
                                 {activeSection === "security" && (

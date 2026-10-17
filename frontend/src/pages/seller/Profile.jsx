@@ -17,6 +17,7 @@ import {
 import axiosInstance from "../../utils/axiosInstance";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
+import NotificationPreferencesCard from '../../components/NotificationPreferencesCard';
 
 // Default preferences
 const defaultPreferences = {
@@ -323,6 +324,7 @@ function Profile() {
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "verification", label: "ID Verification", icon: <FileText size={18} /> },
         // { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
+        { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 
@@ -414,7 +416,7 @@ function Profile() {
                                     <h3 className="text-xl font-semibold">
                                         {sections.find(s => s.id === activeSection)?.label}
                                     </h3>
-                                    {activeSection !== 'preferences' && activeSection !== 'security' && (
+                                    {activeSection !== 'preferences' && activeSection !== 'security' && activeSection !== 'notifications' && (
                                         <div className="flex gap-2">
                                             {isEditing ? (
                                                 <>
@@ -617,6 +619,11 @@ function Profile() {
                                         onChangePassword={handlePasswordChange}
                                         saving={saving}
                                     />
+                                )}
+
+                                {/* Notification Preferences Section */}
+                                {activeSection === "notifications" && (
+                                    <NotificationPreferencesCard />
                                 )}
 
                                 {/* ID Verification Section */}

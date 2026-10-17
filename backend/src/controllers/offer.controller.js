@@ -12,6 +12,10 @@ import {
 } from "../utils/nodemailer.js";
 
 import { broadcastAuctionChange } from "../services/realtimeService.js";
+import {
+  notifyUser,
+  notifyAdminsAndStaffWithPermission,
+} from '../services/notificationService.js';
 
 /**
  * @desc    Make an offer on an auction
@@ -146,7 +150,7 @@ export const makeOffer = async (req, res) => {
       .populate("offers.buyer", "email username firstName lastName")
       .populate("seller", "email username firstName lastName");
 
-      broadcastAuctionChange(id);
+    broadcastAuctionChange(id);
 
     res.status(201).json({
       success: true,
@@ -164,6 +168,28 @@ export const makeOffer = async (req, res) => {
       offerAmount,
       buyer
     ).catch((error) => console.error("Failed to send seller email:", error));
+
+    // ─── In-app notifications ────────────────────────────────
+    const auctionUrl = `/auction/${updatedAuction._id}`;
+    const offerAmountNum = parseFloat(offerAmount);
+
+    // Buyer
+    notifyUser(buyer._id, 'OFFER_CONFIRMATION', {
+      title: 'Offer submitted',
+      message: `Your offer of $${offerAmountNum.toLocaleString()} on "${updatedAuction.title}" was sent.`,
+      actionUrl: `/bidder/offers`,
+      relatedEntity: { type: 'Offer', id: updatedAuction._id }, // offers are embedded
+      metadata: { amount: offerAmountNum, auctionId: updatedAuction._id },
+    }).catch((err) => console.error('notify OFFER_CONFIRMATION:', err));
+
+    // Seller
+    notifyUser(updatedAuction.seller._id || updatedAuction.seller, 'NEW_OFFER', {
+      title: `New offer on "${updatedAuction.title}"`,
+      message: `$${offerAmountNum.toLocaleString()} from ${buyer.username}`,
+      actionUrl: `/seller/offers/all`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: offerAmountNum, buyerUsername: buyer.username },
+    }).catch((err) => console.error('notify NEW_OFFER:', err));
   } catch (error) {
     console.error("Make offer error:", error);
     res.status(400).json({
@@ -398,7 +424,7 @@ export const respondToOffer = async (req, res) => {
           updatedAuction,
           offer.amount
         ).catch((error) =>
-            console.error("Failed to send offer accepted email:", error),
+          console.error("Failed to send offer accepted email:", error),
         );
       } else if (response === "reject") {
         offerRejectedEmail(
@@ -407,7 +433,7 @@ export const respondToOffer = async (req, res) => {
           offer.amount,
           offer?.sellerResponse || "Offer rejected by seller",
         ).catch((error) =>
-            console.error("Failed to send offer rejected email:", error),
+          console.error("Failed to send offer rejected email:", error),
         );
       }
     } catch (emailError) {
@@ -424,6 +450,46 @@ export const respondToOffer = async (req, res) => {
         auction: updatedAuction,
       },
     });
+
+    // ─── In-app notifications ────────────────────────────────
+    const buyerId = offer.buyer._id || offer.buyer;
+    const amountNum = parseFloat(offer.amount);
+    const auctionUrl = `/auction/${updatedAuction._id}`;
+
+    if (response === 'accept') {
+      notifyUser(buyerId, 'OFFER_ACCEPTED', {
+        title: 'Your offer was accepted!',
+        message: `"${updatedAuction.title}" is yours for $${amountNum.toLocaleString()}.`,
+        actionUrl: `/bidder/auctions/won`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: amountNum },
+      }).catch((err) => console.error('notify OFFER_ACCEPTED:', err));
+
+      // Admin queue
+      notifyAdminsAndStaffWithPermission('ADMIN_OFFER_RESPONDED', {
+        title: `Offer accepted — "${updatedAuction.title}"`,
+        message: `$${amountNum.toLocaleString()} — buyer: ${offer.buyer.username}`,
+        actionUrl: `/admin/offers`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: amountNum, buyerId },
+      }).catch((err) => console.error('notify ADMIN_OFFER_RESPONDED:', err));
+    } else if (response === 'reject') {
+      notifyUser(buyerId, 'OFFER_REJECTED', {
+        title: 'Your offer was declined',
+        message: `Seller declined your offer on "${updatedAuction.title}".`,
+        actionUrl: `/bidder/offers`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: amountNum },
+      }).catch((err) => console.error('notify OFFER_REJECTED:', err));
+    } else if (response === 'counter') {
+      notifyUser(buyerId, 'NEW_OFFER', {
+        title: 'You received a counter-offer',
+        message: `Seller countered with $${parseFloat(counterAmount).toLocaleString()} on "${updatedAuction.title}".`,
+        actionUrl: `/bidder/offers`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: parseFloat(counterAmount), isCounter: true },
+      }).catch((err) => console.error('notify NEW_OFFER (counter):', err));
+    }
   } catch (error) {
     console.error("Respond to offer error:", error);
     res.status(400).json({
@@ -508,8 +574,8 @@ export const acceptCounterOffer = async (req, res) => {
         updatedAuction,
         offer.counterOffer.amount,
       ).catch((error) =>
-            console.error("Failed to send offer accepted email:", error),
-        );
+        console.error("Failed to send offer accepted email:", error),
+      );
     } catch (emailError) {
       console.error(
         "Failed to send acceptance notification email:",
@@ -528,6 +594,37 @@ export const acceptCounterOffer = async (req, res) => {
         auction: updatedAuction,
       },
     });
+
+    // ─── In-app notifications ────────────────────────────────
+    const amountNum = parseFloat(offer.counterOffer?.amount || 0);
+    const sellerId = updatedAuction.seller._id || updatedAuction.seller;
+
+    // Notify the seller that their counter was accepted — item is sold
+    notifyUser(sellerId, 'OFFER_COUNTERED', {
+      title: 'Your counter-offer was accepted!',
+      message: `"${updatedAuction.title}" is sold for $${amountNum.toLocaleString()}.`,
+      actionUrl: `/seller/auctions/sold`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum },
+    }).catch((err) => console.error('notify OFFER_COUNTERED:', err));
+
+    // Notify buyer
+    notifyUser(buyerId, 'OFFER_ACCEPTED', {
+      title: 'Purchase confirmed',
+      message: `You bought "${updatedAuction.title}" for $${amountNum.toLocaleString()}.`,
+      actionUrl: `/bidder/auctions/won`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum },
+    }).catch((err) => console.error('notify OFFER_ACCEPTED (counter):', err));
+
+    // Admin queue
+    notifyAdminsAndStaffWithPermission('ADMIN_OFFER_RESPONDED', {
+      title: `Offer completed — "${updatedAuction.title}"`,
+      message: `$${amountNum.toLocaleString()} via counter-offer`,
+      actionUrl: `/admin/offers`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum },
+    }).catch((err) => console.error('notify ADMIN_OFFER_RESPONDED (counter):', err));
   } catch (error) {
     console.error("Accept counter offer error:", error);
     res.status(400).json({
@@ -622,6 +719,17 @@ export const withdrawOffer = async (req, res) => {
         auction: updatedAuction,
       },
     });
+
+    notifyUser(
+      updatedAuction.seller._id || updatedAuction.seller,
+      'OFFER_CANCELED',
+      {
+        title: `Offer withdrawn on "${updatedAuction.title}"`,
+        message: `${buyerId} withdrew their offer of $${parseFloat(offer.amount).toLocaleString()}.`,
+        actionUrl: `/seller/offers/all`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      }
+    ).catch((err) => console.error('notify OFFER_CANCELED (withdraw):', err));
   } catch (error) {
     console.error("Withdraw offer error:", error);
     res.status(400).json({
@@ -1146,7 +1254,7 @@ export const adminRespondToOffer = async (req, res) => {
       .populate("seller", "username firstName lastName email phone")
       .populate("winner", "username firstName lastName email phone address");
 
-      broadcastAuctionChange(auctionId);
+    broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
@@ -1190,6 +1298,39 @@ export const adminRespondToOffer = async (req, res) => {
       ).catch((error) =>
         console.error("Failed to send offer rejected email:", error)
       );
+    }
+
+    // ─── In-app notifications ────────────────────────────────
+    const buyerId = offer.buyer._id || offer.buyer;
+    const amountNum = parseFloat(offer.amount);
+
+    if (response === 'accept') {
+      notifyUser(buyerId, 'OFFER_ACCEPTED', {
+        title: 'Your offer was accepted!',
+        message: `"${updatedAuction.title}" is yours for $${amountNum.toLocaleString()}.`,
+        actionUrl: `/bidder/auctions/won`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: amountNum, byAdmin: true },
+      }).catch((err) => console.error('notify OFFER_ACCEPTED (admin):', err));
+
+      notifyUser(
+        updatedAuction.seller._id || updatedAuction.seller,
+        'OFFER_COUNTERED',
+        {
+          title: `Item sold — "${updatedAuction.title}"`,
+          message: `Admin accepted an offer of $${amountNum.toLocaleString()}.`,
+          actionUrl: `/seller/auctions/sold`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: amountNum, byAdmin: true },
+        }
+      ).catch((err) => console.error('notify OFFER_COUNTERED (admin):', err));
+    } else {
+      notifyUser(buyerId, 'OFFER_REJECTED', {
+        title: 'Your offer was declined',
+        message: `Admin declined your offer on "${updatedAuction.title}".`,
+        actionUrl: `/bidder/offers`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      }).catch((err) => console.error('notify OFFER_REJECTED (admin):', err));
     }
   } catch (error) {
     console.error("Admin respond to offer error:", error);
@@ -1260,6 +1401,14 @@ export const adminCancelOffer = async (req, res) => {
     ).catch((error) =>
       console.error("Failed to send offer canceled email:", error)
     );
+
+    notifyUser(offer.buyer._id || offer.buyer, 'OFFER_CANCELED', {
+      title: 'Offer cancelled by admin',
+      message: `Your offer on "${auction.title}" was cancelled.`,
+      actionUrl: `/bidder/offers`,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { reason: reason || null },
+    }).catch((err) => console.error('notify OFFER_CANCELED (admin):', err));
   } catch (error) {
     console.error("Admin cancel offer error:", error);
     res.status(500).json({
@@ -1580,7 +1729,7 @@ export const reactivateOffer = async (req, res) => {
       .populate("seller", "username firstName lastName email phone")
       .populate("winner", "username firstName lastName email phone");
 
-      broadcastAuctionChange(auctionId);
+    broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
@@ -1631,6 +1780,17 @@ export const reactivateOffer = async (req, res) => {
     } catch (emailError) {
       console.error("Failed to send reactivation emails:", emailError);
     }
+
+    const buyerId = offer.buyer._id || offer.buyer;
+    const amountNum = parseFloat(offer.amount);
+
+    notifyUser(buyerId, 'OFFER_ACCEPTED', {
+      title: 'Your offer was reactivated and accepted!',
+      message: `"${updatedAuction.title}" is yours for $${amountNum.toLocaleString()}.`,
+      actionUrl: `/bidder/auctions/won`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum, reactivated: true },
+    }).catch((err) => console.error('notify OFFER_ACCEPTED (reactivate):', err));
   } catch (error) {
     console.error("Reactivate offer error:", error);
     res.status(400).json({

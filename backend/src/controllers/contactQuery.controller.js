@@ -1,11 +1,12 @@
 import ContactQuery from '../models/contactQuery.model.js';
 import { contactConfirmationEmail, contactEmail } from '../utils/nodemailer.js';
+import { notifyAdminsAndStaffWithPermission } from '../services/notificationService.js';
 
 // Submit contact form query
 export const submitContactQuery = async (req, res) => {
     try {
         const { name, email, phone, userType, message } = req.body;
-        
+
         // Validate required fields
         if (!name || !email || !userType || !message) {
             return res.status(400).json({
@@ -37,10 +38,19 @@ export const submitContactQuery = async (req, res) => {
             }
         });
 
-        if(contactQuery){
+        if (contactQuery) {
             contactEmail(name, email, phone, userType, message).catch(err => console.error('Contact email error:', err));
             contactConfirmationEmail(name, email).catch(err => console.error('Confirmation email error:', err));
         }
+
+        // ─── In-app admin notification (no user account exists) ──
+        notifyAdminsAndStaffWithPermission('ADMIN_NEW_CONTACT_QUERY', {
+            title: 'New contact query',
+            message: `${name} (${userType}) — "${message.slice(0, 100)}"`,
+            actionUrl: `/admin/support/inquiries`,
+            relatedEntity: { type: 'ContactQuery', id: contactQuery._id },
+            metadata: { queryId: contactQuery.queryId, email, userType },
+        }).catch((err) => console.error('notify ADMIN_NEW_CONTACT_QUERY:', err));
 
     } catch (error) {
         console.error('Submit contact query error:', error);
@@ -54,47 +64,47 @@ export const submitContactQuery = async (req, res) => {
 // Get all contact queries for admin
 export const getContactQueries = async (req, res) => {
     try {
-        const { 
-            page = 1, 
-            limit = 12, 
-            status, 
-            search, 
-            userType, 
-            category, 
+        const {
+            page = 1,
+            limit = 12,
+            status,
+            search,
+            userType,
+            category,
             priority,
             sortBy = 'recent',
-            dateRange 
+            dateRange
         } = req.query;
 
         // Build filter object
         const filter = {};
-        
+
         // Status filter
         if (status && status !== 'all') {
             filter.status = status;
         }
-        
+
         // User type filter
         if (userType && userType !== 'all') {
             filter.userType = userType;
         }
-        
+
         // Category filter
         if (category && category !== 'all') {
             filter.category = category;
         }
-        
+
         // Priority filter
         if (priority && priority !== 'all') {
             filter.priority = priority;
         }
-        
+
         // Date range filter
         if (dateRange && dateRange !== 'all') {
             const now = new Date();
             let startDate;
-            
-            switch(dateRange) {
+
+            switch (dateRange) {
                 case 'today':
                     startDate = new Date(now.setHours(0, 0, 0, 0));
                     break;
@@ -108,12 +118,12 @@ export const getContactQueries = async (req, res) => {
                     startDate = new Date(now.setFullYear(now.getFullYear() - 1));
                     break;
             }
-            
+
             if (startDate) {
                 filter.createdAt = { $gte: startDate };
             }
         }
-        
+
         // Search filter
         if (search) {
             filter.$or = [
@@ -128,8 +138,8 @@ export const getContactQueries = async (req, res) => {
         const queries = await ContactQuery.find(filter)
             .populate('assignedTo', 'username firstName lastName email')
             .sort({ createdAt: -1 })
-            // .limit(limit * 1)
-            // .skip((page - 1) * limit);
+        // .limit(limit * 1)
+        // .skip((page - 1) * limit);
 
         // Transform data for frontend
         const transformedQueries = queries.map(query => ({
@@ -158,7 +168,7 @@ export const getContactQueries = async (req, res) => {
 
         // Apply additional sorting
         transformedQueries.sort((a, b) => {
-            switch(sortBy) {
+            switch (sortBy) {
                 case 'recent':
                     return new Date(b.createdAt) - new Date(a.createdAt);
                 case 'oldest':
@@ -175,7 +185,7 @@ export const getContactQueries = async (req, res) => {
 
         // Calculate statistics
         const totalQueries = await ContactQuery.countDocuments(filter);
-        
+
         const statusStats = await ContactQuery.aggregate([
             { $match: filter },
             {
@@ -411,7 +421,7 @@ export const getQueryStats = async (req, res) => {
             }
         ]);
 
-        const responseRate = responseStats[0] ? 
+        const responseRate = responseStats[0] ?
             (responseStats[0].respondedQueries / responseStats[0].totalQueries) * 100 : 0;
 
         res.status(200).json({

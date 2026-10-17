@@ -16,9 +16,6 @@ import {
   auctionApprovedEmail,
   auctionListedEmail,
   identityRejectedEmail,
-  paymentCompletedEmail,
-  paymentCompletedSellerEmail,
-  paymentSuccessEmail,
   sendBulkAuctionNotifications,
 } from "../utils/nodemailer.js";
 import Payment from "../models/payment.model.js";
@@ -27,6 +24,7 @@ import {
   resolveCommissionInput,
   isCommissionLocked,
 } from "../utils/auctionCommission.js";
+import { notifyUser } from '../services/notificationService.js';
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -955,8 +953,18 @@ export const approveAuction = async (req, res) => {
           isActive: true,
         }).select("email username companyName firstName lastName preferences userType currency");
 
+        // In-app: notify seller that listing is live
+        const sellerId = auction.seller?._id || auction.seller;
+        notifyUser(sellerId, 'AUCTION_LISTED', {
+          title: `Your listing is live — "${auction.title}"`,
+          message: `Bidding is now open.`,
+          actionUrl: `/auction/${auction._id}`,
+          relatedEntity: { type: 'Auction', id: auction._id },
+          metadata: { auctionTitle: auction.title },
+        }).catch((err) => console.error('notify AUCTION_LISTED:', err));
+
         if (bidders.length > 0) {
-          await sendBulkAuctionNotifications(bidders, auction, auction.seller);
+          sendBulkAuctionNotifications(bidders, auction, auction.seller).catch((err) => console.error('sendBulkAuctionNotifications error:', err));
         }
       } catch (error) {
         console.error("Failed to send bulk auction notifications:", error);
@@ -2130,13 +2138,42 @@ export const updatePaymentStatus = async (req, res) => {
       adminUserId: admin._id,
     });
 
+    broadcastAuctionChange(id);
+
+    // ─── In-app notifications ────────────────────────────────
+    const buyerId = updatedAuction.winner?._id || updatedAuction.winner;
+    const sellerId = updatedAuction.seller?._id || updatedAuction.seller;
+    const totalAmount =
+      (updatedAuction.finalPrice || 0) +
+      (updatedAuction.buyerFeeAmount || 0) +
+      (updatedAuction.taxAmount || 0);
+
+    if (paymentStatus === 'completed') {
+      if (buyerId) {
+        notifyUser(buyerId, 'PAYMENT_CONFIRMED', {
+          title: 'Payment confirmed',
+          message: `Your payment for "${updatedAuction.title}" is confirmed.`,
+          actionUrl: `/bidder/payments`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: totalAmount, method: auction.paymentMethod },
+        }).catch((err) => console.error('notify PAYMENT_CONFIRMED (admin):', err));
+      }
+      if (sellerId) {
+        notifyUser(sellerId, 'BUYER_PAID', {
+          title: `Buyer paid — "${updatedAuction.title}"`,
+          message: `Payment completed. Ready for payout.`,
+          actionUrl: `/seller/payouts`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: totalAmount },
+        }).catch((err) => console.error('notify BUYER_PAID (admin):', err));
+      }
+    }
+
     if (paymentStatus === "completed") {
       agendaService.scheduleInvoiceUpdate(auction._id, admin?._id).catch((err) =>
         console.error("Failed to schedule invoice update job:", err)
       );
     }
-
-    broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
@@ -2184,6 +2221,14 @@ export const verifyUserIdentity = async (req, res) => {
     user.isVerified = true;
 
     await user.save();
+
+    notifyUser(user._id, 'ACCOUNT_APPROVED', {
+      title: 'Your identity has been verified',
+      message: 'You now have full access to SoldWerX.',
+      actionUrl: `/${user.userType}/dashboard`,
+      relatedEntity: { type: 'User', id: user._id },
+      metadata: { userType: user.userType },
+    }).catch((err) => console.error('notify ACCOUNT_APPROVED:', err));
 
     // Send approval email (fire and forget)
     accountApprovedEmail(user).catch(err =>
@@ -2257,6 +2302,14 @@ export const rejectUserIdentity = async (req, res) => {
 
     await user.save();
 
+    notifyUser(user._id, 'IDENTITY_REJECTED', {
+      title: 'Identity verification rejected',
+      message: `Reason: ${rejectionReason}`,
+      actionUrl: `/${user.userType}/profile`,
+      relatedEntity: { type: 'User', id: user._id },
+      metadata: { reason: rejectionReason, canReupload: allowReupload },
+    }).catch((err) => console.error('notify IDENTITY_REJECTED:', err));
+
     // Send approval email (fire and forget)
     identityRejectedEmail(user, rejectionReason, true).catch(err =>
       console.error("Failed to send account approved email:", err)
@@ -2309,6 +2362,14 @@ export const verifyUser = async (req, res) => {
     user.isVerified = true;
 
     await user.save();
+
+    notifyUser(user._id, 'ACCOUNT_APPROVED', {
+      title: 'Your account has been approved',
+      message: 'You now have full access to SoldWerX.',
+      actionUrl: `/${user.userType}/dashboard`,
+      relatedEntity: { type: 'User', id: user._id },
+      metadata: { userType: user.userType },
+    }).catch((err) => console.error('notify ACCOUNT_APPROVED (verify):', err));
 
     // Send approval email (fire and forget)
     accountApprovedEmail(user).catch(err =>

@@ -28,6 +28,11 @@ import User from "../models/user.model.js";
 import { processProxyBids } from "./proxyBidService.js";
 import { generateAndAttachInvoice } from "./invoiceService.js";
 import { broadcastAuctionChange } from "./realtimeService.js";
+import {
+  notifyUser,
+  createBulkNotifications,
+  notifyAdminsAndStaffWithPermission,
+} from './notificationService.js';
 
 class AgendaService {
   constructor() {
@@ -53,7 +58,7 @@ class AgendaService {
           broadcastAuctionChange(auction._id);
 
           // Send email to seller
-          await auctionListedEmail(auction, auction.seller);
+          auctionListedEmail(auction, auction.seller).catch(err => console.error(`Failed to send auction listed email to seller: `, err));
 
           // Send bulk notifications to all users (except admin and auction seller)
           const allUsers = await User.find({
@@ -62,8 +67,17 @@ class AgendaService {
             isActive: true, // Only active users
           }).select("email username firstName preferences userType");
 
+          // In-app: notify seller + broadcast to interested bidders
+          notifyUser(auction.seller._id || auction.seller, 'AUCTION_LISTED', {
+            title: `Your listing is live — "${auction.title}"`,
+            message: `Bidding is now open.`,
+            actionUrl: `/auction/${auction._id}`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+          }).catch((err) => console.error('notify AUCTION_LISTED (agenda):', err));
+
           // Send bulk notifications
-          await sendBulkAuctionNotifications(allUsers, auction, auction.seller);
+          sendBulkAuctionNotifications(allUsers, auction, auction.seller)
+            .catch((err) => console.error('sendBulkAuctionNotifications error:', err));
 
           // console.log(`✅ Agenda: Activated auction ${auctionId}`);
         }
@@ -163,11 +177,40 @@ class AgendaService {
             // Send admin email for sold auction
             const adminUsers = await User.find({ userType: "admin" });
             for (const admin of adminUsers) {
-              await auctionWonAdminEmail(admin.email, auction, auction.winner);
+              auctionWonAdminEmail(admin.email, auction, auction.winner).catch((err) =>
+                console.error(`Failed to send auction won email to ${admin?.email}: `, err)
+              );
             }
 
             // Send seller email (auction ended without sale)
-            await sendAuctionEndedSellerEmail(auction);
+            sendAuctionEndedSellerEmail(auction).catch((err) =>
+              console.error(`Failed to send auction ended email to seller: `, err)
+            );
+
+            // ─── In-app notifications ────────────────────────
+            if (auction.winner) {
+              notifyUser(auction.winner._id, 'AUCTION_WON', {
+                title: 'You won the auction!',
+                message: `"${auction.title}" is yours for $${(auction.finalPrice || 0).toLocaleString()}.`,
+                actionUrl: `/bidder/auctions/won`,
+                relatedEntity: { type: 'Auction', id: auction._id },
+                metadata: { finalPrice: auction.finalPrice },
+              }).catch((err) => console.error('notify AUCTION_WON (agenda):', err));
+            }
+
+            notifyUser(auction.seller._id, 'AUCTION_ENDED_SOLD', {
+              title: `Your item sold — "${auction.title}"`,
+              message: `Final price: $${(auction.finalPrice || 0).toLocaleString()}`,
+              actionUrl: `/seller/auctions/sold`,
+              relatedEntity: { type: 'Auction', id: auction._id },
+            }).catch((err) => console.error('notify AUCTION_ENDED_SOLD (agenda):', err));
+
+            notifyAdminsAndStaffWithPermission('ADMIN_AUCTION_WON', {
+              title: `Auction sold — "${auction.title}"`,
+              message: `$${(auction.finalPrice || 0).toLocaleString()}`,
+              actionUrl: `/admin/transactions`,
+              relatedEntity: { type: 'Auction', id: auction._id },
+            }).catch((err) => console.error('notify ADMIN_AUCTION_WON (agenda):', err));
 
             console.log(`✅ Agenda: Sent SOLD emails for auction ${auctionId}`);
           } else {
@@ -176,13 +219,41 @@ class AgendaService {
             );
 
             // Send seller email (auction ended without sale)
-            await sendAuctionEndedSellerEmail(auction);
+            sendAuctionEndedSellerEmail(auction).catch((err) =>
+              console.error(`Failed to send auction ended email to seller: `, err)
+            );
 
             // Send admin email for ended auction
             const adminUsers = await User.find({ userType: "admin" });
             for (const admin of adminUsers) {
-              await auctionEndedAdminEmail(admin.email, auction);
+              auctionEndedAdminEmail(admin.email, auction).catch((err) =>
+                console.error(`Failed to send auction ended admin email to ${admin?.email}: `, err)
+              );
             }
+
+            notifyUser(auction.seller._id, 'AUCTION_ENDED_NO_SALE', {
+              title: `Auction ended — "${auction.title}"`,
+              message: auction.status === 'reserve_not_met'
+                ? 'Reserve price was not met.'
+                : 'Auction ended without a sale.',
+              actionUrl: `/seller/auctions/all`,
+              relatedEntity: { type: 'Auction', id: auction._id },
+              metadata: { status: result.newStatus },
+            }).catch((err) => console.error('notify AUCTION_ENDED_NO_SALE:', err));
+
+            notifyAdminsAndStaffWithPermission('ADMIN_AUCTION_ENDED_NO_SALE', {
+              title: `Auction ended without sale — "${auction.title}"`,
+              message: result.newStatus === 'reserve_not_met'
+                ? `Reserve price was not met. No buyer.`
+                : `No bids received. Auction ended.`,
+              actionUrl: `/admin/auctions/all?filter=ended`,
+              relatedEntity: { type: 'Auction', id: auction._id },
+              metadata: {
+                status: result.newStatus,
+                finalPrice: auction.finalPrice || 0,
+                bidCount: auction.bidCount || 0,
+              },
+            }).catch((err) => console.error('notify ADMIN_AUCTION_ENDED_NO_SALE (agenda):', err));
 
             console.log(
               `✅ Agenda: Sent ENDED emails for auction ${auctionId}`,
@@ -287,12 +358,28 @@ class AgendaService {
           // Send to each user
           for (const user of allUsers) {
             try {
-              await auctionEndingSoonEmail(
+              auctionEndingSoonEmail(
                 user.email,
                 user.username,
                 auction,
                 timeLabel,
+              ).catch((err) =>
+                console.error(`Failed to auction ending soon email to ${user?.email}: `, err)
               );
+
+              // In-app: only notify users who've actually engaged with this auction
+              const hasBid = (auction.bids || []).some(
+                (b) => b.bidder?.toString() === user._id.toString()
+              );
+              if (hasBid) {
+                notifyUser(user._id, 'AUCTION_ENDING_SOON', {
+                  title: `"${auction.title}" ends in ${timeLabel}`,
+                  message: `Current price: $${auction.currentPrice.toLocaleString()}`,
+                  actionUrl: `/auction/${auction._id}`,
+                  relatedEntity: { type: 'Auction', id: auction._id },
+                  dedupKey: `ending-soon:${auction._id}:${notificationType}`,
+                }).catch((err) => console.error('notify AUCTION_ENDING_SOON:', err));
+              }
               console.log(
                 `✅ Sent ${timeLabel} notification to ${user.email} (${user.userType}) for auction ${auction.title}`,
               );
@@ -350,43 +437,74 @@ class AgendaService {
           .populate("winner");
 
         // ---- 5. Send the winner their "You Won" email (invoice attached) ----
-        await sendAuctionWonEmail(auction);
+        sendAuctionWonEmail(auction).catch(err => console.error(`Failed to send auction won winner email: `, err));
 
         // ---- 6. Deposit-specific notifications ----
         if (depositResult.status === "charged") {
-          await depositChargedWinnerEmail(
+          depositChargedWinnerEmail(
             auction.winner,
             auction,
             depositResult.amount
-          );
+          ).catch(err => console.error(`Failed to send deposit charge winner email: `, err));
+
+          notifyUser(auction.winner._id, 'DEPOSIT_CHARGED', {
+            title: 'Winning deposit received',
+            message: `$${depositResult.amount.toLocaleString()} charged — credited to your final balance.`,
+            actionUrl: `/bidder/payments`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { amount: depositResult.amount },
+          }).catch((err) => console.error('notify DEPOSIT_CHARGED:', err));
+
+          notifyAdminsAndStaffWithPermission('ADMIN_DEPOSIT_CHARGED', {
+            title: `Deposit charged — "${auction.title}"`,
+            message: `$${depositResult.amount.toLocaleString()} from ${auction.winner?.username}`,
+            actionUrl: `/admin/transactions`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+          }).catch((err) => console.error('notify ADMIN_DEPOSIT_CHARGED:', err));
 
           const adminUsers = await User.find({ userType: "admin" });
           for (const admin of adminUsers) {
-            await depositChargedAdminEmail(
+            depositChargedAdminEmail(
               admin.email,
               auction,
               depositResult.amount
-            );
+            ).catch(err => console.error(`Failed to send deposit charged admin email`, err));
           }
         } else if (depositResult.status === "failed") {
           // Notify winner
-          await depositFailedWinnerEmail(
+          depositFailedWinnerEmail(
             auction.winner,
             auction,
             depositResult.reason
-          );
+          ).catch(err => console.error(`Failed to send deposit failed winner email: `, err));
+
+          notifyUser(auction.winner._id, 'DEPOSIT_FAILED', {
+            title: 'Deposit charge failed',
+            message: `Reason: ${depositResult.reason}. Please update your payment method.`,
+            actionUrl: `/bidder/billing`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { reason: depositResult.reason },
+          }).catch((err) => console.error('notify DEPOSIT_FAILED:', err));
+
+          notifyAdminsAndStaffWithPermission('ADMIN_DEPOSIT_FAILED', {
+            title: `Deposit failed — "${auction.title}"`,
+            message: `Reason: ${depositResult.reason}`,
+            actionUrl: `/admin/transactions`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+          }).catch((err) => console.error('notify ADMIN_DEPOSIT_FAILED:', err));
+
           // Notify all admins
           const adminUsers = await User.find({ userType: "admin" });
           for (const admin of adminUsers) {
-            await depositFailedAdminEmail(
+            depositFailedAdminEmail(
               admin.email,
               auction,
               depositResult.reason
-            );
+            ).catch(err => console.error(`Failed to send deposit failed winner email: `, err));
           }
         }
       } catch (error) {
-        console.error("generate invoice and email job error:", error);
+        console.error("generate invoice and email job error: ", error);
       }
     });
 
@@ -413,8 +531,27 @@ class AgendaService {
         .populate('winner');
 
       // Send emails with the updated invoice
-      await paymentCompletedEmail(updatedAuction.winner, updatedAuction);
-      await paymentCompletedSellerEmail(updatedAuction.seller, updatedAuction, updatedAuction.winner);
+      paymentCompletedEmail(updatedAuction.winner, updatedAuction).catch(err => console.error(`Failed to send payment completed email to winner: `, err));
+      paymentCompletedSellerEmail(updatedAuction.seller, updatedAuction, updatedAuction.winner).catch(err => console.error(`Failed to send payment completed email to seller: `, err));
+
+      // ─── In-app notifications ────────────────────────
+      if (updatedAuction.winner?._id) {
+        notifyUser(updatedAuction.winner._id, 'PAYMENT_CONFIRMED', {
+          title: 'Payment confirmed',
+          message: `Your payment for "${updatedAuction.title}" is confirmed.`,
+          actionUrl: `/bidder/payments`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        }).catch((err) => console.error('notify PAYMENT_CONFIRMED (invoice):', err));
+      }
+      if (updatedAuction.seller?._id) {
+        notifyUser(updatedAuction.seller._id, 'BUYER_PAID', {
+          title: `Buyer paid — "${updatedAuction.title}"`,
+          message: 'Funds are ready for payout.',
+          actionUrl: `/seller/payouts`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        }).catch((err) => console.error('notify BUYER_PAID (invoice):', err));
+      }
+
     });
   }
 

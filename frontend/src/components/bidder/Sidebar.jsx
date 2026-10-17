@@ -19,6 +19,7 @@ import { Link, NavLink } from "react-router-dom";
 import { logo } from "../../assets";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../hooks/useNotifications";
 
 const navigation = [
     { name: 'Dashboard', path: '/bidder/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -31,6 +32,7 @@ const navigation = [
     { name: 'Won Auctions', path: '/bidder/auctions/won', icon: <Award size={20} /> },
     { name: 'Payments', path: '/bidder/payments', icon: <DollarSign size={20} /> },
     { name: 'Billing', path: '/bidder/billing', icon: <CreditCard size={20} /> },
+    { name: 'Notifications', path: '/bidder/notifications', icon: <Bell size={20} /> },
     { name: 'Profile', path: '/bidder/profile', icon: <User size={20} /> },
 ];
 
@@ -38,6 +40,7 @@ function Sidebar() {
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const { logout } = useAuth();
+    const { unreadCount } = useNotifications();
 
     // Handle window resize
     useEffect(() => {
@@ -125,7 +128,14 @@ function Sidebar() {
                                     }
                                 >
                                     <span className="mr-3">{link.icon}</span>
-                                    <span>{link.name}</span>
+                                    <span className="flex items-center justify-between flex-1">
+                                        <span>{link.name}</span>
+                                        {link.name === 'Notifications' && unreadCount > 0 && (
+                                            <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[10px] font-bold rounded-full bg-[#F5B51B] text-black">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </span>
                                 </NavLink>
                             </li>
                         ))}

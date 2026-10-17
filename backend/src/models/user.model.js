@@ -83,6 +83,20 @@ const userSchema = new Schema(
       smsUpdates: { type: Boolean, default: false },
       favoriteCategories: [{ type: String }],
     },
+    // In-app + sound notification preferences
+    notificationPreferences: {
+      inApp: {
+        auction: { type: Boolean, default: true },
+        offer: { type: Boolean, default: true },
+        payment: { type: Boolean, default: true },
+        payout: { type: Boolean, default: true },
+        communication: { type: Boolean, default: true },
+        account: { type: Boolean, default: true },
+        moderation: { type: Boolean, default: true }, // for staff/admin
+        system: { type: Boolean, default: true },
+      },
+      sound: { type: Boolean, default: true },
+    },
 
     createdBy: {
       type: Schema.Types.ObjectId,

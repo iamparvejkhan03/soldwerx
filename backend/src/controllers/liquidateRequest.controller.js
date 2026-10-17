@@ -1,6 +1,7 @@
 import LiquidateRequest from '../models/liquidateRequest.model.js';
 import { liquidateConfirmationEmail, liquidateAdminEmail } from '../utils/nodemailer.js';
 import { deleteFromCloudinary, uploadToCloudinary } from '../utils/cloudinary.js';
+import { notifyAdminsAndStaffWithPermission } from '../services/notificationService.js';
 
 // Helper: Upload photos to Cloudinary using your existing upload function
 const uploadPhotosToCloudinary = async (files) => {
@@ -80,6 +81,15 @@ export const submitLiquidateRequest = async (req, res) => {
                 console.error('Liquidate admin email error:', err)
             );
         }
+
+        // ─── In-app admin notification ───────────────────────────
+        notifyAdminsAndStaffWithPermission('ADMIN_NEW_LIQUIDATION_REQUEST', {
+            title: 'New liquidation request',
+            message: `${name} — ${itemCount || 'items not specified'}`,
+            actionUrl: `/admin/liquidation-requests`,
+            relatedEntity: { type: 'LiquidateRequest', id: liquidateRequest._id },
+            metadata: { requestId: liquidateRequest.requestId, email, itemCount },
+        }).catch((err) => console.error('notify ADMIN_NEW_LIQUIDATION_REQUEST:', err));
 
     } catch (error) {
         console.error('Submit liquidate request error:', error);

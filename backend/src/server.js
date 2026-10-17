@@ -28,7 +28,8 @@ import aiRouter from "./routes/ai.route.js";
 
 import http from "http";
 import { Server } from "socket.io";
-import { setIO } from "./utils/socket.js";
+import { setIO, attachSocketHandlers } from "./utils/socket.js";
+import notificationRouter from "./routes/notification.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +89,7 @@ app.use('/api/v1/sell', sellRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/tax", taxRouter);
 app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/notifications', notificationRouter);
 
 app.get('/api/v1/time', (req, res) => {
     res.set('Cache-Control', 'no-store'); // never cache
@@ -138,18 +140,7 @@ const io = new Server(server, {
 });
 
 setIO(io);
-
-io.on("connection", (socket) => {
-    // Every connected client auto-joins the global feed
-    socket.join("global");
-
-    socket.on("joinAuction", (id) => {
-        if (id) socket.join(`auction:${id}`);
-    });
-    socket.on("leaveAuction", (id) => {
-        if (id) socket.leave(`auction:${id}`);
-    });
-});
+attachSocketHandlers(io);
 
 // Replace: const server = app.listen(PORT, ...)
 server.listen(PORT, () => {

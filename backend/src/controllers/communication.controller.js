@@ -3,6 +3,10 @@ import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";
 import { uploadDocumentToCloudinary } from "../utils/cloudinary.js";
 import { newMessageNotificationEmail, shippingUpdatedEmail } from "../utils/nodemailer.js";
+import {
+    notifyUser,
+    notifyAdminsAndStaffWithPermission,
+} from '../services/notificationService.js';
 
 // ----- Helper -----
 const getOrCreateCommunication = async (auctionId, userId) => {
@@ -227,6 +231,40 @@ export const sendMessage = async (req, res) => {
             sendNotification(seller, sender, auction, content, comm._id);
         }
 
+        // ─── In-app notifications ────────────────────────────
+        // Build the URL based on the RECIPIENT's role, not the sender's.
+        let recipientRole = null;
+        if (recipient) {
+            if (recipient.toString() === auction.seller._id.toString()) {
+                recipientRole = 'seller';
+            } else if (auction.winner && recipient.toString() === auction.winner._id.toString()) {
+                recipientRole = 'bidder';
+            }
+        }
+
+        const recipientUrl = recipientRole
+            ? `/${recipientRole}/communication/${auction._id}`
+            : `/bidder/communication/${auction._id}`; // safe fallback
+
+        if (recipient) {
+            notifyUser(recipient, 'NEW_MESSAGE', {
+                title: `New message from ${sender.username}`,
+                message: `${content ? content.slice(0, 120) : 'Sent an attachment'} — "${auction.title}"`,
+                actionUrl: recipientUrl,   // ← now points to the recipient's view
+                relatedEntity: { type: 'Auction', id: auction._id },
+                metadata: { senderId: sender._id, auctionId: auction._id, communicationId: comm._id },
+            }).catch((err) => console.error('notify NEW_MESSAGE:', err));
+        }
+
+        // Admin queue notification — unchanged (already correct)
+        notifyAdminsAndStaffWithPermission('ADMIN_NEW_MESSAGE', {
+            title: `New message in auction`,
+            message: `${sender.username} → "${auction.title}"`,
+            actionUrl: `/admin/communications/all`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { senderId: sender._id, auctionId: auction._id },
+        }).catch((err) => console.error('notify ADMIN_NEW_MESSAGE:', err));
+
         res.status(201).json({
             success: true,
             message: "Message sent",
@@ -317,6 +355,15 @@ export const updateShipping = async (req, res) => {
                 isAdmin ? "Admin" : isStaff ? "Staff" : "Seller"
             ).catch(err => console.error("Background email error:", err));
         }
+
+        // ─── In-app notification for the buyer ───────────────────
+        notifyUser(winningBidder?._id || auction.winner._id, 'SHIPPING_UPDATED', {
+            title: 'Shipping updated',
+            message: `Shipping info for "${auction.title}" was updated${shippingInfo.trackingNumber ? ` — tracking: ${shippingInfo.trackingNumber}` : ''}.`,
+            actionUrl: `/bidder/communication/${auction._id}`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { trackingNumber: shippingInfo.trackingNumber, company: shippingInfo.company },
+        }).catch((err) => console.error('notify SHIPPING_UPDATED:', err));
 
         res.status(200).json({
             success: true,

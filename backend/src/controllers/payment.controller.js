@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import { paymentInitiatedAdminEmail } from "../utils/nodemailer.js";
 import BidPayment from '../models/bidPayment.model.js';
 import Deposit from "../models/deposit.model.js";
+import { notifyAdminsAndStaffWithPermission } from '../services/notificationService.js';
 
 export const createBankTransferPayment = async (req, res) => {
     try {
@@ -114,6 +115,15 @@ export const createBankTransferPayment = async (req, res) => {
                 `✅ Sent admin notifications to ${adminUsers.length} admin(s)`,
             );
         }
+
+        // ─── In-app admin notification ───────────────────────────
+        notifyAdminsAndStaffWithPermission('ADMIN_BANK_TRANSFER_INITIATED', {
+            title: `Bank transfer initiated — "${auction.title}"`,
+            message: `$${totalAmount.toLocaleString()} from ${buyer?.username || 'buyer'}`,
+            actionUrl: `/admin/transactions`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { amount: totalAmount, buyerId: userId, auctionTitle: auction.title },
+        }).catch((err) => console.error('notify ADMIN_BANK_TRANSFER_INITIATED:', err));
 
         return res.status(200).json({
             success: true,
@@ -473,6 +483,15 @@ export const createCashPayment = async (req, res) => {
                 (err) => console.error(`Admin email failed:`, err)
             );
         }
+
+        // ─── In-app admin notification ───────────────────────────
+        notifyAdminsAndStaffWithPermission('ADMIN_CASH_PAYMENT_INITIATED', {
+            title: `Cash payment selected — "${auction.title}"`,
+            message: `$${totalAmount.toLocaleString()} from ${buyer?.username || 'buyer'}`,
+            actionUrl: `/admin/transactions`,
+            relatedEntity: { type: 'Auction', id: auction._id },
+            metadata: { amount: totalAmount, buyerId: userId, auctionTitle: auction.title },
+        }).catch((err) => console.error('notify ADMIN_CASH_PAYMENT_INITIATED:', err));
 
         return res.status(200).json({
             success: true,

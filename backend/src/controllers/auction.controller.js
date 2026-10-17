@@ -24,6 +24,11 @@ import {
   buildGlobalCommission,
   isCommissionLocked,
 } from "../utils/auctionCommission.js";
+import {
+  notifyUser,
+  createBulkNotifications,
+  notifyAdminsAndStaffWithPermission,
+} from '../services/notificationService.js';
 
 // Create New Auction
 export const createAuction = async (req, res) => {
@@ -389,14 +394,23 @@ export const createAuction = async (req, res) => {
       },
     });
 
+    // In-app admin notification for pending approval
+    notifyAdminsAndStaffWithPermission('ADMIN_AUCTION_PENDING_APPROVAL', {
+      title: `New listing awaiting approval`,
+      message: `"${auction.title}" by ${auction.seller?.username || auction.sellerUsername}`,
+      actionUrl: `/admin/auctions/all?filter=pending`,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { sellerId: auction.seller?._id || auction.seller, sellerUsername: auction.sellerUsername },
+    }).catch((err) => console.error('notify ADMIN_AUCTION_PENDING_APPROVAL:', err));
+
     // Notify admins if needed
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
-      await auctionSubmittedForApprovalEmail(
+      auctionSubmittedForApprovalEmail(
         admin.email,
         auction,
         auction.seller,
-      );
+      ).catch(err => console.error(`failed to send auction submitted for approval email to: ${admin?.email}`, err));
     }
   } catch (error) {
     console.error("Create auction error:", error);
@@ -1700,7 +1714,6 @@ export const deleteAuction = async (req, res) => {
 };
 
 // Place Bid
-
 export const placeBid = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1771,20 +1784,61 @@ export const placeBid = async (req, res) => {
       data: { auction },
     });
 
+    // ─── In-app notifications ────────────────────────────────
+    const amountNum = parseFloat(amount);
+    const auctionUrl = `/auction/${auction._id}`;
+
+    // Notify the bidder
+    notifyUser(bidder._id, 'BID_CONFIRMED', {
+      title: 'Bid placed successfully',
+      message: `Your bid of $${amountNum.toLocaleString()} on "${auction.title}" is confirmed.`,
+      actionUrl: auctionUrl,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { amount: amountNum },
+    }).catch((err) => console.error('notify BID_CONFIRMED:', err));
+
+    // Notify the seller
+    notifyUser(auction.seller._id || auction.seller, 'NEW_BID', {
+      title: `New bid on "${auction.title}"`,
+      message: `$${amountNum.toLocaleString()} from ${bidder.username}`,
+      actionUrl: `/seller/auctions/all`,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { amount: amountNum, bidderId: bidder._id, bidderUsername: bidder.username },
+    }).catch((err) => console.error('notify NEW_BID:', err));
+
+    // Notify everyone who was previously in the running (except the new bidder)
+    const othersToNotify = (previousBidders || []).filter(
+      (id) => id?.toString() !== bidder._id.toString()
+    );
+    if (othersToNotify.length > 0) {
+      createBulkNotifications(othersToNotify, 'OUTBID', {
+        title: `You've been outbid on "${auction.title}"`,
+        message: `New highest bid: $${amountNum.toLocaleString()}`,
+        actionUrl: auctionUrl,
+        relatedEntity: { type: 'Auction', id: auction._id },
+        metadata: { newHighestBid: amountNum },
+        dedupKey: `outbid:${auction._id}`, // collapse proxy cascades
+      }).catch((err) => console.error('notify OUTBID:', err));
+    }
+
     // Send bid confirmation to the current bidder
-    await bidConfirmationEmail(
+    bidConfirmationEmail(
       bidder.email,
       bidder.username,
       auction,
       amount,
       auction.currentPrice,
+    ).catch((err) =>
+      console.error(`Failed to send bid confimation email to ${bidder?.email}:`, err)
     );
 
-    await newBidNotificationEmail(
+    newBidNotificationEmail(
       auction.seller,
       auction,
       parseFloat(amount),
       bidder,
+    ).catch((err) =>
+      console.error(`Failed to send new bid notification email to seller:`, err)
     );
 
     // Send outbid notifications to previous bidders (except current bidder)
@@ -1792,7 +1846,7 @@ export const placeBid = async (req, res) => {
       previousHighestBidder &&
       previousHighestBidder.toString() !== bidder._id.toString()
     ) {
-      await sendOutbidNotifications(
+      sendOutbidNotifications(
         auction,
         previousHighestBidder,
         previousBidders,
@@ -2622,6 +2676,36 @@ export const buyNow = async (req, res) => {
       },
     });
 
+    // ─── In-app notifications ────────────────────────────────
+    const auctionUrl = `/auction/${updatedAuction._id}`;
+
+    // Winner
+    notifyUser(buyer._id, 'AUCTION_WON', {
+      title: 'You won the auction!',
+      message: `"${updatedAuction.title}" is yours for $${(updatedAuction.finalPrice || 0).toLocaleString()}.`,
+      actionUrl: `/bidder/auctions/won`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { finalPrice: updatedAuction.finalPrice, auctionTitle: updatedAuction.title },
+    }).catch((err) => console.error('notify AUCTION_WON (buyNow):', err));
+
+    // Seller
+    notifyUser(updatedAuction.seller._id || updatedAuction.seller, 'AUCTION_ENDED_SOLD', {
+      title: `Your item sold — "${updatedAuction.title}"`,
+      message: `Final price: $${(updatedAuction.finalPrice || 0).toLocaleString()}`,
+      actionUrl: `/seller/auctions/sold`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { finalPrice: updatedAuction.finalPrice, winnerUsername: buyer.username },
+    }).catch((err) => console.error('notify AUCTION_ENDED_SOLD (buyNow):', err));
+
+    // Admins + staff with permission
+    notifyAdminsAndStaffWithPermission('ADMIN_AUCTION_WON', {
+      title: `Item sold — "${updatedAuction.title}"`,
+      message: `$${(updatedAuction.finalPrice || 0).toLocaleString()} — buyer: ${buyer.username}`,
+      actionUrl: `/admin/transactions`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { finalPrice: updatedAuction.finalPrice, buyerId: buyer._id },
+    }).catch((err) => console.error('notify ADMIN_AUCTION_WON (buyNow):', err));
+
     // Send emails (in background)
     sendAuctionEndedSellerEmail(updatedAuction).catch((error) =>
       console.error("Failed to send seller ended auction email:", error),
@@ -2642,7 +2726,7 @@ export const buyNow = async (req, res) => {
         console.log('⚠️ No admin users found with userType: "admin"');
       } else {
         for (const admin of adminUsers) {
-          await auctionWonAdminEmail(
+          auctionWonAdminEmail(
             admin?.email,
             updatedAuction,
             updatedAuction?.winner,
@@ -2999,6 +3083,37 @@ export const placeProxyBid = async (req, res) => {
         updatedAuction.currentBidder.toString()) === bidderIdStr;
 
     const priceChanged = updatedAuction.currentPrice > priceBeforeProxy;
+
+    // ─── In-app notifications ────────────────────────────────
+    const auctionUrl = `/auction/${id}`;
+
+    notifyUser(bidder._id, 'PROXY_BID_PLACED', {
+      title: 'Proxy bid placed',
+      message: `Max bid of $${parseFloat(maxAmount).toLocaleString()} is active on "${updatedAuction.title}".`,
+      actionUrl: auctionUrl,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { maxAmount: parseFloat(maxAmount), isHighest },
+    }).catch((err) => console.error('notify PROXY_BID_PLACED:', err));
+
+    // If somebody else was displaced, notify them (deduped against cascade)
+    if (priceBeforeProxy !== updatedAuction.currentPrice && updatedAuction.currentBidder) {
+      const currentIdStr = updatedAuction.currentBidder._id?.toString?.() ||
+        updatedAuction.currentBidder.toString();
+      const displaced = (updatedAuction.bids || [])
+        .map((b) => b.bidder?._id?.toString?.() || b.bidder?.toString?.() || b.bidder)
+        .filter((uid) => uid && uid !== currentIdStr && uid !== bidder._id.toString());
+      const unique = [...new Set(displaced)];
+      if (unique.length > 0) {
+        createBulkNotifications(unique, 'OUTBID', {
+          title: `You've been outbid on "${updatedAuction.title}"`,
+          message: `New highest bid: $${updatedAuction.currentPrice.toLocaleString()}`,
+          actionUrl: auctionUrl,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { newHighestBid: updatedAuction.currentPrice },
+          dedupKey: `outbid:${updatedAuction._id}`,
+        }).catch((err) => console.error('notify OUTBID (proxy):', err));
+      }
+    }
 
     if (isHighest && priceChanged && userHighestBid > 0) {
       bidConfirmationEmail(
@@ -3390,6 +3505,14 @@ export const updateProxyBid = async (req, res) => {
       updatedAuction.currentBidder &&
       (updatedAuction.currentBidder._id?.toString?.() ||
         updatedAuction.currentBidder.toString()) === userIdStr;
+
+    notifyUser(userId, 'PROXY_BID_PLACED', {
+      title: 'Proxy bid updated',
+      message: `Your max bid is now $${parseFloat(maxAmount).toLocaleString()} on "${updatedAuction.title}".`,
+      actionUrl: `/auction/${id}`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { maxAmount: parseFloat(maxAmount) },
+    }).catch((err) => console.error('notify PROXY_BID_PLACED (update):', err));
 
     if (isHighest && userHighestBid > 0) {
       const populatedUser = await User.findById(userId).select("email username");

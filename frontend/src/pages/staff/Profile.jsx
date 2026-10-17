@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import NotificationPreferencesCard from '../../components/NotificationPreferencesCard';
 
 // Default preferences
 const defaultPreferences = {
@@ -197,6 +198,7 @@ function Profile() {
         { id: "personal", label: "Personal Info", icon: <User size={18} /> },
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
+        { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 
@@ -288,7 +290,7 @@ function Profile() {
                                     <h3 className="text-xl font-semibold">
                                         {sections.find(s => s.id === activeSection)?.label}
                                     </h3>
-                                    {activeSection !== 'preferences' && activeSection !== 'security' && (
+                                    {activeSection !== 'preferences' && activeSection !== 'security' && activeSection !== 'notifications' && (
                                         <div className="flex gap-2">
                                             {isEditing ? (
                                                 <>
@@ -589,6 +591,11 @@ function Profile() {
                                         </div>
                                     </div>
                                 )} */}
+
+                                {/* Notification Preferences Section */}
+                                {activeSection === "notifications" && (
+                                    <NotificationPreferencesCard />
+                                )}
 
                                 {/* Security Section */}
                                 {activeSection === "security" && (

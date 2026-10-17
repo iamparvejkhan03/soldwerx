@@ -7,6 +7,8 @@ import { PopUpContextProvider } from './contexts/PopUpContextProvider';
 import { Protected, LoadingSpinner } from './components';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ensureClockStarted } from './utils/serverClock.js';
+import { NotificationProvider } from './contexts/NotificationContext';
+import NotificationPopup from './components/NotificationPopup';
 import { installTranslationResilience } from 'translation-resilience';
 installTranslationResilience();
 
@@ -47,6 +49,7 @@ const SellerPayouts = lazy(() => import('./pages/seller/Payouts'));
 const CreateEventSeller = lazy(() => import('./pages/seller/CreateEvent'));
 const EditEventSeller = lazy(() => import('./pages/seller/EditEvent'));
 const SellerAllEvents = lazy(() => import('./pages/seller/AllEvents'));
+const SellerNotifications = lazy(() => import('./pages/seller/Notifications'));
 
 {/* Broker Pages */ }
 const BrokerLayout = lazy(() => import('./pages/broker/Layout'));
@@ -74,6 +77,7 @@ const BidderCommunication = lazy(() => import('./pages/bidder/Communication'));
 const BidderAllCommunications = lazy(() => import('./pages/bidder/AllCommunications'));
 const BidderPayments = lazy(() => import('./pages/bidder/Payments'));
 const ActiveEvents = lazy(() => import('./pages/bidder/ActiveEvents'));
+const BidderNotifications = lazy(() => import('./pages/bidder/Notifications'));
 
 {/* Staff Pages */ }
 const StaffLayout = lazy(() => import('./pages/staff/Layout'));
@@ -103,6 +107,7 @@ const StaffAllEvents = lazy(() => import('./pages/staff/AllEvents'));
 const StaffCreateEvent = lazy(() => import('./pages/staff/CreateEvent'));
 const StaffEditEvent = lazy(() => import('./pages/staff/EditEvent'));
 const StaffTaxSettings = lazy(() => import('./pages/staff/TaxSettings'));
+const StaffNotifications = lazy(() => import('./pages/staff/Notifications'));
 
 {/* Admin Pages */ }
 const AdminLayout = lazy(() => import('./pages/admin/Layout'));
@@ -132,169 +137,171 @@ const AdminAllEvents = lazy(() => import('./pages/admin/AllEvents'));
 const AdminCreateEvent = lazy(() => import('./pages/admin/CreateEvent'));
 const AdminEditEvent = lazy(() => import('./pages/admin/EditEvent'));
 const AdminTaxSettings = lazy(() => import('./pages/admin/TaxSettings'));
+const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
 
 ensureClockStarted();
 
 createRoot(document.getElementById('root')).render(
     //<StrictMode>
     <AuthProvider>
-        <PopUpContextProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route path='/' element={<App />}>
-                        <Route path='' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Home /></Suspense>} />
+        <NotificationProvider>
+            <PopUpContextProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path='/' element={<App />}>
+                            <Route path='' index={true} element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Home /></Suspense>} />
 
-                        <Route path='/contact' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Contact /></Suspense>} />
+                            <Route path='/contact' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Contact /></Suspense>} />
 
-                        <Route path='/about' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><About /></Suspense>} />
+                            <Route path='/about' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><About /></Suspense>} />
 
-                        <Route path='/faqs' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><FAQs /></Suspense>} />
+                            <Route path='/faqs' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><FAQs /></Suspense>} />
 
-                        <Route path='/liquidate' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Liquidate /></Suspense>} />
+                            <Route path='/liquidate' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Liquidate /></Suspense>} />
 
-                        <Route path='/sell-with-us' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellWithUs /></Suspense>} />
+                            <Route path='/sell-with-us' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellWithUs /></Suspense>} />
 
-                        <Route path='/login' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Login /></Suspense>} />
+                            <Route path='/login' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Login /></Suspense>} />
 
-                        <Route path='/register' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Register /></Suspense>} />
+                            <Route path='/register' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Register /></Suspense>} />
 
-                        <Route path='/auctions' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Auctions /></Suspense>} />
+                            <Route path='/auctions' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Auctions /></Suspense>} />
 
-                        <Route path='/auction/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleAuction /></Suspense>} />
+                            <Route path='/auction/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleAuction /></Suspense>} />
 
-                        <Route path='/privacy-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PrivacyPolicy /></Suspense>} />
+                            <Route path='/privacy-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PrivacyPolicy /></Suspense>} />
 
-                        <Route path='/terms-of-use' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><TermsOfUse /></Suspense>} />
+                            <Route path='/terms-of-use' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><TermsOfUse /></Suspense>} />
 
-                        <Route path='/payment-refund-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PaymentRefundPolicy /></Suspense>} />
+                            <Route path='/payment-refund-policy' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><PaymentRefundPolicy /></Suspense>} />
 
-                        <Route path='/seller-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellerAgreement /></Suspense>} />
+                            <Route path='/seller-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellerAgreement /></Suspense>} />
 
-                        <Route path='/buyer-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BuyerAgreement /></Suspense>} />
+                            <Route path='/buyer-agreement' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><BuyerAgreement /></Suspense>} />
 
-                        <Route path='/reset-password' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><ResetPassword /></Suspense>} />
+                            <Route path='/reset-password' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><ResetPassword /></Suspense>} />
 
-                        <Route path='/events' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Events /></Suspense>} />
+                            <Route path='/events' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Events /></Suspense>} />
 
-                        <Route path='/event/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleEvent /></Suspense>} />
+                            <Route path='/event/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleEvent /></Suspense>} />
 
-                    </Route>
+                        </Route>
 
-                    {/* Seller Layout */}
-                    <Route path='/seller' element={<Protected authetication={true} userType='seller'><SellerLayout /></Protected>}>
-                        {/* Seller Dashboard */}
-                        <Route
-                            path='/seller/dashboard'
-                            index={true}
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerDashboard />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Create Auction */}
-                        <Route
-                            path='/seller/auctions/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <CreateAuctionSeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Edit Auction */}
-                        <Route
-                            path='/seller/auctions/edit/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <EditAuctionSeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Live Auctions */}
-                        <Route
-                            path='/seller/auctions/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerAllAuctions />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller All Offers */}
-                        <Route
-                            path='/seller/offers/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerAllOffers />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Won Auctions */}
-                        <Route
-                            path='/seller/auctions/sold'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SoldAuctionsSeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Auctions Bid History */}
-                        <Route
-                            path='/seller/bids/history'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidHistorySeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Profile */}
-                        <Route
-                            path='/seller/profile'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerProfile />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Communication */}
-                        <Route
-                            path='/seller/communication/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerCommunication />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Live Communications */}
-                        <Route
-                            path='/seller/communications/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerAllCommunications />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Payout methods */}
-                        <Route
-                            path='/seller/payout-methods'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerPayoutMethods />
-                                </Suspense>
-                            }
-                        />
+                        {/* Seller Layout */}
+                        <Route path='/seller' element={<Protected authetication={true} userType='seller'><SellerLayout /></Protected>}>
+                            {/* Seller Dashboard */}
+                            <Route
+                                path='/seller/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerDashboard />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Create Auction */}
+                            <Route
+                                path='/seller/auctions/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <CreateAuctionSeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Edit Auction */}
+                            <Route
+                                path='/seller/auctions/edit/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <EditAuctionSeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Live Auctions */}
+                            <Route
+                                path='/seller/auctions/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerAllAuctions />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller All Offers */}
+                            <Route
+                                path='/seller/offers/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerAllOffers />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Won Auctions */}
+                            <Route
+                                path='/seller/auctions/sold'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SoldAuctionsSeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Auctions Bid History */}
+                            <Route
+                                path='/seller/bids/history'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidHistorySeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Profile */}
+                            <Route
+                                path='/seller/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerProfile />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Communication */}
+                            <Route
+                                path='/seller/communication/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerCommunication />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Live Communications */}
+                            <Route
+                                path='/seller/communications/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerAllCommunications />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Payout methods */}
+                            <Route
+                                path='/seller/payout-methods'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerPayoutMethods />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Seller Payouts */}
-                        <Route
-                            path='/seller/payouts'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerPayouts />
-                                </Suspense>
-                            }
-                        />
+                            {/* Seller Payouts */}
+                            <Route
+                                path='/seller/payouts'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerPayouts />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Seller Billing */}
-                        {/* <Route
+                            {/* Seller Billing */}
+                            {/* <Route
                                 path='/seller/billing'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -303,76 +310,86 @@ createRoot(document.getElementById('root')).render(
                                 }
                             /> */}
 
-                        {/* Seller Create Event */}
-                        <Route
-                            path='/seller/events/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <CreateEventSeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Edit Event */}
-                        <Route
-                            path='/seller/events/edit/:eventId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <EditEventSeller />
-                                </Suspense>
-                            }
-                        />
-                        {/* Seller Live Events */}
-                        <Route
-                            path='/seller/events/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellerAllEvents />
-                                </Suspense>
-                            }
-                        />
-                    </Route>
+                            {/* Seller Create Event */}
+                            <Route
+                                path='/seller/events/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <CreateEventSeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Edit Event */}
+                            <Route
+                                path='/seller/events/edit/:eventId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <EditEventSeller />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Seller Live Events */}
+                            <Route
+                                path='/seller/events/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerAllEvents />
+                                    </Suspense>
+                                }
+                            />
 
-                    {/* Broker Layout */}
-                    <Route path='/broker' element={<Protected authetication={true} userType='broker'><BrokerLayout /></Protected>}>
-                        {/* Broker Dashboard */}
-                        <Route
-                            path='/broker/dashboard'
-                            index={true}
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BrokerDashboard />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker Create Auction */}
-                        <Route
-                            path='/broker/auctions/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <CreateAuctionBroker />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker Edit Auction */}
-                        <Route
-                            path='/broker/auctions/edit/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <EditAuctionBroker />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker Live Auctions */}
-                        <Route
-                            path='/broker/auctions/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BrokerAllAuctions />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker All Offers */}
-                        {/* <Route
+                            {/* Seller Notifications */}
+                            <Route
+                                path='/seller/notifications'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellerNotifications />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
+
+                        {/* Broker Layout */}
+                        <Route path='/broker' element={<Protected authetication={true} userType='broker'><BrokerLayout /></Protected>}>
+                            {/* Broker Dashboard */}
+                            <Route
+                                path='/broker/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BrokerDashboard />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker Create Auction */}
+                            <Route
+                                path='/broker/auctions/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <CreateAuctionBroker />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker Edit Auction */}
+                            <Route
+                                path='/broker/auctions/edit/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <EditAuctionBroker />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker Live Auctions */}
+                            <Route
+                                path='/broker/auctions/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BrokerAllAuctions />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker All Offers */}
+                            {/* <Route
                             path='/broker/offers/all'
                             element={
                                 <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -380,36 +397,36 @@ createRoot(document.getElementById('root')).render(
                                 </Suspense>
                             }
                         /> */}
-                        {/* Broker Won Auctions */}
-                        <Route
-                            path='/broker/auctions/sold'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SoldAuctionsBroker />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker Auctions Bid History */}
-                        <Route
-                            path='/broker/bids/history'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidHistoryBroker />
-                                </Suspense>
-                            }
-                        />
-                        {/* Broker Profile */}
-                        <Route
-                            path='/broker/profile'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BrokerProfile />
-                                </Suspense>
-                            }
-                        />
+                            {/* Broker Won Auctions */}
+                            <Route
+                                path='/broker/auctions/sold'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SoldAuctionsBroker />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker Auctions Bid History */}
+                            <Route
+                                path='/broker/bids/history'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidHistoryBroker />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Broker Profile */}
+                            <Route
+                                path='/broker/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BrokerProfile />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Broker Billing */}
-                        {/* <Route
+                            {/* Broker Billing */}
+                            {/* <Route
                                 path='/broker/billing'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -417,109 +434,109 @@ createRoot(document.getElementById('root')).render(
                                     </Suspense>
                                 }
                             /> */}
-                    </Route>
+                        </Route>
 
-                    {/* Bidder Layout */}
-                    <Route path='/bidder' element={<Protected authetication={true} userType='bidder'><BidderLayout /></Protected>}>
-                        {/* Bidder Dashboard */}
-                        <Route
-                            path='/bidder/dashboard'
-                            index={true}
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidderDashboard />
-                                </Suspense>
-                            }
-                        />
+                        {/* Bidder Layout */}
+                        <Route path='/bidder' element={<Protected authetication={true} userType='bidder'><BidderLayout /></Protected>}>
+                            {/* Bidder Dashboard */}
+                            <Route
+                                path='/bidder/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderDashboard />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder Watchlist */}
-                        <Route
-                            path='/bidder/watchlist'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <Watchlist />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder Watchlist */}
+                            <Route
+                                path='/bidder/watchlist'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <Watchlist />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder Watchlist */}
-                        <Route
-                            path='/bidder/auctions/active'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <ActiveAuctions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder Watchlist */}
+                            <Route
+                                path='/bidder/auctions/active'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <ActiveAuctions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder My Bids */}
-                        <Route
-                            path='/bidder/bids'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <MyBids />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder My Bids */}
+                            <Route
+                                path='/bidder/bids'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <MyBids />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder My Offers */}
-                        <Route
-                            path='/bidder/offers'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <MyOffers />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder My Offers */}
+                            <Route
+                                path='/bidder/offers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <MyOffers />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder My Bids */}
-                        <Route
-                            path='/bidder/auctions/won'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <WonAuctions />
-                                </Suspense>
-                            }
-                        />
-                        {/* Bidder Profile */}
-                        <Route
-                            path='/bidder/profile'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidderProfile />
-                                </Suspense>
-                            }
-                        />
-                        {/* Bidder Communication */}
-                        <Route
-                            path='/bidder/communication/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidderCommunication />
-                                </Suspense>
-                            }
-                        />
-                        {/* Bidder All Communications */}
-                        <Route
-                            path='/bidder/communications/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidderAllCommunications />
-                                </Suspense>
-                            }
-                        />
-                        {/* Bidder Communication */}
-                        <Route
-                            path='/bidder/payments'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <BidderPayments />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder My Bids */}
+                            <Route
+                                path='/bidder/auctions/won'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <WonAuctions />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Bidder Profile */}
+                            <Route
+                                path='/bidder/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderProfile />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Bidder Communication */}
+                            <Route
+                                path='/bidder/communication/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderCommunication />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Bidder All Communications */}
+                            <Route
+                                path='/bidder/communications/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderAllCommunications />
+                                    </Suspense>
+                                }
+                            />
+                            {/* Bidder Communication */}
+                            <Route
+                                path='/bidder/payments'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderPayments />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Bidder Billing */}
-                        <Route
+                            {/* Bidder Billing */}
+                            <Route
                                 path='/bidder/billing'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -528,202 +545,212 @@ createRoot(document.getElementById('root')).render(
                                 }
                             />
 
-                        {/* Bidder Watchlist */}
-                        <Route
-                            path='/bidder/events/active'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <ActiveEvents />
-                                </Suspense>
-                            }
-                        />
-                    </Route>
+                            {/* Bidder Watchlist */}
+                            <Route
+                                path='/bidder/events/active'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <ActiveEvents />
+                                    </Suspense>
+                                }
+                            />
 
-                    {/* Staff Layout */}
-                    <Route path='/staff' element={<Protected authetication={true} userType='staff'><StaffLayout /></Protected>} >
-                        {/* Staff Dashboard */}
-                        <Route
-                            path='/staff/dashboard'
-                            index={true}
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffDashboard />
-                                </Suspense>
-                            }
-                        />
+                            {/* Bidder Notifications */}
+                            <Route
+                                path='/bidder/notifications'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <BidderNotifications />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
 
-                        {/* Staff All Users */}
-                        <Route
-                            path='/staff/users'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllUsers />
-                                </Suspense>
-                            }
-                        />
+                        {/* Staff Layout */}
+                        <Route path='/staff' element={<Protected authetication={true} userType='staff'><StaffLayout /></Protected>} >
+                            {/* Staff Dashboard */}
+                            <Route
+                                path='/staff/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffDashboard />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff All Staff */}
-                        <Route
-                            path='/staff/staff'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllStaff />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff All Users */}
+                            <Route
+                                path='/staff/users'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllUsers />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Add Staff */}
-                        <Route
-                            path='/staff/staff/add'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAddStaff />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff All Staff */}
+                            <Route
+                                path='/staff/staff'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllStaff />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Edit Staff */}
-                        <Route
-                            path='/staff/staff/edit/:id'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffEditStaff />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Add Staff */}
+                            <Route
+                                path='/staff/staff/add'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAddStaff />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff All Auctions */}
-                        <Route
-                            path='/staff/auctions/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllAuctions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Edit Staff */}
+                            <Route
+                                path='/staff/staff/edit/:id'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffEditStaff />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Create Auction */}
-                        <Route
-                            path='/staff/auctions/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffCreateAuction />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff All Auctions */}
+                            <Route
+                                path='/staff/auctions/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllAuctions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Edit Auction */}
-                        <Route
-                            path='/staff/auctions/edit/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffEditAuction />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Create Auction */}
+                            <Route
+                                path='/staff/auctions/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCreateAuction />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Categories */}
-                        <Route
-                            path='/staff/categories'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffCategories />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Edit Auction */}
+                            <Route
+                                path='/staff/auctions/edit/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffEditAuction />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Liquidation Requests */}
-                        <Route
-                            path='/staff/liquidation-requests'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffLiquidationRequests />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Categories */}
+                            <Route
+                                path='/staff/categories'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCategories />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Liquidation Requests */}
-                        <Route
-                            path='/staff/sell-requests'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffSellRequests />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Liquidation Requests */}
+                            <Route
+                                path='/staff/liquidation-requests'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffLiquidationRequests />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Support */}
-                        <Route
-                            path='/staff/support/inquiries'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffUserQueries />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Liquidation Requests */}
+                            <Route
+                                path='/staff/sell-requests'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffSellRequests />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Profile */}
-                        <Route
-                            path='/staff/profile'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffProfile />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Support */}
+                            <Route
+                                path='/staff/support/inquiries'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffUserQueries />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Comments */}
-                        <Route
-                            path='/staff/comments'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffComments />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Profile */}
+                            <Route
+                                path='/staff/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffProfile />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Commissions */}
-                        <Route
-                            path='/staff/commissions'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffCommissions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Comments */}
+                            <Route
+                                path='/staff/comments'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffComments />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Bids */}
-                        <Route
-                            path='/staff/bids'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffBidHistory />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Commissions */}
+                            <Route
+                                path='/staff/commissions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCommissions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Offers */}
-                        <Route
-                            path='/staff/offers'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllOffers />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Bids */}
+                            <Route
+                                path='/staff/bids'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffBidHistory />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Transactions */}
-                        <Route
-                            path='/staff/transactions'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffTransactions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Offers */}
+                            <Route
+                                path='/staff/offers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllOffers />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Payouts */}
-                        <Route
+                            {/* Staff Transactions */}
+                            <Route
+                                path='/staff/transactions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffTransactions />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Staff Payouts */}
+                            <Route
                                 path='/staff/payouts'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -732,8 +759,8 @@ createRoot(document.getElementById('root')).render(
                                 }
                             />
 
-                        {/* Staff Payout Methods */}
-                        {/* <Route
+                            {/* Staff Payout Methods */}
+                            {/* <Route
                                 path='/staff/payout-methods'
                                 element={
                                     <Suspense fallback={<LoadingSpinner height={'750px'} />}>
@@ -743,100 +770,110 @@ createRoot(document.getElementById('root')).render(
                             /> */}
 
                             {/* Staff Communications */}
-                        <Route
-                            path='/staff/communications/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllCommunications />
-                                </Suspense>
-                            }
-                        />
+                            <Route
+                                path='/staff/communications/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllCommunications />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Communication Details */}
-                        <Route
-                            path='/staff/communication/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffCommunication />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Communication Details */}
+                            <Route
+                                path='/staff/communication/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCommunication />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Transactions */}
-                        <Route
-                            path='/staff/transactions'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffTransactions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Transactions */}
+                            <Route
+                                path='/staff/transactions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffTransactions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff All Events */}
-                        <Route
-                            path='/staff/events/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffAllEvents />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff All Events */}
+                            <Route
+                                path='/staff/events/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffAllEvents />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff All Events */}
-                        <Route
-                            path='/staff/events/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffCreateEvent />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff All Events */}
+                            <Route
+                                path='/staff/events/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffCreateEvent />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Edit Event */}
-                        <Route
-                            path='/staff/events/edit/:eventId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffEditEvent />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Edit Event */}
+                            <Route
+                                path='/staff/events/edit/:eventId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffEditEvent />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Staff Tax Settings */}
-                        <Route
-                            path='/staff/tax-settings'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <StaffTaxSettings />
-                                </Suspense>
-                            }
-                        />
-                    </Route>
+                            {/* Staff Tax Settings */}
+                            <Route
+                                path='/staff/tax-settings'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffTaxSettings />
+                                    </Suspense>
+                                }
+                            />
 
-                    {/* Admin Layout */}
-                    <Route path='/admin' element={<Protected authetication={true} userType='admin'><AdminLayout /></Protected>} >
-                        {/* Admin Dashboard */}
-                        <Route
-                            path='/admin/dashboard'
-                            index={true}
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminDashboard />
-                                </Suspense>
-                            }
-                        />
+                            {/* Staff Notifications */}
+                            <Route
+                                path='/staff/notifications'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <StaffNotifications />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
 
-                        {/* Admin All Users */}
-                        <Route
-                            path='/admin/users'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AllUsers />
-                                </Suspense>
-                            }
-                        />
+                        {/* Admin Layout */}
+                        <Route path='/admin' element={<Protected authetication={true} userType='admin'><AdminLayout /></Protected>} >
+                            {/* Admin Dashboard */}
+                            <Route
+                                path='/admin/dashboard'
+                                index={true}
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminDashboard />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin All Staff */}
+                            {/* Admin All Users */}
+                            <Route
+                                path='/admin/users'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AllUsers />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin All Staff */}
                             <Route
                                 path='/admin/staff'
                                 element={
@@ -866,219 +903,231 @@ createRoot(document.getElementById('root')).render(
                                 }
                             />
 
-                        {/* Admin All Auctions */}
-                        <Route
-                            path='/admin/auctions/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminAllAuctions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin All Auctions */}
+                            <Route
+                                path='/admin/auctions/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminAllAuctions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin All Auctions */}
-                        <Route
-                            path='/admin/auctions/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminCreateAuction />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin All Auctions */}
+                            <Route
+                                path='/admin/auctions/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminCreateAuction />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Edit Auction */}
-                        <Route
-                            path='/admin/auctions/edit/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminEditAuction />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Edit Auction */}
+                            <Route
+                                path='/admin/auctions/edit/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminEditAuction />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Categories */}
-                        <Route
-                            path='/admin/categories'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <Categories />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Categories */}
+                            <Route
+                                path='/admin/categories'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <Categories />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Support */}
-                        <Route
-                            path='/admin/support/inquiries'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <UserQueries />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Support */}
+                            <Route
+                                path='/admin/support/inquiries'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <UserQueries />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Liquidation Requests */}
-                        <Route
-                            path='/admin/liquidation-requests'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <LiquidationRequests />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Liquidation Requests */}
+                            <Route
+                                path='/admin/liquidation-requests'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <LiquidationRequests />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Liquidation Requests */}
-                        <Route
-                            path='/admin/sell-requests'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <SellRequests />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Liquidation Requests */}
+                            <Route
+                                path='/admin/sell-requests'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <SellRequests />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Profile */}
-                        <Route
-                            path='/admin/profile'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminProfile />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Profile */}
+                            <Route
+                                path='/admin/profile'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminProfile />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Comments */}
-                        <Route
-                            path='/admin/comments'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminComments />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Comments */}
+                            <Route
+                                path='/admin/comments'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminComments />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Commissions */}
-                        <Route
-                            path='/admin/commissions'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <Commissions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Commissions */}
+                            <Route
+                                path='/admin/commissions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <Commissions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Bids */}
-                        <Route
-                            path='/admin/bids'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminBidHistory />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Bids */}
+                            <Route
+                                path='/admin/bids'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminBidHistory />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Offers */}
-                        <Route
-                            path='/admin/offers'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminAllOffers />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Offers */}
+                            <Route
+                                path='/admin/offers'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminAllOffers />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Communications */}
-                        <Route
-                            path='/admin/communications/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AllCommunications />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Communications */}
+                            <Route
+                                path='/admin/communications/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AllCommunications />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Communication Details */}
-                        <Route
-                            path='/admin/communication/:auctionId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminCommunication />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Communication Details */}
+                            <Route
+                                path='/admin/communication/:auctionId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminCommunication />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Payouts */}
-                        <Route
-                            path='/admin/payouts'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminPayouts />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Payouts */}
+                            <Route
+                                path='/admin/payouts'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminPayouts />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Payout Methods */}
-                        <Route
-                            path='/admin/payout-methods'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminPayoutMethods />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Payout Methods */}
+                            <Route
+                                path='/admin/payout-methods'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminPayoutMethods />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Transactions */}
-                        <Route
-                            path='/admin/transactions'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <Transactions />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Transactions */}
+                            <Route
+                                path='/admin/transactions'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <Transactions />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin All Events */}
-                        <Route
-                            path='/admin/events/all'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminAllEvents />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin All Events */}
+                            <Route
+                                path='/admin/events/all'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminAllEvents />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin All Events */}
-                        <Route
-                            path='/admin/events/create'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminCreateEvent />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin All Events */}
+                            <Route
+                                path='/admin/events/create'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminCreateEvent />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Edit Event */}
-                        <Route
-                            path='/admin/events/edit/:eventId'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminEditEvent />
-                                </Suspense>
-                            }
-                        />
+                            {/* Admin Edit Event */}
+                            <Route
+                                path='/admin/events/edit/:eventId'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminEditEvent />
+                                    </Suspense>
+                                }
+                            />
 
-                        {/* Admin Tax Settings */}
-                        <Route
-                            path='/admin/tax-settings'
-                            element={
-                                <Suspense fallback={<LoadingSpinner height={'750px'} />}>
-                                    <AdminTaxSettings />
-                                </Suspense>
-                            }
-                        />
-                    </Route>
-                </Routes>
-            </BrowserRouter>
-        </PopUpContextProvider>
+                            {/* Admin Tax Settings */}
+                            <Route
+                                path='/admin/tax-settings'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminTaxSettings />
+                                    </Suspense>
+                                }
+                            />
+
+                            {/* Admin Notifications */}
+                            <Route
+                                path='/admin/notifications'
+                                element={
+                                    <Suspense fallback={<LoadingSpinner height={'750px'} />}>
+                                        <AdminNotifications />
+                                    </Suspense>
+                                }
+                            />
+                        </Route>
+                    </Routes>
+                    <NotificationPopup />
+                </BrowserRouter>
+            </PopUpContextProvider>
+        </NotificationProvider>
     </AuthProvider>
     //</StrictMode>,
 )
