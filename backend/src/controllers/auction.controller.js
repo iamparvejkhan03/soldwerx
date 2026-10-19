@@ -407,7 +407,7 @@ export const createAuction = async (req, res) => {
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
       auctionSubmittedForApprovalEmail(
-        admin.email,
+        admin,
         auction,
         auction.seller,
       ).catch(err => console.error(`failed to send auction submitted for approval email to: ${admin?.email}`, err));
@@ -1773,8 +1773,8 @@ export const placeBid = async (req, res) => {
     await processProxyBids(auction._id);
 
     // Populate the updated auction
-    await auction.populate("currentBidder", "username firstName email");
-    await auction.populate("seller", "username firstName email");
+    await auction.populate("currentBidder", "username firstName email userType emailPreferences");
+    await auction.populate("seller", "username firstName email userType emailPreferences");
 
     broadcastAuctionChange(auction._id);
 
@@ -1823,8 +1823,7 @@ export const placeBid = async (req, res) => {
 
     // Send bid confirmation to the current bidder
     bidConfirmationEmail(
-      bidder.email,
-      bidder.username,
+      bidder,
       auction,
       amount,
       auction.currentPrice,
@@ -2656,9 +2655,9 @@ export const buyNow = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email")
-      .populate("winner", "username firstName lastName email phone address")
-      .populate("bids.bidder", "username firstName lastName");
+      .populate("seller", "username firstName lastName email userType emailPreferences")
+      .populate("winner", "username firstName lastName email phone address userType emailPreferences")
+      .populate("bids.bidder", "username firstName lastName userType emailPreferences");
 
     // Custom message for giveaway
     const successMessage =
@@ -2719,7 +2718,7 @@ export const buyNow = async (req, res) => {
     // Send admin emails to all admin users
     try {
       const adminUsers = await User.find({ userType: "admin" }).select(
-        "email firstName",
+        "email firstName lastName username phone userType emailPreferences",
       );
 
       if (adminUsers.length === 0) {
@@ -2727,7 +2726,7 @@ export const buyNow = async (req, res) => {
       } else {
         for (const admin of adminUsers) {
           auctionWonAdminEmail(
-            admin?.email,
+            admin,
             updatedAuction,
             updatedAuction?.winner,
           ).catch((error) =>
@@ -3117,8 +3116,7 @@ export const placeProxyBid = async (req, res) => {
 
     if (isHighest && priceChanged && userHighestBid > 0) {
       bidConfirmationEmail(
-        bidder.email,
-        bidder.username,
+        bidder,
         updatedAuction,
         userHighestBid,               // ← user's real highest bid
         updatedAuction.currentPrice,  // ← current auction price
@@ -3515,11 +3513,10 @@ export const updateProxyBid = async (req, res) => {
     }).catch((err) => console.error('notify PROXY_BID_PLACED (update):', err));
 
     if (isHighest && userHighestBid > 0) {
-      const populatedUser = await User.findById(userId).select("email username");
+      const populatedUser = await User.findById(userId).select("email phone username userType emailPreferences");
       if (populatedUser?.email) {
         bidConfirmationEmail(
-          populatedUser.email,
-          populatedUser.username,
+          populatedUser,
           updatedAuction,
           userHighestBid,
           updatedAuction.currentPrice,

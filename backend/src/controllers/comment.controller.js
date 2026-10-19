@@ -74,7 +74,7 @@ export const addComment = async (req, res) => {
             .populate('user', 'firstName lastName username email userType');
 
         // Populate the auction's seller
-        await populatedComment.auction.populate('seller', 'email username firstName');
+        await populatedComment.auction.populate('seller', 'email username firstName userType emailPreferences');
 
         // ─── In-app notifications ────────────────────────────
         const auctionUrl = `/auction/${auctionId}#comments`;
@@ -452,7 +452,7 @@ export const flagComment = async (req, res) => {
 
         for (const admin of adminUsers) {
             flaggedCommentAdminEmail(
-                admin.email,
+                admin,
                 reason || 'Inappropriate content',
                 commentWithAuction,
                 commentWithAuction.auction,

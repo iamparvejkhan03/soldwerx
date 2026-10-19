@@ -54,7 +54,7 @@ class AgendaService {
         if (auction && auction.status === "approved") {
           auction.status = "active";
           await auction.save();
-          await auction.populate("seller", "email username firstName");
+          await auction.populate("seller", "email username firstName userType emailPreferences");
           broadcastAuctionChange(auction._id);
 
           // Send email to seller
@@ -65,7 +65,7 @@ class AgendaService {
             _id: { $ne: auction.seller._id }, // Exclude auction owner
             userType: { $ne: "admin" }, // Exclude admin users
             isActive: true, // Only active users
-          }).select("email username firstName preferences userType");
+          }).select("email username firstName userType emailPreferences");
 
           // In-app: notify seller + broadcast to interested bidders
           notifyUser(auction.seller._id || auction.seller, 'AUCTION_LISTED', {
@@ -93,7 +93,7 @@ class AgendaService {
       try {
         let auction = await Auction.findById(auctionId).populate(
           "seller",
-          "email phone username firstName",
+          "email phone username firstName userType emailPreferences",
         );
         // Don't populate winner initially since it might be null
 
@@ -160,8 +160,8 @@ class AgendaService {
           // Re-fetch the auction with populated winner if it was sold
           if (result.wasSold) {
             auction = await Auction.findById(auctionId)
-              .populate("seller", "email phone username firstName")
-              .populate("winner", "email phone username firstName address");
+              .populate("seller", "email phone username firstName userType emailPreferences")
+              .populate("winner", "email phone username firstName address userType emailPreferences");
           }
 
           // Send appropriate emails based on the result
@@ -177,7 +177,7 @@ class AgendaService {
             // Send admin email for sold auction
             const adminUsers = await User.find({ userType: "admin" });
             for (const admin of adminUsers) {
-              auctionWonAdminEmail(admin.email, auction, auction.winner).catch((err) =>
+              auctionWonAdminEmail(admin, auction, auction.winner).catch((err) =>
                 console.error(`Failed to send auction won email to ${admin?.email}: `, err)
               );
             }
@@ -226,7 +226,7 @@ class AgendaService {
             // Send admin email for ended auction
             const adminUsers = await User.find({ userType: "admin" });
             for (const admin of adminUsers) {
-              auctionEndedAdminEmail(admin.email, auction).catch((err) =>
+              auctionEndedAdminEmail(admin, auction).catch((err) =>
                 console.error(`Failed to send auction ended admin email to ${admin?.email}: `, err)
               );
             }
@@ -320,7 +320,7 @@ class AgendaService {
               "notifications.ending24hour": { $ne: true }, // Not sent yet
             },
           ],
-        }).populate("seller", "email username preferences userType"); // Populate seller to exclude them
+        }).populate("seller", "email username userType emailPreferences"); // Populate seller to exclude them
 
         for (const auction of endingSoonAuctions) {
           // Calculate exact time remaining for this auction
@@ -351,16 +351,14 @@ class AgendaService {
           const allUsers = await User.find({
             _id: { $ne: auction.seller._id }, // Exclude auction owner
             userType: { $nin: ["admin", "seller", "broker"] }, // Exclude admin, seller, and broker users
-            "preferences.bidAlerts": { $ne: false }, // Exclude users who opted out
             isActive: true, // Only active users
-          }).select("email username preferences userType");
+          }).select("email username userType emailPreferences");
 
           // Send to each user
           for (const user of allUsers) {
             try {
               auctionEndingSoonEmail(
-                user.email,
-                user.username,
+                user,
                 auction,
                 timeLabel,
               ).catch((err) =>
@@ -465,7 +463,7 @@ class AgendaService {
           const adminUsers = await User.find({ userType: "admin" });
           for (const admin of adminUsers) {
             depositChargedAdminEmail(
-              admin.email,
+              admin,
               auction,
               depositResult.amount
             ).catch(err => console.error(`Failed to send deposit charged admin email`, err));
@@ -497,7 +495,7 @@ class AgendaService {
           const adminUsers = await User.find({ userType: "admin" });
           for (const admin of adminUsers) {
             depositFailedAdminEmail(
-              admin.email,
+              admin,
               auction,
               depositResult.reason
             ).catch(err => console.error(`Failed to send deposit failed winner email: `, err));

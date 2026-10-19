@@ -92,7 +92,7 @@ export const createBankTransferPayment = async (req, res) => {
 
         // ✅ Fetch admin's bank details from database
         const adminUsers = await User.find({ userType: "admin" }).select(
-            "payoutMethods firstName lastName email",
+            "payoutMethods firstName lastName email phone userType emailPreferences",
         );
 
         if (adminUsers.length === 0) {
@@ -100,7 +100,7 @@ export const createBankTransferPayment = async (req, res) => {
         } else {
             for (const admin of adminUsers) {
                 paymentInitiatedAdminEmail(
-                    admin?.email,
+                    admin,
                     payment,
                     buyer,
                     auction
@@ -476,10 +476,10 @@ export const createCashPayment = async (req, res) => {
 
         // Notify admins
         const adminUsers = await User.find({ userType: "admin" }).select(
-            "payoutMethods firstName lastName email"
+            "payoutMethods firstName lastName email phone userType emailPreferences"
         );
         for (const admin of adminUsers) {
-            paymentInitiatedAdminEmail(admin.email, payment, buyer, auction).catch(
+            paymentInitiatedAdminEmail(admin, payment, buyer, auction).catch(
                 (err) => console.error(`Admin email failed:`, err)
             );
         }

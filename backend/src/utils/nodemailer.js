@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import Commission from "../models/commission.model.js";
+import { sendCategorizedEmail } from "../services/emailSenderService.js";
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -19,6 +20,8 @@ transporter.verify(function (error, success) {
         console.log("SMTP Server is ready");
     }
 });
+
+export { transporter };
 
 // ============================================
 // SoldWerX BRANDING CONFIGURATION
@@ -341,11 +344,12 @@ const contactEmail = async (name, email, phone, userType = "Bidder", message) =>
             </div>
         `;
         const html = baseTemplate(content, 'New Contact Query');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: process.env.EMAIL_USER,
+            emailKey: 'admin.contact_form',
             subject: `New Contact Query - ${name}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         return !!info;
     } catch (error) {
@@ -378,11 +382,12 @@ const contactConfirmationEmail = async (name, email) => {
             </div>
         `;
         const html = baseTemplate(content, 'Thank You');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: email,
+            emailKey: 'communication.contact_confirmation',
             subject: `Thank You for Contacting ${BRAND_NAME}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         return !!info;
     } catch (error) {
@@ -413,11 +418,11 @@ const welcomeEmail = async (user) => {
             <p>Need help getting started? Check out our FAQ section or contact our support team - we're here to help!</p>
         `;
         const html = baseTemplate(content, `Welcome, ${user.firstName || user.companyName || user.username}`);
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: user.email,
+        const info = await sendCategorizedEmail({
+            user: user,
+            emailKey: "account.welcome",
             subject: `Welcome to ${BRAND_NAME}, ${user.firstName || user.companyName || user.username}!`,
-            html
+            html,
         });
         console.log(`Welcome email sent to ${user.email}`);
         return !!info;
@@ -428,7 +433,7 @@ const welcomeEmail = async (user) => {
 };
 
 // 4. New user registered for admin
-const newUserRegistrationEmail = async (adminEmail, user) => {
+const newUserRegistrationEmail = async (adminUser, user) => {
     try {
         const userTypeDisplay = (user.userType || "bidder").charAt(0).toUpperCase() + (user.userType || "bidder").slice(1);
         const content = `
@@ -452,11 +457,11 @@ const newUserRegistrationEmail = async (adminEmail, user) => {
             </div>
         `;
         const html = baseTemplate(content, 'New User Registration');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: "admin.new_user_registered",
             subject: `New User Registration - ${userTypeDisplay}`,
-            html
+            html,
         });
         console.log(`New user registration email sent to admin for ${user.email}`);
         return !!info;
@@ -492,11 +497,12 @@ const resetPasswordEmail = async (email, url) => {
             <p>After resetting your password, you can log in to your ${BRAND_NAME} account and continue browsing our diverse selection of items.</p>
         `;
         const html = baseTemplate(content, 'Password Reset');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: email,
+            emailKey: 'account.password_reset',
             subject: `Reset Your ${BRAND_NAME} Password`,
-            html
+            html,
+            bypassPrefs: true,
         });
         return !!info;
     } catch (error) {
@@ -505,7 +511,7 @@ const resetPasswordEmail = async (email, url) => {
 };
 
 // 6. Auction submitted for admin approval
-const auctionSubmittedForApprovalEmail = async (adminEmail, auction, seller) => {
+const auctionSubmittedForApprovalEmail = async (adminUser, auction, seller) => {
     try {
         const content = `
             <h2 style="text-align: center;">New Listing Awaiting Approval</h2>
@@ -543,11 +549,11 @@ const auctionSubmittedForApprovalEmail = async (adminEmail, auction, seller) => 
             </div>
         `;
         const html = baseTemplate(content, 'Listing Approval Required');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: "admin.auction_submitted",
             subject: `New Listing for Approval - ${auction.title}`,
-            html
+            html,
         });
         console.log(`Listing submission email sent to admin for auction ${auction._id}`);
         return !!info;
@@ -589,11 +595,11 @@ const auctionApprovedEmail = async (seller, listing) => {
             <p>For any questions about the selling process or if you need assistance, our support team is here to help.</p>
         `;
         const html = baseTemplate(content, 'Listing Approved');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'auction.listing_approved',
             subject: `Your Listing is Live: ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Listing approved email sent to seller ${seller.email}`);
         return !!info;
@@ -634,11 +640,11 @@ const auctionListedEmail = async (listing, seller) => {
             <p>We wish you a quick and successful sale!</p>
         `;
         const html = baseTemplate(content, 'Listing Live');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'auction.listing_live',
             subject: `Your Listing is Live on ${BRAND_NAME}: ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Listing live email sent to seller ${seller?.email}`);
         return !!info;
@@ -711,11 +717,11 @@ const newAuctionNotificationEmail = async (bidder, listing, seller) => {
             </div>
         `;
         const html = baseTemplate(content, 'New Listing');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: bidder.email,
+        const info = await sendCategorizedEmail({
+            user: bidder,
+            emailKey: 'marketing.new_listing',
             subject: `New Listing: ${listing?.title}`,
-            html
+            html,
         });
         console.log(`New listing notification sent to bidder ${bidder?.email} for listing ${listing?._id}`);
         return !!info;
@@ -730,22 +736,19 @@ const sendBulkAuctionNotifications = async (bidders, listing, seller) => {
     try {
         const notificationPromises = bidders?.map(async (bidder) => {
             try {
-                if (bidder?.preferences) {
-                    await newAuctionNotificationEmail(bidder, listing, seller);
-                    return { success: true, email: bidder.email };
-                }
-                return { success: false, email: bidder?.email, reason: "Notifications disabled" };
+                await newAuctionNotificationEmail(bidder, listing, seller);
+                return { success: true, email: bidder.email };
             } catch (error) {
                 console.error(`Failed to send notification to ${bidder?.email}:`, error.message);
                 return { success: false, email: bidder?.email, error: error.message };
             }
         });
-        const results = await Promise.allSettled(notificationPromises);
-        const successful = results.filter(result => result.status === "fulfilled" && result.value.success).length;
-        const failed = results.filter(result => result.status === "fulfilled" && !result.value.success).length;
-        const errors = results.filter(result => result.status === "rejected").length;
+        const results = await Promise.allSettled(notificationPromises || []);
+        const successful = results.filter(r => r.status === "fulfilled" && r.value.success).length;
+        const failed = results.filter(r => r.status === "fulfilled" && !r.value.success).length;
+        const errors = results.filter(r => r.status === "rejected").length;
         console.log(`Bulk listing notifications completed: ${successful} successful, ${failed} skipped/failed, ${errors} errors`);
-        return { total: bidders.length, successful, failed, errors };
+        return { total: bidders?.length || 0, successful, failed, errors };
     } catch (error) {
         console.error("Error in bulk listing notifications:", error);
         throw error;
@@ -753,7 +756,7 @@ const sendBulkAuctionNotifications = async (bidders, listing, seller) => {
 };
 
 // 11. Bid confirmation email for bidder
-const bidConfirmationEmail = async (userEmail, userName, listing, amount, currentBid) => {
+const bidConfirmationEmail = async (user, listing, amount, currentBid) => {
     try {
         const isWinning = amount >= currentBid;
         const content = `
@@ -772,11 +775,11 @@ const bidConfirmationEmail = async (userEmail, userName, listing, amount, curren
             </div>
         `;
         const html = baseTemplate(content, 'Bid Confirmation');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.bid_confirmation',
             subject: `Bid Confirmation - ${listing.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -814,11 +817,11 @@ const newBidNotificationEmail = async (seller, listing, bidAmount, bidder) => {
             </div>
         `;
         const html = baseTemplate(content, 'New Bid Received');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'auction.new_bid',
             subject: `New Bid Received - ${listing.title}`,
-            html
+            html,
         });
         console.log(`New bid notification sent to seller ${seller.email}`);
         return !!info;
@@ -829,7 +832,7 @@ const newBidNotificationEmail = async (seller, listing, bidAmount, bidder) => {
 };
 
 // 13. Offer confirmation email for bidder
-const offerConfirmationEmail = async (userEmail, listing, offerAmount, listingPrice) => {
+const offerConfirmationEmail = async (user, listing, offerAmount, listingPrice) => {
     try {
         const content = `
             <h2 style="text-align: center;">Your Offer Has Been Submitted</h2>
@@ -854,11 +857,11 @@ const offerConfirmationEmail = async (userEmail, listing, offerAmount, listingPr
             <p>We have notified the seller of your offer and they have 48 hours to respond.</p>
         `;
         const html = baseTemplate(content, 'Offer Submitted');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'offer.submitted',
             subject: `Offer Submitted - ${listing.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -902,11 +905,11 @@ const newOfferNotificationEmail = async (seller, listing, offerAmount, bidder) =
             </div>
         `;
         const html = baseTemplate(content, 'New Offer Received');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller?.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'offer.new',
             subject: `New Offer Received - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`New offer notification sent to seller ${seller.email}`);
         return !!info;
@@ -918,14 +921,19 @@ const newOfferNotificationEmail = async (seller, listing, offerAmount, bidder) =
 
 // 15. Outbid notification for bidder
 const outbidNotificationEmail = async (
-    userEmail,
-    userName,
+    user,
     listing,
     newBid,
     listingUrl,
     userHighestBid = null
 ) => {
     try {
+        const userName =
+            user.username ||
+            user.companyName ||
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            user.email;
+
         const content = `
             <h2 style="text-align: center;">You've Been Outbid</h2>
             <p style="text-align: center;">Another bidder has placed a higher bid on an item you were bidding on.</p>
@@ -967,11 +975,11 @@ const outbidNotificationEmail = async (
             <p>Act quickly. The sooner you place your next bid, the better your chances of winning.</p>
         `;
         const html = baseTemplate(content, 'Outbid Notification');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.outbid',
             subject: `You've Been Outbid - ${listing.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -1056,21 +1064,17 @@ const flushOutbidNotifications = async (auctionId, candidateUserIds) => {
         const toNotify = [...candidateUserIds].filter(
             (id) => id !== currentHighestId
         );
-
         if (toNotify.length === 0) {
-            console.log(
-                `Outbid flush ${auctionId}: no users to notify (candidate(s) regained top spot)`
-            );
+            console.log(`Outbid flush ${auctionId}: no users to notify (candidate(s) regained top spot)`);
             return;
         }
 
         const User = (await import("../models/user.model.js")).default;
-        const users = await User.find({
-            _id: { $in: toNotify },
-            "preferences.outbidNotifications": true,
-        });
+        // Old `"preferences.outbidNotifications": true` filter removed.
+        // The wrapper's isEmailEnabled gate handles opt-outs per recipient.
+        const users = await User.find({ _id: { $in: toNotify } });
         if (users.length === 0) {
-            console.log(`Outbid flush ${auctionId}: no users with notifications enabled`);
+            console.log(`Outbid flush ${auctionId}: no users to notify`);
             return;
         }
 
@@ -1081,15 +1085,8 @@ const flushOutbidNotifications = async (auctionId, candidateUserIds) => {
             users.map(async (user) => {
                 try {
                     const userHighestBid = getUserHighestBid(auction, user._id);
-                    const userName =
-                        user.username ||
-                        user?.companyName ||
-                        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                        user.email;
-
                     await outbidNotificationEmail(
-                        user.email,
-                        userName,
+                        user,
                         auction,
                         latestHighestBid,
                         auctionUrl,
@@ -1115,7 +1112,7 @@ const flushOutbidNotifications = async (auctionId, candidateUserIds) => {
 };
 
 // 17. Auction ending soon notification for bidders
-const auctionEndingSoonEmail = async (userEmail, userName, listing) => {
+const auctionEndingSoonEmail = async (user, listing) => {
     try {
         const content = `
             <h2 style="text-align: center;">Listing Expiring Soon</h2>
@@ -1138,11 +1135,11 @@ const auctionEndingSoonEmail = async (userEmail, userName, listing) => {
             </div>
         `;
         const html = baseTemplate(content, 'Listing Expiring Soon');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.ending_soon',
             subject: `Listing Expires Soon: ${listing?.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -1194,11 +1191,11 @@ const sendAuctionEndedSellerEmail = async (listing) => {
             <p>Your listing for <strong>${listing?.title}</strong> on ${BRAND_NAME} has ended.</p>
         `;
         const html = baseTemplate(content, isSold ? 'Item Sold' : 'Listing Ended');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: listing?.seller?.email,
+        const info = await sendCategorizedEmail({
+            user: listing.seller,
+            emailKey: 'auction.ended',
             subject: `Your Listing Has Ended - ${listing?.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -1251,11 +1248,11 @@ const sendAuctionWonEmail = async (listing) => {
             </div>
         `;
         const html = baseTemplate(content, 'Invoice');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: listing?.winner?.email,
+        const info = await sendCategorizedEmail({
+            user: listing.winner,
+            emailKey: 'auction.won',
             subject: `Invoice - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Listing won invoice email sent to ${listing?.winner?.email}`);
         return !!info;
@@ -1266,7 +1263,7 @@ const sendAuctionWonEmail = async (listing) => {
 };
 
 // 20. Auction won notification for admin
-const auctionWonAdminEmail = async (adminEmail, listing, buyer) => {
+const auctionWonAdminEmail = async (adminUser, listing, buyer) => {
     try {
         const content = `
             <h2 style="text-align: center;">Item Sold</h2>
@@ -1302,11 +1299,11 @@ const auctionWonAdminEmail = async (adminEmail, listing, buyer) => {
             </div>
         `;
         const html = baseTemplate(content, 'Item Sold');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.auction_won',
             subject: `Item Sold - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Listing sold admin email sent for listing ${listing._id}`);
         return !!info;
@@ -1317,7 +1314,7 @@ const auctionWonAdminEmail = async (adminEmail, listing, buyer) => {
 };
 
 // 21. Auction ended notification for admin
-const auctionEndedAdminEmail = async (adminEmail, listing) => {
+const auctionEndedAdminEmail = async (adminUser, listing) => {
     try {
         const isSold = listing.status === "sold" || listing.status === "sold_buy_now";
         const statusDisplay = isSold ? 'Sold' : 'Ended';
@@ -1362,11 +1359,11 @@ const auctionEndedAdminEmail = async (adminEmail, listing) => {
             ` : ''}
         `;
         const html = baseTemplate(content, `Listing ${statusDisplay}`);
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.auction_ended',
             subject: `Listing ${statusDisplay} - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Listing ended admin email sent for listing ${listing?._id} (Status: ${listing?.status})`);
         return !!info;
@@ -1377,7 +1374,7 @@ const auctionEndedAdminEmail = async (adminEmail, listing) => {
 };
 
 // 22. Offer accepted notification for bidder
-const offerAcceptedEmail = async (buyerEmail, listing, offerAmount) => {
+const offerAcceptedEmail = async (buyer, listing, offerAmount) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Accepted</h2>
@@ -1399,13 +1396,13 @@ const offerAcceptedEmail = async (buyerEmail, listing, offerAmount) => {
             </div>
         `;
         const html = baseTemplate(content, 'Offer Accepted');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: buyerEmail,
+        const info = await sendCategorizedEmail({
+            user: buyer,
+            emailKey: 'offer.accepted',
             subject: `Offer Accepted - ${listing?.title}`,
-            html
+            html,
         });
-        console.log(`Offer accepted email sent to buyer ${buyerEmail}`);
+        console.log(`Offer accepted email sent to buyer ${buyer.email}`);
         return !!info;
     } catch (error) {
         console.error(`Failed to send offer accepted email:`, error);
@@ -1414,7 +1411,7 @@ const offerAcceptedEmail = async (buyerEmail, listing, offerAmount) => {
 };
 
 // 23. Offer rejected notification for bidder
-const offerRejectedEmail = async (buyerEmail, listing, offerAmount, reason) => {
+const offerRejectedEmail = async (buyer, listing, offerAmount, reason) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Declined</h2>
@@ -1445,13 +1442,13 @@ const offerRejectedEmail = async (buyerEmail, listing, offerAmount, reason) => {
             </div>
         `;
         const html = baseTemplate(content, 'Offer Declined');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: buyerEmail,
+        const info = await sendCategorizedEmail({
+            user: buyer,
+            emailKey: 'offer.rejected',
             subject: `Offer Declined - ${listing?.title}`,
-            html
+            html,
         });
-        console.log(`Offer rejected email sent to buyer ${buyerEmail}`);
+        console.log(`Offer rejected email sent to buyer ${buyer.email}`);
         return !!info;
     } catch (error) {
         console.error(`Failed to send offer rejected email:`, error);
@@ -1460,7 +1457,7 @@ const offerRejectedEmail = async (buyerEmail, listing, offerAmount, reason) => {
 };
 
 // 24. Offer canceled notification for bidder
-const offerCanceledEmail = async (buyerEmail, listing, offerAmount) => {
+const offerCanceledEmail = async (buyer, listing, offerAmount) => {
     try {
         const content = `
             <h2 style="text-align: center;">Offer Canceled</h2>
@@ -1484,13 +1481,13 @@ const offerCanceledEmail = async (buyerEmail, listing, offerAmount) => {
             </div>
         `;
         const html = baseTemplate(content, 'Offer Canceled');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: buyerEmail,
+        const info = await sendCategorizedEmail({
+            user: buyer,
+            emailKey: 'offer.canceled',
             subject: `Offer Canceled - ${listing?.title}`,
-            html
+            html,
         });
-        console.log(`Offer canceled email sent to buyer ${buyerEmail}`);
+        console.log(`Offer canceled email sent to buyer ${buyer.email}`);
         return !!info;
     } catch (error) {
         console.error(`Failed to send offer canceled email:`, error);
@@ -1526,11 +1523,11 @@ const paymentCompletedEmail = async (user, listing) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payment Confirmed');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: user?.email,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'payment.completed_buyer',
             subject: `Payment Confirmed - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Payment completed email sent to buyer ${user?.email}`);
         return !!info;
@@ -1568,11 +1565,11 @@ const paymentSuccessEmail = async (user, listing) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payment Successful');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: user.email,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'payment.completed_buyer',
             subject: `Payment Confirmed - ${listing.title}`,
-            html
+            html,
         });
         console.log(`Payment success email sent to ${user.email}`);
         return !!info;
@@ -1604,11 +1601,11 @@ const paymentCompletedSellerEmail = async (seller, listing, buyer) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payment Received');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller?.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'payment.completed_seller',
             subject: `Payment Received - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Payment completed email sent to seller ${seller?.email}`);
         return !!info;
@@ -1619,7 +1616,7 @@ const paymentCompletedSellerEmail = async (seller, listing, buyer) => {
 };
 
 // 28. Flagged comment admin email
-const flaggedCommentAdminEmail = async (adminEmail, reason, comment, listing, reportedByUser) => {
+const flaggedCommentAdminEmail = async (adminUser, reason, comment, listing, reportedByUser) => {
     try {
         const content = `
             <h2 style="text-align: center;">Comment Flagged for Review</h2>
@@ -1654,11 +1651,11 @@ const flaggedCommentAdminEmail = async (adminEmail, reason, comment, listing, re
             </div>
         `;
         const html = baseTemplate(content, 'Flagged Comment');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.flagged_comment',
             subject: `Flagged Comment - ${listing?.title}`,
-            html
+            html,
         });
         console.log(`Flagged comment email sent to admin for comment ${comment._id}`);
         return !!info;
@@ -1693,11 +1690,11 @@ const newCommentSellerEmail = async (seller, listing, comment, commentAuthor) =>
             </div>
         `;
         const html = baseTemplate(content, 'New Comment');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller?.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'communication.new_comment_seller',
             subject: `New Comment on Your Listing: ${listing.title}`,
-            html
+            html,
         });
         console.log(`New comment email sent to seller ${seller.email}`);
         return !!info;
@@ -1732,11 +1729,11 @@ const newCommentBidderEmail = async (bidder, listing, comment, commentAuthor) =>
             </div>
         `;
         const html = baseTemplate(content, 'New Activity');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: bidder?.email,
+        const info = await sendCategorizedEmail({
+            user: bidder,
+            emailKey: 'communication.new_comment_bidder',
             subject: `New Activity on Listing: ${listing?.title}`,
-            html
+            html,
         });
         console.log(`New comment email sent to bidder ${bidder.email}`);
         return !!info;
@@ -1747,7 +1744,7 @@ const newCommentBidderEmail = async (bidder, listing, comment, commentAuthor) =>
 };
 
 // 31. Giveaway participation confirmation
-const giveawayParticipationEmail = async (userEmail, listing) => {
+const giveawayParticipationEmail = async (user, listing) => {
     try {
         const content = `
             <h2 style="text-align: center;">You're in the Giveaway!</h2>
@@ -1770,13 +1767,13 @@ const giveawayParticipationEmail = async (userEmail, listing) => {
             <p>Good luck!</p>
         `;
         const html = baseTemplate(content, 'Giveaway Entry Confirmed');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.giveaway_entered',
             subject: `Giveaway Entry Confirmed - ${listing.title}`,
-            html
+            html,
         });
-        console.log(`Giveaway participation email sent to ${userEmail}`);
+        console.log(`Giveaway participation email sent to ${user.email}`);
         return !!info;
     } catch (error) {
         console.error(`Failed to send giveaway participation email:`, error);
@@ -1785,7 +1782,8 @@ const giveawayParticipationEmail = async (userEmail, listing) => {
 };
 
 // 32. Giveaway winner notification
-const giveawayWinnerEmail = async (winnerEmail, winnerName, listing) => {
+const giveawayWinnerEmail = async (winner, listing) => {
+    const winnerName = winner.firstName || winner.companyName || winner.username || winner.email;
     try {
         const content = `
             <h2 style="text-align: center;">🎉 Congratulations! You Won!</h2>
@@ -1813,11 +1811,11 @@ const giveawayWinnerEmail = async (winnerEmail, winnerName, listing) => {
             <p>Once again, congratulations on your win!</p>
         `;
         const html = baseTemplate(content, '🎉 You Won the Giveaway!');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: winnerEmail,
+        const info = await sendCategorizedEmail({
+            user: winner,
+            emailKey: 'auction.giveaway_won',
             subject: `🎉 Congratulations! You Won ${listing.title}!`,
-            html
+            html,
         });
         console.log(`Giveaway winner email sent to ${winnerEmail}`);
         return !!info;
@@ -1865,11 +1863,11 @@ const payoutInitiatedEmail = async (seller, auction, payout) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payout Initiated');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'payout.initiated',
             subject: `💰 Payout Initiated - ${auction.title}`,
-            html
+            html,
         });
         console.log(`✅ Payout initiated email sent to seller ${seller.email}`);
         return !!info;
@@ -1916,11 +1914,11 @@ const payoutCompletedEmail = async (seller, auction, payout) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payout Completed');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'payout.completed',
             subject: `✅ Payout Completed - ${auction.title}`,
-            html
+            html,
         });
         console.log(`✅ Payout completed email sent to seller ${seller.email}`);
         return !!info;
@@ -1963,11 +1961,11 @@ const payoutFailedEmail = async (seller, payout) => {
             </div>
         `;
         const html = baseTemplate(content, 'Payout Issue');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: seller.email,
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'payout.failed',
             subject: `⚠️ Payout Update - Action Required`,
-            html
+            html,
         });
         console.log(`✅ Payout failed email sent to seller ${seller.email}`);
         return !!info;
@@ -1983,7 +1981,7 @@ const sendOfferOutbidNotifications = async () => {
     return false;
 };
 
-const paymentInitiatedAdminEmail = async (adminEmail, payment, buyer, auction) => {
+const paymentInitiatedAdminEmail = async (adminUser, payment, buyer, auction) => {
     try {
         const content = `
             <h2 style="text-align: center;">💰 New Payment Initiated</h2>
@@ -2027,13 +2025,13 @@ const paymentInitiatedAdminEmail = async (adminEmail, payment, buyer, auction) =
             </div>
         `;
         const html = baseTemplate(content, 'New Payment Initiated');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.payment_initiated',
             subject: `New Payment Initiated - ${auction?.title}`,
-            html
+            html,
         });
-        console.log(`Payment initiated admin email sent to ${adminEmail}`);
+        console.log(`Payment initiated admin email sent to ${adminUser.email}`);
         return !!info;
     } catch (error) {
         console.error(`Failed to send payment initiated admin email:`, error);
@@ -2086,11 +2084,11 @@ const shippingUpdatedEmail = async (winningBidder, auction, shippingInfo, update
 
         const html = baseTemplate(content, 'Shipping Updated');
 
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: winningBidder.email,
+        const info = await sendCategorizedEmail({
+            user: winningBidder,
+            emailKey: 'communication.shipping_updated',
             subject: `Shipping Update - ${auction.title}`,
-            html
+            html,
         });
 
         console.log(`✅ Shipping update email sent to winning bidder ${winningBidder.email}`);
@@ -2157,11 +2155,11 @@ const newMessageNotificationEmail = async (recipient, sender, auction, messageCo
 
         const html = baseTemplate(content, 'New Message');
 
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: recipient.email,
+        const info = await sendCategorizedEmail({
+            user: recipient,
+            emailKey: 'communication.new_message',
             subject: `New Message - ${auction.title}`,
-            html
+            html,
         });
 
         console.log(`✅ New message notification sent to ${recipient.email}`);
@@ -2219,11 +2217,11 @@ const accountApprovedEmail = async (user) => {
 
         const html = baseTemplate(content, 'Account Approved');
 
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: user.email,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'account.approved',
             subject: `Account Approved - Welcome to ${BRAND_NAME}!`,
-            html
+            html,
         });
 
         console.log(`✅ Account approval email sent to ${user.email}`);
@@ -2280,11 +2278,11 @@ const identityRejectedEmail = async (user, rejectionReason, allowReupload = true
 
         const html = baseTemplate(content, 'Identity Verification Rejected');
 
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: user.email,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'account.identity_rejected',
             subject: `Identity Verification Rejected - ${BRAND_NAME}`,
-            html
+            html,
         });
 
         console.log(`✅ Identity rejection email sent to ${user.email}`);
@@ -2337,11 +2335,12 @@ const liquidateConfirmationEmail = async (name, email) => {
         `;
 
         const html = baseTemplate(content, 'Liquidation Request Received');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: email,
+            emailKey: 'communication.liquidation_confirmation',
             subject: `Liquidation Request Received - ${BRAND_NAME}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         console.log(`✅ Liquidation confirmation email sent to ${email}`);
         return !!info;
@@ -2403,11 +2402,12 @@ const liquidateAdminEmail = async (name, email, phone, location, description, it
         `;
 
         const html = baseTemplate(content, 'New Liquidation Request');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER, // Admin email
+        const info = await sendCategorizedEmail({
+            to: process.env.EMAIL_USER,
+            emailKey: 'admin.liquidation_request',
             subject: `New Liquidation Request - ${name}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         console.log(`✅ Liquidation admin email sent to ${process.env.EMAIL_USER}`);
         return !!info;
@@ -2459,11 +2459,12 @@ const sellConfirmationEmail = async (name, email) => {
         `;
 
         const html = baseTemplate(content, 'Selling Request Received');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: email,
+            emailKey: 'communication.sell_confirmation',
             subject: `Selling Request Received - ${BRAND_NAME}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         console.log(`✅ Sell confirmation email sent to ${email}`);
         return !!info;
@@ -2537,11 +2538,12 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
         `;
 
         const html = baseTemplate(content, 'New Selling Request');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
+        const info = await sendCategorizedEmail({
             to: process.env.EMAIL_USER,
+            emailKey: 'admin.sell_request',
             subject: `New Selling Request - ${itemType}`,
-            html
+            html,
+            bypassPrefs: true,
         });
         console.log(`✅ Sell admin email sent to ${process.env.EMAIL_USER}`);
         return !!info;
@@ -2555,8 +2557,14 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
 // Proxy Bid Email Templates
 // ------------------------------------------------------------
 
-const sendProxyBidPlacedEmail = async (userEmail, username, auction, proxyBid) => {
+const sendProxyBidPlacedEmail = async (user, auction, proxyBid) => {
     try {
+        const username =
+            user.username ||
+            user.companyName ||
+            user.firstName ||
+            user.email;
+
         const content = `
             <h2 style="text-align: center;">🤖 Proxy Bid Placed</h2>
             <p style="text-align: center;">Hello ${username},</p>
@@ -2573,11 +2581,11 @@ const sendProxyBidPlacedEmail = async (userEmail, username, auction, proxyBid) =
             </div>
         `;
         const html = baseTemplate(content, 'Proxy Bid Confirmed');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.proxy_bid_placed',
             subject: `Proxy Bid Placed - ${auction.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -2586,8 +2594,14 @@ const sendProxyBidPlacedEmail = async (userEmail, username, auction, proxyBid) =
     }
 };
 
-const sendProxyBidOutbidEmail = async (userEmail, username, auction, newBidAmount) => {
+const sendProxyBidOutbidEmail = async (user, auction, newBidAmount) => {
     try {
+        const username =
+            user.username ||
+            user.companyName ||
+            user.firstName ||
+            user.email;
+
         const content = `
             <h2 style="text-align: center;">🔔 Your Proxy Bid Was Outbid</h2>
             <p style="text-align: center;">Hello ${username},</p>
@@ -2603,11 +2617,11 @@ const sendProxyBidOutbidEmail = async (userEmail, username, auction, newBidAmoun
             </div>
         `;
         const html = baseTemplate(content, 'Proxy Bid Outbid');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: userEmail,
+        const info = await sendCategorizedEmail({
+            user,
+            emailKey: 'auction.proxy_bid_outbid',
             subject: `Proxy Bid Outbid - ${auction.title}`,
-            html
+            html,
         });
         return !!info;
     } catch (error) {
@@ -2647,9 +2661,9 @@ const depositChargedWinnerEmail = async (winner, auction, depositAmount) => {
       </div>
     `;
         const html = baseTemplate(content, "Winning Deposit Received");
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: winner.email,
+        const info = await sendCategorizedEmail({
+            user: winner,
+            emailKey: 'payment.deposit_charged',
             subject: `Winning Deposit Received - ${auction.title}`,
             html,
         });
@@ -2691,9 +2705,9 @@ const depositFailedWinnerEmail = async (winner, auction, reason) => {
       </div>
     `;
         const html = baseTemplate(content, "Deposit Payment Failed");
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: winner.email,
+        const info = await sendCategorizedEmail({
+            user: winner,
+            emailKey: 'payment.deposit_failed',
             subject: `⚠️ Deposit Payment Failed - ${auction.title}`,
             html,
         });
@@ -2706,7 +2720,7 @@ const depositFailedWinnerEmail = async (winner, auction, reason) => {
 };
 
 // Deposit charge failed → admin
-const depositFailedAdminEmail = async (adminEmail, auction, reason) => {
+const depositFailedAdminEmail = async (adminUser, auction, reason) => {
     try {
         const content = `
       <h2 style="text-align: center;">⚠️ Winning Deposit Charge Failed</h2>
@@ -2732,13 +2746,13 @@ const depositFailedAdminEmail = async (adminEmail, auction, reason) => {
       </div>
     `;
         const html = baseTemplate(content, "Winning Deposit Charge Failed");
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.deposit_failed',
             subject: `⚠️ Winning Deposit Failed - ${auction.title}`,
             html,
         });
-        console.log(`✅ Deposit failed admin email sent to ${adminEmail}`);
+        console.log(`✅ Deposit failed admin email sent to ${adminUser.email}`);
         return !!info;
     } catch (error) {
         console.error("Failed to send deposit failed admin email:", error);
@@ -2747,7 +2761,7 @@ const depositFailedAdminEmail = async (adminEmail, auction, reason) => {
 };
 
 // Deposit charged successfully → admin
-const depositChargedAdminEmail = async (adminEmail, auction, depositAmount) => {
+const depositChargedAdminEmail = async (adminUser, auction, depositAmount) => {
     try {
         const content = `
             <h2 style="text-align: center;">✅ Winning Deposit Charged</h2>
@@ -2770,13 +2784,13 @@ const depositChargedAdminEmail = async (adminEmail, auction, depositAmount) => {
             </div>
         `;
         const html = baseTemplate(content, "Winning Deposit Charged");
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.deposit_charged',
             subject: `✅ Winning Deposit Charged - ${auction.title}`,
             html,
         });
-        console.log(`✅ Deposit charged admin email sent to ${adminEmail}`);
+        console.log(`✅ Deposit charged admin email sent to ${adminUser.email}`);
         return !!info;
     } catch (error) {
         console.error("Failed to send deposit charged admin email:", error);
@@ -2788,7 +2802,7 @@ const depositChargedAdminEmail = async (adminEmail, auction, depositAmount) => {
 // CARD PAYMENT COMPLETED → ADMIN
 // ============================================
 
-const cardPaymentCompletedAdminEmail = async (adminEmail, payment, buyer, auction) => {
+const cardPaymentCompletedAdminEmail = async (adminUser, payment, buyer, auction) => {
     try {
         const content = `
             <h2 style="text-align: center;">💳 Card Payment Completed</h2>
@@ -2835,13 +2849,13 @@ const cardPaymentCompletedAdminEmail = async (adminEmail, payment, buyer, auctio
         `;
 
         const html = baseTemplate(content, 'Card Payment Completed');
-        const info = await transporter.sendMail({
-            from: `"${BRAND_NAME}" <${process.env.EMAIL_USER}>`,
-            to: adminEmail,
+        const info = await sendCategorizedEmail({
+            user: adminUser,
+            emailKey: 'admin.card_payment_completed',
             subject: `💳 Card Payment Completed - ${auction?.title}`,
             html,
         });
-        console.log(`✅ Card payment completed admin email sent to ${adminEmail}`);
+        console.log(`✅ Card payment completed admin email sent to ${adminUser.email}`);
         return !!info;
     } catch (error) {
         console.error('❌ Failed to send card payment completed admin email:', error);
@@ -2851,12 +2865,12 @@ const cardPaymentCompletedAdminEmail = async (adminEmail, payment, buyer, auctio
 
 // Export all
 export {
-    contactEmail,
-    contactConfirmationEmail,
-    welcomeEmail,
-    newUserRegistrationEmail,
-    resetPasswordEmail,
-    auctionSubmittedForApprovalEmail,
+    contactEmail, //done
+    contactConfirmationEmail, //done
+    welcomeEmail, //done
+    newUserRegistrationEmail, //done
+    resetPasswordEmail, //done
+    auctionSubmittedForApprovalEmail, //done
     auctionApprovedEmail,
     auctionListedEmail,
     newAuctionNotificationEmail,

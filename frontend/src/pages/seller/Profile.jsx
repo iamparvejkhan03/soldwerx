@@ -18,15 +18,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
 import NotificationPreferencesCard from '../../components/NotificationPreferencesCard';
-
-// Default preferences
-const defaultPreferences = {
-    bidAlerts: true,
-    outbidNotifications: true,
-    newsletter: true,
-    smsUpdates: false,
-    favoriteCategories: []
-};
+import EmailPreferencesCard from '../../components/EmailPreferencesCard';
 
 function Profile() {
     const [userData, setUserData] = useState(null);
@@ -188,20 +180,6 @@ function Profile() {
         }
     };
 
-    const handlePreferencesChange = async (preferences) => {
-        try {
-            const { data } = await axiosInstance.put('/api/v1/users/preferences', { preferences });
-            if (data.success) {
-                setUserData(data.data.user);
-                return true;
-            }
-        } catch (err) {
-            setError('Failed to update preferences');
-            console.error('Update preferences error:', err);
-            return false;
-        }
-    };
-
     const handleCancel = () => {
         fetchUserData(); // Reload original data
         setIsEditing(false);
@@ -219,21 +197,6 @@ function Profile() {
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
-        }
-    };
-
-    const togglePreference = async (preference) => {
-        const newPreferences = {
-            ...userData.preferences,
-            [preference]: !userData.preferences[preference]
-        };
-
-        const success = await handlePreferencesChange(newPreferences);
-        if (success) {
-            setUserData(prev => ({
-                ...prev,
-                preferences: newPreferences
-            }));
         }
     };
 
@@ -323,8 +286,8 @@ function Profile() {
         { id: "personal", label: "Personal Info", icon: <User size={18} /> },
         { id: "address", label: "Address", icon: <MapPin size={18} /> },
         // { id: "verification", label: "ID Verification", icon: <FileText size={18} /> },
-        // { id: "preferences", label: "Preferences", icon: <Bell size={18} /> },
         { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
+        { id: "email", label: "Email Preferences", icon: <Mail size={18} /> },
         { id: "security", label: "Security", icon: <Shield size={18} /> }
     ];
 
@@ -377,7 +340,7 @@ function Profile() {
                 <SellerContainer>
                     <div className="max-w-full pt-16 pb-7 md:pt-0">
                         <h2 className="text-3xl md:text-4xl font-bold my-5">Seller Profile</h2>
-                        {/* <p className="text-secondary">Manage your account settings and bidding preferences</p> */}
+                        {/* <p className="text-secondary">Manage your account settings and preferences</p> */}
                     </div>
 
                     {error && (
@@ -416,7 +379,7 @@ function Profile() {
                                     <h3 className="text-xl font-semibold">
                                         {sections.find(s => s.id === activeSection)?.label}
                                     </h3>
-                                    {activeSection !== 'preferences' && activeSection !== 'security' && activeSection !== 'notifications' && (
+                                    {activeSection !== 'security' && activeSection !== 'notifications' && activeSection !== 'email' && (
                                         <div className="flex gap-2">
                                             {isEditing ? (
                                                 <>
@@ -624,6 +587,11 @@ function Profile() {
                                 {/* Notification Preferences Section */}
                                 {activeSection === "notifications" && (
                                     <NotificationPreferencesCard />
+                                )}
+                                
+                                {/* Email Preferences Section */}
+                                {activeSection === "email" && (
+                                    <EmailPreferencesCard />
                                 )}
 
                                 {/* ID Verification Section */}

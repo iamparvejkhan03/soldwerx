@@ -75,6 +75,7 @@ import NotificationItem from "./NotificationItem";
 import NotificationBell from "./NotificationBell";
 import NotificationPopup from "./NotificationPopup";
 import NotificationPreferencesCard from "./NotificationPreferencesCard";
+import EmailPreferencesCard from "./EmailPreferencesCard";
 
 export {
     Container,
@@ -154,4 +155,5 @@ export {
     NotificationBell,
     NotificationPopup,
     NotificationPreferencesCard,
+    EmailPreferencesCard,
 }

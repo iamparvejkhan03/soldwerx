@@ -76,13 +76,7 @@ const userSchema = new Schema(
       postCode: { type: String, trim: true },
       country: { type: String, trim: true },
     },
-    preferences: {
-      bidAlerts: { type: Boolean, default: true },
-      outbidNotifications: { type: Boolean, default: true },
-      newsletter: { type: Boolean, default: true },
-      smsUpdates: { type: Boolean, default: false },
-      favoriteCategories: [{ type: String }],
-    },
+    
     // In-app + sound notification preferences
     notificationPreferences: {
       inApp: {
@@ -96,6 +90,13 @@ const userSchema = new Schema(
         system: { type: Boolean, default: true },
       },
       sound: { type: Boolean, default: true },
+    },
+
+    // Email preferences (per-email opt-in/out)
+    emailPreferences: {
+      type: Map,
+      of: Boolean,
+      default: () => new Map(),
     },
 
     createdBy: {
@@ -359,6 +360,7 @@ userSchema.methods.toSafeObject = function () {
   delete userObject.resetPasswordTokenExpiry;
   delete userObject.emailVerificationToken;
   delete userObject.emailVerificationExpiry;
+  delete userObject.emailPreferences;
   return userObject;
 };
 

@@ -557,11 +557,11 @@ export const confirmWinnerPayment = async (req, res) => {
 
             // ---- Notify all admins that card payment succeeded ----
             try {
-                const adminUsers = await User.find({ userType: 'admin' }).select('email');
+                const adminUsers = await User.find({ userType: 'admin' }).select('email phone firstName lastName userType emailPreferences');
                 const buyer = await User.findById(userId).select('firstName lastName username email phone companyName');
                 for (const admin of adminUsers) {
                     cardPaymentCompletedAdminEmail(
-                        admin.email,
+                        admin,
                         {
                             totalAmount: bidPayment.totalAmount,
                             bidAmount: bidPayment.bidAmount,

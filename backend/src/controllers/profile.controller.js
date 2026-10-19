@@ -10,7 +10,7 @@ import bcrypt from "bcrypt";
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken -emailPreferences"
     );
 
     if (!user) {
@@ -162,37 +162,6 @@ export const changePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error while changing password",
-    });
-  }
-};
-
-// Update preferences
-export const updatePreferences = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { preferences } = req.body;
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { preferences },
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).select("-password -refreshToken");
-
-    res.status(200).json({
-      success: true,
-      message: "Preferences updated successfully",
-      data: {
-        user: updatedUser,
-      },
-    });
-  } catch (error) {
-    console.error("Update preferences error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error while updating preferences",
     });
   }
 };

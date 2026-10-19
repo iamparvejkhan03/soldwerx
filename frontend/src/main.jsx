@@ -30,6 +30,7 @@ const Liquidate = lazy(() => import('./pages/Liquidate'));
 const SellWithUs = lazy(() => import('./pages/SellWithUs'));
 const Events = lazy(() => import('./pages/Events'));
 const SingleEvent = lazy(() => import('./pages/SingleEvent'));
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 
 {/* Seller Pages */ }
 const SellerLayout = lazy(() => import('./pages/seller/Layout'));
@@ -184,6 +185,8 @@ createRoot(document.getElementById('root')).render(
                             <Route path='/events' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Events /></Suspense>} />
 
                             <Route path='/event/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleEvent /></Suspense>} />
+
+                            <Route path='/unsubscribe' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Unsubscribe /></Suspense>} />
 
                         </Route>
 

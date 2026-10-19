@@ -147,8 +147,8 @@ export const makeOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(id)
-      .populate("offers.buyer", "email username firstName lastName")
-      .populate("seller", "email username firstName lastName");
+      .populate("offers.buyer", "email username firstName lastName userType emailPreferences")
+      .populate("seller", "email username firstName lastName userType emailPreferences");
 
     broadcastAuctionChange(id);
 
@@ -160,7 +160,7 @@ export const makeOffer = async (req, res) => {
       },
     });
 
-    offerConfirmationEmail(buyer?.email, updatedAuction, offerAmount, updatedAuction?.buyNowPrice || updatedAuction?.startPrice).catch((error) => console.error("Failed to send buyer email:", error));
+    offerConfirmationEmail(buyer, updatedAuction, offerAmount, updatedAuction?.buyNowPrice || updatedAuction?.startPrice).catch((error) => console.error("Failed to send buyer email:", error));
 
     newOfferNotificationEmail(
       updatedAuction?.seller,
@@ -328,8 +328,8 @@ export const respondToOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email")
-      .populate("seller", "username firstName lastName email");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -420,7 +420,7 @@ export const respondToOffer = async (req, res) => {
     try {
       if (response === "accept") {
         offerAcceptedEmail(
-          offer.buyer.email,
+          offer.buyer,
           updatedAuction,
           offer.amount
         ).catch((error) =>
@@ -428,7 +428,7 @@ export const respondToOffer = async (req, res) => {
         );
       } else if (response === "reject") {
         offerRejectedEmail(
-          offer.buyer.email,
+          offer.buyer,
           updatedAuction,
           offer.amount,
           offer?.sellerResponse || "Offer rejected by seller",
@@ -563,14 +563,14 @@ export const acceptCounterOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email")
-      .populate("seller", "username firstName lastName email")
-      .populate("winner", "username firstName lastName email");
+      .populate("offers.buyer", "username firstName lastName email userType emailPreferences")
+      .populate("seller", "username firstName lastName email userType emailPreferences")
+      .populate("winner", "username firstName lastName email userType emailPreferences");
 
     // Send email notification to seller
     try {
       offerAcceptedEmail(
-        updatedAuction.winner.email,
+        updatedAuction.winner,
         updatedAuction,
         offer.counterOffer.amount,
       ).catch((error) =>
@@ -1204,8 +1204,8 @@ export const adminRespondToOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
-      .populate("seller", "username firstName lastName email phone");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -1250,9 +1250,9 @@ export const adminRespondToOffer = async (req, res) => {
 
     // Populate updated data
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
-      .populate("seller", "username firstName lastName email phone")
-      .populate("winner", "username firstName lastName email phone address");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences")
+      .populate("winner", "username firstName lastName email phone address userType emailPreferences");
 
     broadcastAuctionChange(auctionId);
 
@@ -1269,7 +1269,7 @@ export const adminRespondToOffer = async (req, res) => {
     // Send appropriate email based on response
     if (response === "accept") {
       offerAcceptedEmail(
-        offer.buyer.email,
+        offer.buyer,
         updatedAuction,
         offer.amount
       ).catch((error) =>
@@ -1285,13 +1285,13 @@ export const adminRespondToOffer = async (req, res) => {
       //   console.error("Failed to send buyer won auction email:", error)
       // );
 
-      auctionWonAdminEmail(admin?.email, updatedAuction, offer?.buyer).catch(
+      auctionWonAdminEmail(admin, updatedAuction, offer?.buyer).catch(
         (error) =>
           console.error("Failed to send admin auction won email:", error)
       );
     } else {
       offerRejectedEmail(
-        offer.buyer.email,
+        offer.buyer,
         updatedAuction,
         offer.amount,
         offer?.sellerResponse || "Offer rejected by seller",
@@ -1352,8 +1352,8 @@ export const adminCancelOffer = async (req, res) => {
     const { auctionId, reason } = req.body;
 
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "email username firstName lastName email")
-      .populate("seller", "email username firstName lastName email");
+      .populate("offers.buyer", "email username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "email username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -1395,7 +1395,7 @@ export const adminCancelOffer = async (req, res) => {
 
     // Send email to buyer in background
     offerCanceledEmail(
-      offer.buyer.email,
+      offer.buyer,
       auction,
       offer.amount
     ).catch((error) =>
@@ -1725,9 +1725,9 @@ export const reactivateOffer = async (req, res) => {
 
     // Populate updated auction
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
-      .populate("seller", "username firstName lastName email phone")
-      .populate("winner", "username firstName lastName email phone");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences")
+      .populate("winner", "username firstName lastName email phone userType emailPreferences");
 
     broadcastAuctionChange(auctionId);
 
@@ -1747,7 +1747,7 @@ export const reactivateOffer = async (req, res) => {
     try {
       // Notify buyer
       offerAcceptedEmail(
-        offer.buyer.email,
+        offer.buyer,
         updatedAuction,
         offer.amount,
       ).catch((error) =>
@@ -1766,15 +1766,34 @@ export const reactivateOffer = async (req, res) => {
       //   console.error("Failed to send buyer won auction email:", error)
       // );
 
-      // Notify admin (if seller did it)
-      if (!isAdmin) {
-        // You might want to add a different email function for this
-        auctionWonAdminEmail(
-          process.env.ADMIN_EMAIL || "admin@example.com",
-          updatedAuction,
-          offer.buyer
-        ).catch((error) =>
-          console.error("Failed to send admin notification email:", error)
+      try {
+        const adminUsers = await User.find({ userType: "admin" }).select(
+          "email firstName lastName username phone userType emailPreferences",
+        );
+
+        if (adminUsers.length === 0) {
+          console.log('⚠️ No admin users found with userType: "admin"');
+        } else {
+          for (const admin of adminUsers) {
+            auctionWonAdminEmail(
+              admin,
+              updatedAuction,
+              updatedAuction?.winner,
+            ).catch((error) =>
+              console.error(
+                `Failed to send admin email to ${admin.email}:`,
+                error,
+              ),
+            );
+          }
+          console.log(
+            `✅ Sent admin notifications to ${adminUsers.length} admin(s)`,
+          );
+        }
+      } catch (adminEmailError) {
+        console.error(
+          "Error fetching admin users or sending admin emails:",
+          adminEmailError,
         );
       }
     } catch (emailError) {

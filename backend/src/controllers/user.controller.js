@@ -238,7 +238,7 @@ export const registerUser = async (req, res) => {
 
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
-      newUserRegistrationEmail(admin.email, user).catch((err) =>
+      newUserRegistrationEmail(admin, user).catch((err) =>
         console.error(`Failed to send new use admin email to ${admin?.email}:`, err)
       );
     }
@@ -333,7 +333,7 @@ export const completeRegistration = async (req, res) => {
     );
     const adminUsers = await User.find({ userType: "admin" });
     for (const admin of adminUsers) {
-      newUserRegistrationEmail(admin.email, user).catch((err) =>
+      newUserRegistrationEmail(admin, user).catch((err) =>
         console.error(`Failed to send new user admin email to ${admin.email}:`, err)
       );
     }
