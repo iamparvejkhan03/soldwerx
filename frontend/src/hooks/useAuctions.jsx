@@ -18,16 +18,9 @@ export const useAuctions = () => {
         location: '',
         sortBy: 'createdAt',
         sortOrder: 'desc',
-        // Add all the new car filters
-        make: '',
-        model: '',
-        yearMin: '',
-        yearMax: '',
-        transmission: '',
-        fuelType: '',
-        condition: '',
         auctionType: '',
-        allowOffers: ''
+        allowOffers: '',
+        featured: '',
     });
 
     // Clean filters - remove empty values
@@ -133,15 +126,9 @@ export const useAuctions = () => {
             priceMin: searchParams.get('priceMin') || '',
             priceMax: searchParams.get('priceMax') || '',
             location: searchParams.get('location') || '',
-            make: searchParams.get('make') || '',
-            model: searchParams.get('model') || '',
-            yearMin: searchParams.get('yearMin') || '',
-            yearMax: searchParams.get('yearMax') || '',
-            transmission: searchParams.get('transmission') || '',
-            fuelType: searchParams.get('fuelType') || '',
-            condition: searchParams.get('condition') || '',
             auctionType: searchParams.get('auctionType') || '',
             allowOffers: searchParams.get('allowOffers') || '',
+            featured: searchParams.get('featured') || '',
             sortBy: searchParams.get('sortBy') || 'createdAt',
             sortOrder: searchParams.get('sortOrder') || 'desc'
         };

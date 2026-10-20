@@ -3,7 +3,7 @@ import { AdminContainer, AdminHeader, AdminSidebar, LoadingSpinner } from "../..
 import {
     Search, Filter, Calendar, Eye, Edit, MoreVertical, Trash2,
     AlertTriangle, CheckCircle, Plus, FileText, Users, MapPin,
-    Clock, Gavel, X, Loader
+    Clock, Gavel, X, Loader, Star
 } from "lucide-react";
 import { about } from "../../assets";
 import toast from "react-hot-toast";
@@ -122,6 +122,22 @@ function AllEvents() {
             }
         } catch (err) {
             console.error('Publish event error:', err);
+        }
+    };
+
+    const handleToggleFeatured = async (eventId, currentlyFeatured) => {
+        try {
+            const { data } = await axiosInstance.patch(
+                `/api/v1/events/${eventId}/featured`,
+                { featured: !currentlyFeatured }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                fetchEvents();
+            }
+        } catch (err) {
+            console.error("Toggle featured error:", err);
+            toast.error(err.response?.data?.message || "Failed to update featured status");
         }
     };
 
@@ -294,6 +310,12 @@ function AllEvents() {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     {getStatusBadge(event.status, event.eventDate, event.endDate)}
+                                                    {event.featured && (
+                                                        <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs rounded-full">
+                                                            <Star size={10} fill="currentColor" />
+                                                            Featured
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center gap-1">
@@ -338,6 +360,19 @@ function AllEvents() {
                                                                         >
                                                                             <CheckCircle size={16} />
                                                                             <span>Publish Event</span>
+                                                                        </button>
+                                                                    )}
+
+                                                                    {event.status === "published" && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                handleToggleFeatured(event._id, event.featured);
+                                                                                setActiveDropdown(null);
+                                                                            }}
+                                                                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+                                                                        >
+                                                                            <Star size={16} fill={event.featured ? "currentColor" : "none"} />
+                                                                            <span>{event.featured ? "Remove Featured" : "Mark as Featured"}</span>
                                                                         </button>
                                                                     )}
 

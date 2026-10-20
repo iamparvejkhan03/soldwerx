@@ -21,6 +21,12 @@ const FiltersSection = ({
         { value: "past", label: "Past" },
     ];
 
+    const featuredOptions = [
+        { value: "", label: "All" },
+        { value: "true", label: "Yes" },
+        { value: "false", label: "No" },
+    ];
+
     return (
         <div className="bg-white px-4 py-6 rounded-lg shadow-md h-fit">
             <div className="flex justify-between items-center mb-6 lg:hidden">
@@ -58,6 +64,21 @@ const FiltersSection = ({
                     >
                         {statusOptions.map(status => (
                             <option key={status.value} value={status.value}>{status.label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Featured Filter */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Featured</label>
+                    <select
+                        name="featured"
+                        value={uiFilters.featured || ''}
+                        onChange={handleFilterChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                        {featuredOptions.map(featured => (
+                            <option key={featured.value} value={featured.value}>{featured.label}</option>
                         ))}
                     </select>
                 </div>
@@ -122,6 +143,7 @@ function Events() {
         location: "",
         sortBy: "eventDate",
         sortOrder: "asc",
+        featured: "",
     });
     const location = useLocation();
     const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -136,6 +158,7 @@ function Events() {
         const locationParam = searchParams.get('location');
         const sortByParam = searchParams.get('sortBy');
         const sortOrderParam = searchParams.get('sortOrder');
+        const featuredParam = searchParams.get('featured');
 
         const newFilters = { ...uiFilters };
 
@@ -144,6 +167,7 @@ function Events() {
         if (locationParam) newFilters.location = locationParam;
         if (sortByParam) newFilters.sortBy = sortByParam;
         if (sortOrderParam) newFilters.sortOrder = sortOrderParam;
+        if (featuredParam) newFilters.featured = featuredParam;
 
         setUiFilters(newFilters);
 
@@ -237,6 +261,7 @@ function Events() {
             location: "",
             sortBy: "eventDate",
             sortOrder: "asc",
+            featured: "",
         };
         setUiFilters(resetFilters);
         fetchEvents(1, resetFilters);
@@ -406,6 +431,11 @@ function Events() {
                                                                                 'bg-blue-100 text-blue-800'}`}>
                                                                         {event.status}
                                                                     </span>
+
+                                                                    {event?.featured && <span className={`px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800`}>
+                                                                        Featured
+                                                                    </span>}
+
                                                                     <span className="text-xs text-gray-500">
                                                                         {event.views || 0} views
                                                                     </span>

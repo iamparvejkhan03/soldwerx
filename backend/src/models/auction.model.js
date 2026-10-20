@@ -419,6 +419,14 @@ const auctionSchema = new Schema(
       type: Number,
       default: 0,
     },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
+    featuredAt: {
+      type: Date,
+      default: null,
+    },
 
     // Auto-extend auction if bids near end time
     autoExtend: {
@@ -507,6 +515,7 @@ auctionSchema.index({ "offers.status": 1 });
 auctionSchema.index({ "offers.expiresAt": 1 });
 auctionSchema.index({ "proxyBids.bidder": 1, "proxyBids.isActive": 1 });
 auctionSchema.index({ "proxyBids.maxAmount": -1 });
+auctionSchema.index({ featured: 1, status: 1, endDate: 1 });
 
 // Virtual for time remaining
 auctionSchema.virtual("timeRemaining").get(function () {

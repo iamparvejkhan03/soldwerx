@@ -7,12 +7,13 @@ import { useLocation } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import { useLiveAuctionTicks } from "../hooks/useLiveAuctionTicks";
 
-// Car filters that apply to ALL categories
-const carFilters = {
+// filters that apply to ALL categories
+const filters = {
     'ALL': {
         auction: [
             { name: 'auctionType', label: 'Auction Type', type: 'select', options: ['', 'standard', 'reserve', 'buy_now'] },
-            { name: 'allowOffers', label: 'Accepts Offers', type: 'select', options: ['', 'true', 'false'] }
+            { name: 'allowOffers', label: 'Accepts Offers', type: 'select', options: ['', 'true', 'false'] },
+            { name: 'featured', label: 'Featured', type: 'select', options: ['', 'true', 'false'] },
         ]
     }
 };
@@ -37,7 +38,7 @@ const FiltersSection = ({
     location  // Add this
 }) => {
     const getCurrentCategoryFilters = () => {
-        return carFilters['ALL'] || {};
+        return filters['ALL'] || {};
     };
 
     // Handle parent category selection
@@ -322,7 +323,7 @@ const FiltersSection = ({
                     </div>
 
                     {/* Allow Offers */}
-                    {/* <div className="mb-4">
+                    <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Accepts Offers
                         </label>
@@ -336,7 +337,24 @@ const FiltersSection = ({
                             <option value="true">Yes</option>
                             <option value="false">No</option>
                         </select>
-                    </div> */}
+                    </div>
+
+                    {/* Featured */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Featured Listings
+                        </label>
+                        <select
+                            name="featured"
+                            value={uiFilters?.featured || ''}
+                            onChange={handleFilterChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        >
+                            <option value="">All</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -379,6 +397,7 @@ function Auctions() {
         sortOrder: "desc",
         auctionType: "",
         allowOffers: "",
+        featured: "",
     });
 
     const [categories, setCategories] = useState([]);
@@ -398,8 +417,9 @@ function Auctions() {
         const categoryParam = searchParams.get('category');
         const subcategoryParam = searchParams.get('subcategory');
         const statusParam = searchParams.get('status');
-        const auctionTypeParam = searchParams.get('auctionType'); // Add this line
-        const allowOffersParam = searchParams.get('allowOffers'); // Add this line
+        const auctionTypeParam = searchParams.get('auctionType');
+        const allowOffersParam = searchParams.get('allowOffers');
+        const isFeaturedParam = searchParams.get('featured');
 
         const newFilters = { ...uiFilters };
 
@@ -428,6 +448,11 @@ function Auctions() {
         // Set allow offers from URL if exists
         if (allowOffersParam) {
             newFilters.allowOffers = allowOffersParam;
+        }
+
+        // Set featured from URL if exists
+        if (isFeaturedParam) {
+            newFilters.featured = isFeaturedParam;
         }
 
         // IMPORTANT: Only set status from URL if it exists, otherwise keep 'active'
@@ -592,13 +617,7 @@ function Auctions() {
             sortOrder: "desc",
             auctionType: "",
             allowOffers: "",
-            make: "",
-            model: "",
-            yearMin: "",
-            yearMax: "",
-            transmission: "",
-            fuelType: "",
-            condition: ""
+            featured: "",
         };
         setUiFilters(resetFilters);
         updateFilters(resetFilters);

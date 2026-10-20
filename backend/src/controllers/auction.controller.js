@@ -432,17 +432,10 @@ export const getAuctions = async (req, res) => {
       search,
       sortBy = "createdAt",
       sortOrder = "desc",
-      // Car filters
-      make,
-      model,
-      yearMin,
-      yearMax,
-      transmission,
-      fuelType,
-      condition,
       // Auction filters
       auctionType,
       allowOffers,
+      featured,
       // Price filters
       priceMin,
       priceMax,
@@ -499,8 +492,6 @@ export const getAuctions = async (req, res) => {
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
-        { "specifications.make": { $regex: search, $options: "i" } },
-        { "specifications.model": { $regex: search, $options: "i" } },
       ];
     }
 
@@ -508,79 +499,6 @@ export const getAuctions = async (req, res) => {
     if (location) {
       filter.location = { $regex: location, $options: "i" };
     }
-
-    // Build specifications filter for Map type
-    const specsFilter = {};
-
-    // For Map type, we need to check both existence and value
-    if (make) {
-      specsFilter["specifications.make"] = {
-        $exists: true,
-        $regex: make,
-        $options: "i",
-      };
-    }
-
-    if (model) {
-      specsFilter["specifications.model"] = {
-        $exists: true,
-        $regex: model,
-        $options: "i",
-      };
-    }
-
-    if (yearMin || yearMax) {
-      // Convert filter values to numbers
-      const minYear = yearMin ? parseInt(yearMin) : null;
-      const maxYear = yearMax ? parseInt(yearMax) : null;
-
-      // Use $expr to handle type conversion
-      specsFilter.$expr = specsFilter.$expr || { $and: [] };
-
-      const yearCondition = {
-        $and: [
-          { $ne: ["$specifications.year", null] },
-          { $ne: ["$specifications.year", ""] },
-        ],
-      };
-
-      if (minYear !== null) {
-        yearCondition.$and.push({
-          $gte: [{ $toInt: "$specifications.year" }, minYear],
-        });
-      }
-
-      if (maxYear !== null) {
-        yearCondition.$and.push({
-          $lte: [{ $toInt: "$specifications.year" }, maxYear],
-        });
-      }
-
-      specsFilter.$expr.$and.push(yearCondition);
-    }
-
-    // Other car filters - with existence checks
-    if (transmission && transmission !== "") {
-      specsFilter["specifications.transmission"] = {
-        $exists: true,
-        $eq: transmission,
-      };
-    }
-
-    if (fuelType && fuelType !== "") {
-      specsFilter["specifications.fuelType"] = {
-        $exists: true,
-        $eq: fuelType,
-      };
-    }
-
-    if (condition && condition !== "") {
-      specsFilter["specifications.condition"] = {
-        $exists: true,
-        $eq: condition,
-      };
-    }
-
     // Auction type filter
     if (auctionType && auctionType !== "") {
       filter.auctionType = auctionType;
@@ -591,15 +509,17 @@ export const getAuctions = async (req, res) => {
       filter.allowOffers = allowOffers === "true";
     }
 
-    // Combine specifications filter with main filter
-    if (Object.keys(specsFilter).length > 0) {
-      filter.$and = filter.$and || [];
-      filter.$and.push(specsFilter);
-    }
+    // Featured filter
+    if (featured === "true") filter.featured = true;
+    else if (featured === "false") filter.featured = false;
 
     // Sort options
     const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+    const useFeaturedOrder = featured === "true" && !req.query.sortBy;
+    const finalSortBy = useFeaturedOrder ? "featuredOrder" : sortBy;
+    const finalSortOrder = useFeaturedOrder ? "asc" : sortOrder;
+    sortOptions[finalSortBy] = finalSortOrder === "desc" ? -1 : 1;
+    if (useFeaturedOrder) sortOptions.featuredAt = -1;
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -3530,6 +3450,31 @@ export const updateProxyBid = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error while updating proxy bid.",
+    });
+  }
+};
+
+// Get featured auctions for the home page
+export const getFeaturedAuctions = async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 4, 20);
+
+    const auctions = await Auction.find({
+      featured: true,
+      status: "active",
+      endDate: { $gt: new Date() },
+    })
+      .populate("seller", "username firstName lastName")
+      .populate("currentBidder", "username firstName")
+      .sort({ featuredAt: -1 })
+      .limit(limit);
+
+    res.status(200).json({ success: true, data: { auctions, total: auctions.length } });
+  } catch (error) {
+    console.error("Get featured auctions error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching featured auctions",
     });
   }
 };

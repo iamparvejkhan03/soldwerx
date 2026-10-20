@@ -22,7 +22,7 @@ import {
     getStaffById,
     updateStaff,
     deleteStaff,
-    updateStaffStatus
+    updateStaffStatus,
 } from '../controllers/admin.controller.js';
 import { authAdmin } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/multer.middleware.js';

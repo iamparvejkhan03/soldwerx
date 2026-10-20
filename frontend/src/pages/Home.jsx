@@ -1,12 +1,17 @@
 import { lazy, Suspense } from "react";
 import { Hero, Container, LoadingSpinner, HowItWorks } from "../components";
 
+// Direct (non-lazy) — these return null when empty, so importing them
+// directly avoids any Suspense fallback flash that would take up space.
+import FeaturedAuctionsSection from "../components/FeaturedAuctionsSection";
+import FeaturedEventsSection from "../components/FeaturedEventsSection";
+
 const CTA = lazy(() => import('../components/CTA'));
 const CategoryIconsSection = lazy(() => import('../components/CategoryIconsSection'));
 const TestimonialSection = lazy(() => import('../components/TestimonialSection'));
 const About = lazy(() => import('../components/About'));
-const HomeAuctionsSection = lazy(() =>import("../components/HomeAuctionsSection"));
-const HomeEventsSection = lazy(() =>import("../components/HomeEventsSection"));
+const HomeAuctionsSection = lazy(() => import("../components/HomeAuctionsSection"));
+const HomeEventsSection = lazy(() => import("../components/HomeEventsSection"));
 
 const trustedBrands = [];
 
@@ -16,29 +21,16 @@ function Home() {
         <>
             <Hero />
 
-            {/* Marquee section */}
-            {/* <Container>
-                <Marquee speed={50} gradient={false}>
-                    <div className="flex gap-8 w-full my-14 mr-8">
-                        {
-                            trustedBrands.map(brand => (
-                                <div key={brand.alt} className="flex items-center justify-center border rounded-lg shadow hover:shadow-lg transition-all border-slate-200 p-4 md:p-5 bg-white">
-                                    <img
-                                        src={brand.src}
-                                        alt={brand.alt}
-                                        className="h-6 sm:h-6 md:h-7 lg:h-8 xl:h-9 mix-blend-multiply"
-                                    />
-                                </div>
-                            ))
-                        }
-                    </div>
-                </Marquee>
-            </Container> */}
-
             {/* Category section */}
             <Suspense fallback={<LoadingSpinner />}>
                 <CategoryIconsSection />
             </Suspense>
+
+            {/* Featured Auctions — renders nothing if none featured */}
+            <FeaturedAuctionsSection />
+
+            {/* Featured Events — renders nothing if none featured */}
+            <FeaturedEventsSection />
 
             {/* Auctions section */}
             <Suspense fallback={<LoadingSpinner />}>
@@ -51,22 +43,13 @@ function Home() {
             </Suspense>
 
             {/* Who we are section */}
-            {/* <Container className="mb-8 md:mb-0"> */}
             <Suspense fallback={<LoadingSpinner />}>
                 <About />
             </Suspense>
-            {/* </Container> */}
 
             <Container className="">
                 <HowItWorks />
             </Container>
-
-            {/* Testimonials */}
-            {/* <Container>
-                <Suspense fallback={<LoadingSpinner />}>
-                    <TestimonialSection />
-                </Suspense>
-            </Container> */}
 
             <CTA />
         </>

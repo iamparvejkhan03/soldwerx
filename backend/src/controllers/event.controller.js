@@ -188,105 +188,116 @@ export const getEvents = async (req, res) => {
             search,
             sortBy = "eventDate",
             sortOrder = "asc",
+            featured
         } = req.query;
 
-        // Build filter
-        const filter = {};
+        // Build filter using an $and array so multiple conditions
+        // (especially those that use $or internally) don't overwrite each other.
+        const conditions = [];
 
-        // Status filter - handle special cases
+        // ---- Status filter ----
         if (status && status !== "all") {
             const now = new Date();
 
             if (status === "ongoing") {
-                // Events that are published, started, and not ended
-                filter.status = "published";
-                filter.eventDate = { $lte: now };
-                filter.$or = [
-                    { endDate: { $gte: now } },
-                    { endDate: { $exists: false } }
-                ];
+                // Published, already started, not yet ended
+                conditions.push(
+                    { status: "published" },
+                    { eventDate: { $lte: now } },
+                    { $or: [{ endDate: { $gte: now } }, { endDate: { $exists: false } }] }
+                );
             } else if (status === "past") {
-                // Events that are published and ended
-                filter.status = "published";
-                filter.$or = [
-                    { endDate: { $lt: now } },
+                // Published and ended
+                conditions.push(
+                    { status: "published" },
                     {
-                        endDate: { $exists: false },
-                        eventDate: { $lt: now }
+                        $or: [
+                            { endDate: { $lt: now } },
+                            { endDate: { $exists: false }, eventDate: { $lt: now } }
+                        ]
                     }
-                ];
+                );
             } else if (status === "upcoming") {
-                // Events that are published and not started yet
-                filter.status = "published";
-                filter.eventDate = { $gt: now };
+                // Published, not started yet
+                conditions.push(
+                    { status: "published" },
+                    { eventDate: { $gt: now } }
+                );
             } else {
-                // Direct status match for draft, published, cancelled, completed
-                filter.status = status;
+                // Direct match: draft, published, cancelled, completed
+                conditions.push({ status });
             }
         }
 
-        // Search filter
+        // ---- Search filter ----
         if (search) {
-            filter.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } },
-                { createdByUsername: { $regex: search, $options: "i" } },
-            ];
+            const re = { $regex: search, $options: "i" };
+            conditions.push({
+                $or: [
+                    { title: re },
+                    { description: re },
+                    { location: re },
+                    { createdByUsername: re }
+                ]
+            });
         }
 
-        // Location filter
+        // ---- Location filter ----
         if (req.query.location) {
-            filter.location = { $regex: req.query.location, $options: 'i' };
+            conditions.push({
+                location: { $regex: req.query.location, $options: "i" }
+            });
         }
 
-        // Filter by user type (show appropriate events)
+        // ---- Featured filter (boolean) ----
+        // Featured filter
+        if (featured === "true") filter.featured = true;
+        else if (featured === "false") filter.featured = false;
+
+        // ---- User-scope filter ----
         if (req.user) {
             if (req.user.userType === "seller") {
-                filter.createdBy = req.user._id;
+                conditions.push({ createdBy: req.user._id });
             }
             // Admin sees all
         }
 
-        // Sort options - simplified
-        const sortOptions = {};
+        const filter = conditions.length ? { $and: conditions } : {};
 
-        // Map frontend sort values to actual fields
+        // ---- Sort ----
+        const sortOptions = {};
         switch (sortBy) {
             case 'ending_soon':
-                // Events ending soonest (earliest end date first)
                 sortOptions.endDate = 1;
                 sortOptions.eventDate = 1;
                 break;
             case 'newest':
-                // Newest created first
                 sortOptions.createdAt = -1;
                 break;
             case 'oldest':
-                // Oldest created first
                 sortOptions.createdAt = 1;
                 break;
             case 'title_asc':
-                // Title A-Z
                 sortOptions.title = 1;
                 break;
             case 'title_desc':
-                // Title Z-A
                 sortOptions.title = -1;
                 break;
             default:
-                // Default: earliest event date first
                 sortOptions.eventDate = 1;
         }
 
-        // Pagination
-        const skip = (parseInt(page) - 1) * parseInt(limit);
+        // ---- Pagination ----
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 12;
+        const skip = (pageNum - 1) * limitNum;
 
         const events = await Event.find(filter)
             .populate("createdBy", "username firstName lastName")
-            .populate("auctions", "title currentPrice photos status bidCount")
+            .populate("auctions", "title currentPrice photos status bidCount featured")
             .sort(sortOptions)
             .skip(skip)
+            .limit(limitNum);
 
         const total = await Event.countDocuments(filter);
 
@@ -295,8 +306,8 @@ export const getEvents = async (req, res) => {
             data: {
                 events,
                 pagination: {
-                    currentPage: parseInt(page),
-                    totalPages: Math.ceil(total / limit),
+                    currentPage: pageNum,
+                    totalPages: Math.ceil(total / limitNum),
                     totalEvents: total,
                     hasNextPage: skip + events.length < total,
                     hasPrevPage: skip > 0,
@@ -812,10 +823,10 @@ export const getEventWithAuctions = async (req, res) => {
 export const getUserEvents = async (req, res) => {
     try {
         const user = req.user;
-        const { 
-            status, 
-            search, 
-            page = 1, 
+        const {
+            status,
+            search,
+            page = 1,
             limit = 10,
             sortBy = "eventDate",
             sortOrder = "asc"
@@ -897,6 +908,92 @@ export const getUserEvents = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Internal server error while fetching user events",
+        });
+    }
+};
+
+// ============= TOGGLE FEATURED (ADMIN ONLY) =============
+export const toggleEventFeatured = async (req, res) => {
+    try {
+        if (req.user.userType !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can feature events",
+            });
+        }
+
+        const { id } = req.params;
+        const { featured } = req.body;
+
+        if (typeof featured !== "boolean") {
+            return res.status(400).json({
+                success: false,
+                message: "`featured` must be a boolean",
+            });
+        }
+
+        const event = await Event.findById(id);
+        if (!event) {
+            return res.status(404).json({ success: false, message: "Event not found" });
+        }
+
+        if (featured && !event.featured) {
+            const top = await Event.findOne({ featured: true })
+                .sort({ featuredOrder: -1 })
+                .select("featuredOrder")
+                .lean();
+            event.featuredAt = new Date();
+            event.featuredOrder = (top?.featuredOrder ?? -1) + 1;
+        } else if (!featured) {
+            event.featuredAt = null;
+            event.featuredOrder = null;
+        }
+        event.featured = featured;
+        event.featuredAt = featured ? new Date() : null;
+        await event.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Event ${featured ? "marked as featured" : "removed from featured"}`,
+            data: { event },
+        });
+    } catch (error) {
+        console.error("Toggle event featured error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error while updating featured status",
+        });
+    }
+};
+
+// ============= GET FEATURED EVENTS =============
+export const getFeaturedEvents = async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit) || 4, 20);
+        const now = new Date();
+
+        const events = await Event.find({
+            featured: true,
+            status: "published",
+            $or: [
+                { endDate: { $gte: now } },
+                { endDate: { $exists: false }, eventDate: { $gte: now } },
+            ],
+        })
+            .populate("createdBy", "username firstName lastName")
+            .populate("auctions", "title currentPrice photos status bidCount")
+            .sort({ featuredAt: -1 })
+            .limit(limit);
+
+        res.status(200).json({
+            success: true,
+            data: { events, total: events.length },
+        });
+    } catch (error) {
+        console.error("Get featured events error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error while fetching featured events",
         });
     }
 };

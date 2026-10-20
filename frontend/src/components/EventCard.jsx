@@ -28,7 +28,14 @@ const EventCard = ({ event }) => {
         return { class: "bg-gray-100 text-gray-800", text: status };
     };
 
+    const getFeaturedBadge = (featured) => {
+        if (featured) {
+            return { class: "bg-orange-100 text-orange-800", text: "Featured" };
+        }
+    };
+
     const statusConfig = getStatusBadge(event.status, event.eventDate, event.endDate);
+    const featuredConfig = getFeaturedBadge(event?.featured);
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -64,8 +71,15 @@ const EventCard = ({ event }) => {
 
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${statusConfig.class}`}>
-                            {statusConfig.text}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${statusConfig?.class}`}>
+                            {statusConfig?.text}
+                        </span>
+                    </div>
+
+                    {/* Featured Badge */}
+                    <div className="absolute top-3 right-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${featuredConfig?.class}`}>
+                            {featuredConfig?.text}
                         </span>
                     </div>
 

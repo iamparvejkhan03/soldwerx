@@ -716,6 +716,8 @@ export const getAllAuctions = async (req, res) => {
         searchQuery.status = "draft";
       } else if (filter === "ended") {
         searchQuery.status = { $in: ["ended", "sold", "reserve_not_met"] };
+      } else if (filter === "featured") {
+        searchQuery.featured = true;
       } else {
         searchQuery.status = filter;
       }
@@ -853,7 +855,10 @@ export const updateAuctionStatus = async (req, res) => {
 
     const updateData = {};
     if (status) updateData.status = status;
-    if (featured !== undefined) updateData.featured = featured;
+    if (featured !== undefined) {
+      updateData.featured = !!featured;
+      updateData.featuredAt = featured ? new Date() : null;
+    }
 
     const auction = await Auction.findByIdAndUpdate(auctionId, updateData, {
       new: true,
@@ -869,8 +874,8 @@ export const updateAuctionStatus = async (req, res) => {
 
     let message = "Auction updated successfully";
     if (status) message = `Auction ${status} successfully`;
-    if (featured !== undefined) {
-      message = `Auction ${featured ? "featured" : "unfeatured"} successfully`;
+    else if (featured !== undefined) {
+      message = `Auction ${featured ? "marked as featured" : "removed from featured"}`;
     }
 
     broadcastAuctionChange(auctionId);

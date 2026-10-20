@@ -80,6 +80,14 @@ const eventSchema = new Schema(
             type: Number,
             default: 0,
         },
+        featured: {
+            type: Boolean,
+            default: false,
+        },
+        featuredAt: {
+            type: Date,
+            default: null,
+        },
     },
     {
         timestamps: true,
@@ -90,6 +98,7 @@ const eventSchema = new Schema(
 eventSchema.index({ createdBy: 1, createdAt: -1 });
 eventSchema.index({ status: 1, eventDate: 1 });
 eventSchema.index({ "createdByUserType": 1 });
+eventSchema.index({ featured: 1, status: 1, eventDate: 1 });
 
 // Virtual for checking if event is upcoming
 eventSchema.virtual("isUpcoming").get(function () {

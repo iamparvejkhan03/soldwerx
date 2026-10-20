@@ -9,6 +9,7 @@ import {
     HandHelping,
     HandGrab,
     ArrowUpRight,
+    Star,
 } from "lucide-react";
 
 import { heroImg } from "../assets";
@@ -69,6 +70,7 @@ function AuctionCard({ auction }) {
     // ============================================================
 
     const isReserveMet = auction?.currentPrice >= auction?.reservePrice;
+    const isFeatured = auction?.featured;
 
     const isAuctionActive =
         auction?.status === "active" && !auctionTime?.completed;
@@ -162,8 +164,16 @@ function AuctionCard({ auction }) {
             });
         }
 
+        if (auction?.featured) {
+            badges.push({
+                label: "Featured",
+                icon: Star,
+                color: "bg-orange-50 text-orange-700 border-orange-200",
+            });
+        }
+
         return badges;
-    }, [auction, isReserveMet]);
+    }, [auction, isReserveMet, isFeatured]);
 
     // ============================================================
     // LOADING STATE

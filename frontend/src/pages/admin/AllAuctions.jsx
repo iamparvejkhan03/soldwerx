@@ -385,10 +385,10 @@ function AllAuctions() {
                             <div className="text-2xl font-bold text-amber-600">{stats.pending?.toLocaleString('en-US')}</div>
                             <div className="text-sm text-gray-500">Pending</div>
                         </div>
-                        {/* <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                             <div className="text-2xl font-bold text-purple-600">{stats.featured?.toLocaleString('en-US')}</div>
                             <div className="text-sm text-gray-500">Featured</div>
-                        </div> */}
+                        </div>
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                             <div className="text-2xl font-bold text-blue-600">{stats.sold?.toLocaleString('en-US')}</div>
                             <div className="text-sm text-gray-500">Sold</div>
@@ -420,6 +420,7 @@ function AllAuctions() {
                                         onChange={(e) => setFilter(e.target.value)}
                                     >
                                         <option value="all">All Auctions</option>
+                                        <option value="featured">Featured</option>
                                         <option value="active">Active</option>
                                         <option value="pending">Pending</option>
                                         <option value="ended">Ended</option>
@@ -725,7 +726,7 @@ function AllAuctions() {
                                                                     )} */}
 
                                                                     {/* Featured Toggle */}
-                                                                    {/* <div className="border-t border-gray-100 my-1"></div>
+                                                                    <div className="border-t border-gray-100 my-1"></div>
                                                                     <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
                                                                         Featured Status
                                                                     </div>
@@ -738,7 +739,7 @@ function AllAuctions() {
                                                                     >
                                                                         <Star size={16} fill={auction.featured ? "currentColor" : "none"} />
                                                                         <span>{auction.featured ? "Remove Featured" : "Make Featured"}</span>
-                                                                    </button> */}
+                                                                    </button>
 
                                                                     {/* Delete Action */}
                                                                     <div className="border-t border-gray-100 my-1"></div>

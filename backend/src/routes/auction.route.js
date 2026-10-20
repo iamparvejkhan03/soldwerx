@@ -17,7 +17,8 @@ import {
     placeProxyBid,
     cancelProxyBid,
     getProxyBidStatus,
-    updateProxyBid
+    updateProxyBid,
+    getFeaturedAuctions
 } from '../controllers/auction.controller.js';
 import upload from '../middlewares/multer.middleware.js';
 import { auth, authBidder, authSeller } from '../middlewares/auth.middleware.js';
@@ -55,6 +56,7 @@ auctionRouter.put('/:id/proxy-bid', authBidder, updateProxyBid);
 // Public routes
 auctionRouter.get('/', getAuctions);
 auctionRouter.get('/hot', getHotListing);
+auctionRouter.get("/featured", getFeaturedAuctions);
 auctionRouter.get('/:id', getAuction);
 auctionRouter.get('/:id/commission', auth, getAuctionCommission);
 
