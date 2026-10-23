@@ -33,6 +33,7 @@ import {
   createBulkNotifications,
   notifyAdminsAndStaffWithPermission,
 } from './notificationService.js';
+import Watchlist from "../models/watchlist.model.js";
 
 class AgendaService {
   constructor() {
@@ -276,6 +277,103 @@ class AgendaService {
         }
       } catch (error) {
         console.error("Agenda job error (end auction):", error);
+      }
+    });
+
+    // Job to send a 30-second "auction ending" warning to engaged users
+    this.agenda.define("auction 30s left", async (job) => {
+      const { auctionId } = job.attrs.data;
+
+      try {
+        const auction = await Auction.findById(auctionId)
+          .populate("seller", "_id username firstName lastName")
+          .lean();
+
+        if (!auction) return;
+
+        // ── Skip conditions ────────────────────────────────
+        if (auction.status !== "active") return;
+
+        const now = Date.now();
+        const endMs = new Date(auction.endDate).getTime();
+
+        // Auction already ended
+        if (endMs <= now) return;
+
+        // Extended past the warning window — the auction was rescheduled
+        // and a fresh job has been scheduled for the new end time.
+        if (endMs - now > 60_000) return;
+
+        // Already sent (safety net)
+        if (auction.notifications?.ending30sec) return;
+
+        // No bids = nothing exciting to warn about
+        if (!auction.bidCount || auction.bidCount === 0) return;
+
+        // ── Build recipient list: bidders + watchers ───────
+        const bidderIds = [
+          ...new Set(
+            (auction.bids || [])
+              .map((b) => b.bidder?.toString())
+              .filter(Boolean)
+          ),
+        ];
+
+        const watcherDocs = await Watchlist.find({ auction: auctionId })
+          .select("user")
+          .lean();
+        const watcherIds = watcherDocs
+          .map((w) => w.user?.toString())
+          .filter(Boolean);
+
+        // Merge, dedupe, exclude the seller
+        const sellerId = auction.seller?._id?.toString();
+        const recipientSet = new Set([...bidderIds, ...watcherIds]);
+        if (sellerId) recipientSet.delete(sellerId);
+
+        if (recipientSet.size === 0) {
+          // Nothing to do, but mark so we don't retry
+          await Auction.updateOne(
+            { _id: auctionId },
+            {
+              $set: {
+                "notifications.ending30sec": true,
+                "notifications.ending30secSentAt": new Date(),
+              },
+            }
+          );
+          return;
+        }
+
+        // ── Fire in-app notifications ──────────────────────
+        await createBulkNotifications([...recipientSet], "AUCTION_30S_LEFT", {
+          title: `⏰ 30 seconds left — "${auction.title}"`,
+          message: `Current bid: $${(auction.currentPrice || 0).toLocaleString()} — place your bid now!`,
+          actionUrl: `/auction/${auction._id}`,
+          relatedEntity: { type: "Auction", id: auction._id },
+          metadata: {
+            auctionId: auction._id,
+            currentPrice: auction.currentPrice,
+            bidCount: auction.bidCount,
+          },
+        });
+
+        // ── Mark as sent ───────────────────────────────────
+        await Auction.updateOne(
+          { _id: auctionId },
+          {
+            $set: {
+              "notifications.ending30sec": true,
+              "notifications.ending30secSentAt": new Date(),
+            },
+          }
+        );
+
+        console.log(
+          `⏰ Sent 30s warnings for "${auction.title}" to ${recipientSet.size} users`
+        );
+      } catch (err) {
+        console.error("Agenda job error (auction 30s left):", err);
       }
     });
 
@@ -563,6 +661,17 @@ class AgendaService {
   async scheduleAuctionEnd(auctionId, endDate) {
     await this.agenda.schedule(endDate, "end auction", { auctionId });
     // console.log(`📅 Scheduled ending for auction ${auctionId} at ${endDate}`);
+    
+    // Also schedule the 30-second warning job (if the auction ends far
+    // enough in the future that the warning moment is still ahead of us).
+    const endMs = new Date(endDate).getTime();
+    const warnAt = new Date(endMs - 30 * 1000);
+
+    // Only schedule if the warning time is >5s from now. Anything closer
+    // means the auction is ending immediately — no useful warning window.
+    if (warnAt.getTime() > Date.now() + 5000) {
+      await this.agenda.schedule(warnAt, "auction 30s left", { auctionId });
+    }
   }
 
   // Cancel jobs if auction is deleted or modified

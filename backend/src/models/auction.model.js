@@ -441,7 +441,9 @@ const auctionSchema = new Schema(
       ending30minSentAt: Date,
       ending2hourSentAt: Date,
       ending24hourSentAt: Date,
-      offerReceived: { type: Boolean, default: false }, // NEW: Offer notifications
+      ending30sec: { type: Boolean, default: false },
+      ending30secSentAt: Date,
+      offerReceived: { type: Boolean, default: false },
       offerExpiring: { type: Boolean, default: false },
     },
 
@@ -629,6 +631,9 @@ auctionSchema.methods.placeBid = async function (
       // Reset to exactly 2 minutes from now (not add to existing time)
       const newEndDate = new Date(now.getTime() + 2 * 60 * 1000);
       this.endDate = newEndDate;
+
+      this.notifications.ending30sec = false;
+      this.notifications.ending30secSentAt = null;
 
       // Reschedule the end job with new time
       await agendaService.cancelAuctionJobs(this._id);

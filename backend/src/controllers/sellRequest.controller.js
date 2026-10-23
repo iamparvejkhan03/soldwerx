@@ -32,7 +32,10 @@ const uploadPhotosToCloudinary = async (files) => {
 // Submit sell request
 export const submitSellRequest = async (req, res) => {
     try {
-        const { name, email, phone, location, itemType, description, preferredMethod } = req.body;
+        const {
+            name, email, phone, location, itemType, description, preferredMethod,
+            propertyType, propertyAddress, bedrooms, bathrooms, squareFootage, yearBuilt, askingPrice
+        } = req.body;
 
         // Validate required fields
         if (!name || !email || !itemType || !description) {
@@ -57,7 +60,15 @@ export const submitSellRequest = async (req, res) => {
             itemType,
             description,
             preferredMethod: preferredMethod || 'not-sure',
-            photos: photoUrls
+            photos: photoUrls,
+            // property-specific
+            propertyType: propertyType || null,
+            propertyAddress: propertyAddress?.trim() || '',
+            bedrooms: bedrooms !== undefined && bedrooms !== '' ? Number(bedrooms) : null,
+            bathrooms: bathrooms !== undefined && bathrooms !== '' ? Number(bathrooms) : null,
+            squareFootage: squareFootage !== undefined && squareFootage !== '' ? Number(squareFootage) : null,
+            yearBuilt: yearBuilt !== undefined && yearBuilt !== '' ? Number(yearBuilt) : null,
+            askingPrice: askingPrice !== undefined && askingPrice !== '' ? Number(askingPrice) : null,
         });
 
         res.status(201).json({
@@ -71,21 +82,35 @@ export const submitSellRequest = async (req, res) => {
 
         // Send emails asynchronously
         if (sellRequest) {
-            sellConfirmationEmail(name, email).catch(err =>
+            sellConfirmationEmail(name, email, propertyType).catch(err =>
                 console.error('Sell confirmation email error:', err)
             );
-            sellAdminEmail(name, email, phone, location, itemType, description, preferredMethod, photoUrls).catch(err =>
+
+            sellAdminEmail(
+                name, email, phone, location, itemType, description, preferredMethod, photoUrls,
+                { propertyType, propertyAddress, bedrooms, bathrooms, squareFootage, yearBuilt, askingPrice }
+            ).catch(err =>
                 console.error('Sell admin email error:', err)
             );
         }
 
         // ─── In-app admin notification ───────────────────────────
+        const isProperty = !!propertyType;
         notifyAdminsAndStaffWithPermission('ADMIN_NEW_SELL_REQUEST', {
-            title: 'New sell request',
-            message: `${name} — "${itemType}"`,
+            title: isProperty ? 'New property sell request' : 'New sell request',
+            message: isProperty
+                ? `${name} — ${propertyType} at ${propertyAddress || 'unknown address'}`
+                : `${name} — "${itemType}"`,
             actionUrl: `/admin/sell-requests`,
             relatedEntity: { type: 'SellRequest', id: sellRequest._id },
-            metadata: { requestId: sellRequest.requestId, itemType, email },
+            metadata: {
+                requestId: sellRequest.requestId,
+                itemType,
+                email,
+                isProperty,
+                propertyType: propertyType || null,
+                propertyAddress: propertyAddress || null,
+            },
         }).catch((err) => console.error('notify ADMIN_NEW_SELL_REQUEST:', err));
 
     } catch (error) {
@@ -108,7 +133,8 @@ export const getSellRequests = async (req, res) => {
             preferredMethod,
             priority,
             sortBy = 'recent',
-            dateRange
+            dateRange,
+            propertyType
         } = req.query;
 
         const filter = {};
@@ -123,6 +149,10 @@ export const getSellRequests = async (req, res) => {
 
         if (priority && priority !== 'all') {
             filter.priority = priority;
+        }
+
+        if (propertyType && propertyType !== 'all') {
+            filter.propertyType = propertyType;
         }
 
         if (dateRange && dateRange !== 'all') {
@@ -179,7 +209,14 @@ export const getSellRequests = async (req, res) => {
             estimatedValue: request.estimatedValue,
             createdAt: request.createdAt,
             updatedAt: request.updatedAt,
-            respondedAt: request.respondedAt
+            respondedAt: request.respondedAt,
+            propertyType: request.propertyType ?? null,
+            propertyAddress: request.propertyAddress ?? '',
+            bedrooms: request.bedrooms ?? null,
+            bathrooms: request.bathrooms ?? null,
+            squareFootage: request.squareFootage ?? null,
+            yearBuilt: request.yearBuilt ?? null,
+            askingPrice: request.askingPrice ?? null,
         }));
 
         transformedRequests.sort((a, b) => {
@@ -230,6 +267,11 @@ export const getSellRequests = async (req, res) => {
             { $count: 'count' }
         ]);
 
+        const propertyStats = await SellRequest.aggregate([
+            { $match: { ...filter, propertyType: { $ne: null } } },
+            { $count: 'count' },
+        ]);
+
         const statistics = {
             totalRequests,
             newRequests: statusStats.find(stat => stat._id === 'new')?.count || 0,
@@ -237,6 +279,7 @@ export const getSellRequests = async (req, res) => {
             contactedRequests: statusStats.find(stat => stat._id === 'contacted')?.count || 0,
             listedRequests: statusStats.find(stat => stat._id === 'listed')?.count || 0,
             recentRequests: recentStats[0]?.count || 0,
+            propertyRequests: propertyStats[0]?.count || 0,
             methodBreakdown: methodStats.reduce((acc, stat) => {
                 acc[stat._id] = stat.count;
                 return acc;
@@ -270,7 +313,17 @@ export const getSellRequests = async (req, res) => {
                 { value: 'week', label: 'Last 7 Days' },
                 { value: 'month', label: 'Last 30 Days' },
                 { value: 'year', label: 'Last Year' }
-            ]
+            ],
+            propertyTypes: [
+                { value: 'all', label: 'All Property Types' },
+                { value: 'house', label: 'House' },
+                { value: 'apartment', label: 'Apartment' },
+                { value: 'condo', label: 'Condo' },
+                { value: 'townhouse', label: 'Townhouse' },
+                { value: 'land', label: 'Land' },
+                { value: 'commercial', label: 'Commercial' },
+                { value: 'other', label: 'Other' },
+            ],
         };
 
         res.status(200).json({
@@ -417,6 +470,11 @@ export const getSellStats = async (req, res) => {
             }
         ]);
 
+        const requestsByPropertyType = await SellRequest.aggregate([
+            { $match: { propertyType: { $ne: null } } },
+            { $group: { _id: '$propertyType', count: { $sum: 1 } } },
+        ]);
+
         res.status(200).json({
             success: true,
             data: {
@@ -424,6 +482,7 @@ export const getSellStats = async (req, res) => {
                 averageResponseTime: overallStats[0]?.avgResponseTime || 0,
                 requestsByStatus,
                 requestsByMethod,
+                requestsByPropertyType,
                 todayRequests: await SellRequest.countDocuments({
                     createdAt: { $gte: new Date(today.setHours(0, 0, 0, 0)) }
                 })

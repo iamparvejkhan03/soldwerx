@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { AdminContainer, AdminHeader, AdminSidebar, LoadingSpinner } from "../../components";
-import { 
-    Search, 
-    User, 
-    Clock, 
-    Copy, 
-    CheckCircle, 
-    Trash2, 
-    Eye, 
-    AlertCircle, 
-    CheckCircle2, 
-    XCircle, 
+import {
+    Search,
+    User,
+    Clock,
+    Copy,
+    CheckCircle,
+    Trash2,
+    Eye,
+    AlertCircle,
+    CheckCircle2,
+    XCircle,
     X,
     Package,
     Phone,
@@ -20,7 +20,8 @@ import {
     FileText,
     Gavel,
     ShoppingCart,
-    HelpCircle
+    HelpCircle,
+    Building
 } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast } from "react-hot-toast";
@@ -303,6 +304,36 @@ function SellRequests() {
         );
     };
 
+    const getTypeBadge = (type) => {
+        const base =
+            "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1";
+
+        if (!type) {
+            return (
+                <span className={`${base} bg-gray-100 text-gray-800`}>
+                    <HelpCircle size={12} />
+                    Not Specified
+                </span>
+            );
+        }
+
+        if (type === "Real Estate") {
+            return (
+                <span className={`${base} bg-green-100 text-green-800`}>
+                    <Building size={12} />
+                    Real Estate
+                </span>
+            );
+        }
+
+        return (
+            <span className={`${base} bg-blue-100 text-blue-800`}>
+                <Package size={12} />
+                {type}
+            </span>
+        );
+    };
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -525,7 +556,8 @@ function SellRequests() {
                                     <tr>
                                         <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                                         {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th> */}
-                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                        {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th> */}
+                                        <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                         <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                         {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th> */}
                                         <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
@@ -554,8 +586,11 @@ function SellRequests() {
                                                     <div className="text-xs text-gray-500">Item Type</div>
                                                 </div>
                                             </td> */}
-                                            <td className="py-4 px-6">
+                                            {/* <td className="py-4 px-6">
                                                 {getMethodBadge(request.preferredMethod)}
+                                            </td> */}
+                                            <td className="py-4 px-6">
+                                                {getTypeBadge(request?.itemType)}
                                             </td>
                                             <td className="py-4 px-6">
                                                 {getStatusBadge(request.status)}
@@ -723,6 +758,30 @@ function SellRequests() {
                                                     <span className="text-gray-500">Item Type</span>
                                                     <span className="font-medium">{selectedRequest.itemType}</span>
                                                 </div>
+                                                {selectedRequest.propertyType && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Property Type</span>
+                                                        <span className="font-medium capitalize">{selectedRequest.propertyType}</span>
+                                                    </div>
+                                                )}
+                                                {selectedRequest.propertyAddress && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Address</span>
+                                                        <span className="font-medium text-right max-w-[60%]">{selectedRequest.propertyAddress}</span>
+                                                    </div>
+                                                )}
+                                                {selectedRequest.bedrooms != null && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Beds / Baths</span>
+                                                        <span className="font-medium">{selectedRequest.bedrooms} / {selectedRequest.bathrooms ?? "—"}</span>
+                                                    </div>
+                                                )}
+                                                {selectedRequest.squareFootage && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Sq. Ft.</span>
+                                                        <span className="font-medium">{selectedRequest.squareFootage.toLocaleString()}</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-500">Preferred Method</span>
                                                     <span className="font-medium capitalize">{selectedRequest.preferredMethod?.replace('-', ' ')}</span>

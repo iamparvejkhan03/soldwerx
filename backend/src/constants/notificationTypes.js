@@ -29,6 +29,7 @@ export const NOTIFICATION_TYPES = {
     PROXY_BID_PLACED: { category: 'auction', priority: 'low', permission: null, audience: 'user' },
     AUCTION_WON: { category: 'auction', priority: 'urgent', permission: null, audience: 'user' },
     AUCTION_ENDING_SOON: { category: 'auction', priority: 'high', permission: null, audience: 'user' },
+    AUCTION_30S_LEFT: { category: 'auction', priority: 'urgent', permission: null, audience: 'user' },
     GIVEAWAY_WON: { category: 'auction', priority: 'high', permission: null, audience: 'user' },
 
     // ─── Offers (buyer side) ─────────────────────────────────

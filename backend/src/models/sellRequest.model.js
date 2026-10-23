@@ -39,6 +39,42 @@ const sellRequestSchema = new Schema({
         url: String,
         publicId: String
     }],
+    propertyType: {
+        type: String,
+        enum: ['house', 'apartment', 'condo', 'townhouse', 'land', 'commercial', 'other'],
+        default: null
+    },
+    propertyAddress: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    bedrooms: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    bathrooms: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    squareFootage: {
+        type: Number,
+        min: 0,
+        default: null
+    },
+    yearBuilt: {
+        type: Number,
+        min: 1800,
+        max: 2100,
+        default: null
+    },
+    askingPrice: {
+        type: Number,
+        min: 0,
+        default: null
+    },
     status: {
         type: String,
         enum: ['new', 'in-review', 'contacted', 'approved', 'listed', 'closed'],

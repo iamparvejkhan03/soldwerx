@@ -469,14 +469,32 @@ export const getAuctions = async (req, res) => {
             .filter((c) => c.trim() !== "");
         }
 
+        // Normalize
+        categoriesArray = categoriesArray.filter(Boolean).map((c) => c.trim());
+
         if (categoriesArray.length > 0) {
           filter.categories = { $in: categoriesArray };
+
+          // Exclude real-estate unless it was explicitly requested
+          if (!categoriesArray.includes("real-estate")) {
+            filter.categories.$ne = "real-estate";
+          }
         }
       }
       // Fallback to single category for backward compatibility
       else if (category) {
         filter.categories = { $in: [category] };
+
+        // Exclude real-estate unless it was explicitly requested
+        if (category !== "real-estate") {
+          filter.categories.$ne = "real-estate";
+        }
       }
+    } else {
+      // No category specified — exclude real-estate by default.
+      // Real estate has its own dedicated section:
+      //   /auctions?category=real-estate
+      filter.categories = { $ne: "real-estate" };
     }
     // ===================================================
 
@@ -3135,6 +3153,11 @@ export const placeBidDirect = async (
         if (timeRemaining < 2 * 60 * 1000) {
           const newEndDate = new Date(now.getTime() + 2 * 60 * 1000);
           update.$set.endDate = newEndDate;
+
+          // ← Reset the 30s flag so the rescheduled warning can fire again
+          update.$set["notifications.ending30sec"] = false;
+          update.$set["notifications.ending30secSentAt"] = null;
+
           extended = true;
         }
       }

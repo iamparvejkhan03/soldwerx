@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { closeMenu, darkLogo, logo, menuIcon } from "../assets";
+import { closeMenu, darkLogo, dummyUserImg, logo, menuIcon } from "../assets";
 import Container from "./Container";
-import { ChevronRight, LayoutDashboard, LogIn, Search, ChevronDown, X, Gavel, Clock, DollarSign, Gift } from "lucide-react";
+import { ChevronRight, LayoutDashboard, LogIn, Search, ChevronDown, X, Gavel, Clock, DollarSign, Gift, Star, MessageCircleQuestion } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { usePopUp } from "../contexts/PopUpContextProvider";
@@ -10,11 +10,11 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import NotificationBell from "./NotificationBell";
 
 const navLinks = [
-    {
-        name: 'Home',
-        href: '/',
-        sublabel: null,
-    },
+    // {
+    //     name: 'Home',
+    //     href: '/',
+    //     sublabel: null,
+    // },
     {
         name: 'Buy',
         href: '/auctions',
@@ -44,6 +44,7 @@ function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
     const [isAuctionTypesOpen, setIsAuctionTypesOpen] = useState(false);
+    const [isRealEstateOpen, setIsRealEstateOpen] = useState(false);
     const [categories, setCategories] = useState([]);
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -51,9 +52,11 @@ function Header() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const auctionTypesRef = useRef(null);
+    const realEstateRef = useRef(null);
 
     const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
     const [mobileAuctionTypesOpen, setMobileAuctionTypesOpen] = useState(false);
+    const [mobileRealEstateOpen, setMobileRealEstateOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
 
     useEffect(() => {
@@ -67,6 +70,9 @@ function Header() {
         const handleClickOutside = (event) => {
             if (auctionTypesRef.current && !auctionTypesRef.current.contains(event.target)) {
                 setIsAuctionTypesOpen(false);
+            }
+            if (realEstateRef.current && !realEstateRef.current.contains(event.target)) {
+                setIsRealEstateOpen(false);
             }
         };
 
@@ -143,8 +149,18 @@ function Header() {
         setMobileAuctionTypesOpen(false);
     };
 
+    const handleRealEstateSelect = (status, featured = false) => {
+        const params = new URLSearchParams();
+        params.set('category', 'real-estate');
+        if (status) params.set('status', status);
+        if (featured) params.set('featured', true);
+        navigate(`/auctions?${params.toString()}`);
+        setIsRealEstateOpen(false);
+        setMobileRealEstateOpen(false);
+    };
+
     // Divider color depends on scroll state
-    const dividerClass = `w-px h-8 mx-4 ${isScrolled ? 'bg-black/15' : 'bg-white/20'}`;
+    const dividerClass = `w-px h-8 mx-4 ${isScrolled ? 'bg-white/20' : 'bg-white/40'}`;
     const mainLabel = `text-[11px] font-bold uppercase tracking-[0.1em] leading-tight transition-colors`;
     const subLabel = `block text-[9px] font-bold uppercase tracking-[0.08em] text-[#F5B51B] leading-tight mt-0.5`;
 
@@ -221,6 +237,80 @@ function Header() {
                                             >
                                                 <ChevronRight size={18} />
                                                 <span>View All Auctions</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </li>
+
+                        {/* Real Estate dropdown */}
+                        <li className="flex items-center">
+                            <span className={dividerClass} />
+                            <div ref={realEstateRef} className="relative">
+                                <button
+                                    onClick={() => setIsRealEstateOpen(!isRealEstateOpen)}
+                                    className={`group flex flex-col justify-center text-left cursor-pointer transition-colors ${isScrolled ? 'text-white hover:text-[#F5B51B]' : 'text-white hover:text-[#F5B51B]'}`}
+                                >
+                                    <span className={`${mainLabel} flex items-center gap-1`}>
+                                        Real Estate
+                                        <ChevronDown size={13} strokeWidth={2.5} className={`transition-transform ${isRealEstateOpen ? 'rotate-180' : ''}`} />
+                                    </span>
+                                    <span className={subLabel}>Live & Upcoming</span>
+                                </button>
+
+                                {isRealEstateOpen && (
+                                    <div className="absolute top-full left-0 mt-4 w-64 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-50">
+                                        <button
+                                            onClick={() => handleRealEstateSelect('active')}
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-gray-700"
+                                        >
+                                            <Gavel size={18} className="text-[#F5B51B]" />
+                                            <span>Live</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleRealEstateSelect('approved')}
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-gray-700"
+                                        >
+                                            <Clock size={18} className="text-[#F5B51B]" />
+                                            <span>Upcoming</span>
+                                        </button>
+                                        <div className="border-t border-gray-100">
+                                            <Link
+                                                to="/real-estate-faqs"
+                                                onClick={() => setIsRealEstateOpen(false)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-gray-700"
+                                            >
+                                                <MessageCircleQuestion size={18} className="text-[#F5B51B]" />
+                                                <span>Real Estate FAQs</span>
+                                            </Link>
+                                        </div>
+                                        <div className="border-t border-gray-100">
+                                            <button
+                                                onClick={() => handleRealEstateSelect(null, true)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-[#F5B51B] font-medium"
+                                            >
+                                                <Star size={18} />
+                                                <span>Featured Properties</span>
+                                            </button>
+                                        </div>
+                                        <div className="border-t border-gray-100">
+                                            <button
+                                                onClick={() => handleRealEstateSelect(null)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-[#F5B51B] font-medium"
+                                            >
+                                                <ChevronRight size={18} />
+                                                <span>Browse All Properties</span>
+                                            </button>
+                                        </div>
+                                        <div className="border-t border-gray-100">
+                                            <Link
+                                                to="/sell-property"
+                                                onClick={() => setIsRealEstateOpen(false)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-[#F5B51B] font-medium"
+                                            >
+                                                <DollarSign size={18} />
+                                                <span>Sell a Property</span>
                                             </Link>
                                         </div>
                                     </div>
@@ -322,7 +412,9 @@ function Header() {
                             {
                                 user
                                     ?
-                                    <button className="flex items-center gap-2 inset-0 bg-[#F5B51B] hover:bg-[#e8a600] transition-all duration-300 text-black px-5 py-2 rounded-md cursor-pointer" onClick={() => navigate(`/${user.userType}/dashboard`)}><LayoutDashboard size={20} /> Dashboard</button>
+                                    <button onClick={() => navigate(`/${user.userType}/dashboard`)}>
+                                        <img src={user?.img ? user?.img : dummyUserImg} alt="userImg" className="h-10 w-10 rounded-full" />
+                                    </button>
                                     :
                                     <button className="flex items-center gap-2 inset-0 bg-[#F5B51B] hover:bg-[#e8a600] transition-all duration-300 text-black px-5 py-2 rounded-md cursor-pointer" onClick={() => navigate('/login')}><LogIn size={20} /> Log In</button>
                             }
@@ -368,6 +460,20 @@ function Header() {
                             </button>
                         </li>
 
+                        {/* Mobile Real Estate */}
+                        <li className="relative mx-5 py-2 mb-2">
+                            <button
+                                onClick={() => {
+                                    setMobileRealEstateOpen(true);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="flex items-center gap-1"
+                            >
+                                Real Estate
+                                <ChevronRight size={16} />
+                            </button>
+                        </li>
+
                         <li className="relative mx-5 py-2 mb-2">
                             <button
                                 onClick={() => {
@@ -385,7 +491,7 @@ function Header() {
                             {
                                 user
                                     ?
-                                    <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#e8a600] transition-all duration-300 text-black px-5 py-2 rounded-md cursor-pointer" onClick={() => navigate(`/${user.userType}/dashboard`)}><LayoutDashboard size={20} /> Dashboard</button>
+                                    <button onClick={() => navigate(`/${user.userType}/dashboard`)}><img src={user?.img ? user?.img : dummyUserImg} alt="userImg" className="h-10 w-10 rounded-full" /></button>
                                     :
                                     <button className="flex items-center gap-2 bg-[#F5B51B] hover:bg-[#e8a600] transition-all duration-300 text-black px-5 py-2 rounded-md cursor-pointer" onClick={() => { navigate('/login'); setIsMenuOpen(false) }}><LogIn size={20} /> Log In</button>
                             }
@@ -437,6 +543,95 @@ function Header() {
                                     className="flex items-center gap-2 text-[#F5B51B] font-medium"
                                 >
                                     View all auctions <ChevronRight size={16} />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* MOBILE REAL ESTATE DRAWER */}
+                <div
+                    className={`fixed inset-0 bg-white z-[100] transform transition-transform duration-300 ${mobileRealEstateOpen ? "translate-x-0" : "translate-x-full"}`}
+                >
+                    <div className="h-full overflow-y-auto">
+                        <div className="flex items-center justify-between p-5 border-b">
+                            <h2 className="text-xl font-bold">Real Estate</h2>
+                            <X
+                                className="cursor-pointer"
+                                onClick={() => setMobileRealEstateOpen(false)}
+                            />
+                        </div>
+
+                        <div className="p-5 space-y-3">
+                            <div
+                                onClick={() => {
+                                    handleRealEstateSelect('active');
+                                    setMobileRealEstateOpen(false);
+                                }}
+                                className="flex items-center gap-4 p-4 border rounded-xl hover:border-[#F5B51B] cursor-pointer"
+                            >
+                                <div className="p-2 rounded-lg bg-gray-100">
+                                    <Gavel size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">Live</h3>
+                                    <p className="text-sm text-gray-500">Bidding now</p>
+                                </div>
+                            </div>
+
+                            <div
+                                onClick={() => {
+                                    handleRealEstateSelect('approved');
+                                    setMobileRealEstateOpen(false);
+                                }}
+                                className="flex items-center gap-4 p-4 border rounded-xl hover:border-[#F5B51B] cursor-pointer"
+                            >
+                                <div className="p-2 rounded-lg bg-gray-100">
+                                    <Clock size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">Upcoming</h3>
+                                    <p className="text-sm text-gray-500">Coming soon</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/real-estate-faqs"
+                                    onClick={() => setMobileRealEstateOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    <MessageCircleQuestion size={16} /> Real Estate FAQs
+                                </Link>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/auctions?category=real-estate&featured=true"
+                                    onClick={() => setMobileRealEstateOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    Featured properties <ChevronRight size={16} />
+                                </Link>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/auctions?category=real-estate"
+                                    onClick={() => setMobileRealEstateOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    Browse all properties <ChevronRight size={16} />
+                                </Link>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/sell-property"
+                                    onClick={() => setMobileRealEstateOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    <DollarSign size={16} /> Sell a Property
                                 </Link>
                             </div>
                         </div>

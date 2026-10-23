@@ -341,6 +341,15 @@ function AllAuctions() {
         );
     };
 
+    const formatCategory = (slug) => {
+    if (!slug) return "";
+    return String(slug)
+        .split(/[-_]+/)              // split on hyphens or underscores
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+};
+
     return (
         <section className="flex min-h-screen bg-gray-50">
             <AdminSidebar />
@@ -475,9 +484,9 @@ function AllAuctions() {
                                                                 {auction.title}
                                                             </div>
                                                             <div className="flex flex-wrap gap-1 mt-1">
-                                                                {/* <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                                    {auction.category}
-                                                                </span> */}
+                                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                                    {formatCategory(auction?.categories?.[0])}
+                                                                </span>
                                                                 {getAuctionTypeBadge(auction.auctionType)}
                                                                 {auction.featured && (
                                                                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs rounded-full">

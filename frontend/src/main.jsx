@@ -31,6 +31,8 @@ const SellWithUs = lazy(() => import('./pages/SellWithUs'));
 const Events = lazy(() => import('./pages/Events'));
 const SingleEvent = lazy(() => import('./pages/SingleEvent'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
+const SellProperty = lazy(() => import('./pages/SellProperty'));
+const RealEstateFAQs = lazy(() => import('./pages/RealEstateFAQs'));
 
 {/* Seller Pages */ }
 const SellerLayout = lazy(() => import('./pages/seller/Layout'));
@@ -187,6 +189,10 @@ createRoot(document.getElementById('root')).render(
                             <Route path='/event/:id' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SingleEvent /></Suspense>} />
 
                             <Route path='/unsubscribe' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><Unsubscribe /></Suspense>} />
+
+                            <Route path='/sell-property' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><SellProperty /></Suspense>} />
+
+                            <Route path='/real-estate-faqs' element={<Suspense fallback={<LoadingSpinner height={'725px'} />}><RealEstateFAQs /></Suspense>} />
 
                         </Route>
 

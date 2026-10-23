@@ -22,12 +22,50 @@ export const NotificationProvider = ({ children }) => {
         return v !== 'false';
     });
 
+    // Preload custom sound files once on mount
+    useEffect(() => {
+        const soundFiles = {
+            OUTBID: '/sounds/outbid.mp3',
+            AUCTION_30S_LEFT: '/sounds/30seconds.mp3',
+            // AUCTION_WON: '/sounds/win.mp3',
+        };
+
+        for (const [key, url] of Object.entries(soundFiles)) {
+            const audio = new Audio(url);
+            audio.preload = 'auto';
+            audio.volume = 0.4;
+            customSoundsRef.current[key] = audio;
+        }
+    }, []);
+
     const audioCtxRef = useRef(null);
+    // Preloaded custom sounds — one Audio instance per file, reused
+    const customSoundsRef = useRef({});
+
+    const playCustomSound = useCallback(async (key) => {
+        if (!soundEnabled) return;
+        const audio = customSoundsRef.current[key];
+        if (!audio) return;
+
+        try {
+            audio.currentTime = 0;   // rewind if already playing
+            await audio.play();
+        } catch (err) {
+            // Autoplay blocked (user hasn't interacted yet) or
+            // file failed to load. Fail silently.
+        }
+    }, [soundEnabled]);
 
     // ─── Sound ─────────────────────────────────────────────
-    const playChime = useCallback((priority) => {
+    const playChime = useCallback((priority, type) => {
         if (!soundEnabled) return;
         if (priority !== 'urgent' && priority !== 'high') return;
+
+        if (customSoundsRef.current[type]) {
+            playCustomSound(type);
+            return;
+        }
+
         try {
             if (!audioCtxRef.current) {
                 const AC = window.AudioContext || window.webkitAudioContext;
@@ -42,7 +80,23 @@ export const NotificationProvider = ({ children }) => {
             masterGain.gain.value = 0.3;
             masterGain.connect(ctx.destination);
 
-            const freqs = priority === 'urgent' ? [880, 1320] : [660];
+            // ─── Pick the tone sequence ────────────────────────────────
+            //  OUTBID (and PROXY_BID_OUTBID) → sad descending two-note fall
+            //  OFFER_REJECTED                → same sad fall (you lost out)
+            //  urgent (other)                → bright ascending two-note
+            //  high (other)                  → single soft note
+            let freqs;
+            let gapMs = 120;
+
+            if (type === 'OUTBID' || type === 'PROXY_BID_OUTBID' || type === 'OFFER_REJECTED') {
+                freqs = [660, 440];      // descending — feels like a loss
+                gapMs = 160;
+            } else if (priority === 'urgent') {
+                freqs = [880, 1320];     // ascending — feels positive/alert
+            } else {
+                freqs = [660];           // single soft note for other highs
+            }
+
             freqs.forEach((f, i) => {
                 const osc = ctx.createOscillator();
                 const g = ctx.createGain();
@@ -50,10 +104,10 @@ export const NotificationProvider = ({ children }) => {
                 osc.frequency.value = f;
                 g.gain.setValueAtTime(0.0001, now);
                 g.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
-                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45 + i * 0.12);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45 + i * (gapMs / 1000));
                 osc.connect(g).connect(masterGain);
                 osc.start(now);
-                osc.stop(now + 0.65 + i * 0.12);
+                osc.stop(now + 0.65 + i * (gapMs / 1000));
             });
         } catch (_) { /* silent */ }
     }, [soundEnabled]);
@@ -105,7 +159,7 @@ export const NotificationProvider = ({ children }) => {
                 return [notification, ...prev].slice(0, 10);
             });
             setUnreadCount(n);
-            playChime(notification.priority);
+            playChime(notification.priority, notification.type);
             pushPopup(notification);
         };
         const onCount = ({ unreadCount: n }) => setUnreadCount(n);

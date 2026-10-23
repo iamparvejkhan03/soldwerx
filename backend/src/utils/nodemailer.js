@@ -2417,32 +2417,33 @@ const liquidateAdminEmail = async (name, email, phone, location, description, it
     }
 };
 
-const sellConfirmationEmail = async (name, email) => {
+const sellConfirmationEmail = async (name, email, propertyType = null) => {
+    const isProperty = !!propertyType;
     try {
         const content = `
             <h2 style="text-align: center;">Thank You for Your Selling Request</h2>
             <p style="text-align: center;">Dear ${name},</p>
             
-            <p>Thank you for submitting your selling request with <strong>${BRAND_NAME}</strong>. We have received your details and our team will review them promptly.</p>
+            <p>Thank you for submitting your ${isProperty ? 'property' : 'selling'} request with <strong>${BRAND_NAME}</strong>. We have received your details and our team will review them promptly.</p>
             
             ${createInfoCard(`
                 <p style="margin: 0 0 12px 0; font-weight: bold; color: ${BRAND_COLORS.secondary};">What Happens Next?</p>
                 <div style="margin: 12px 0 0 0;">
                     <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
                         <span style="font-size: 18px;">📋</span>
-                        <span style="color: ${BRAND_COLORS.text};">Our team will review your request within 24 hours</span>
+                        <span style="color: ${BRAND_COLORS.text};">Our team will review your ${isProperty ? 'property' : 'request'} within 24 hours</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
                         <span style="font-size: 18px;">📞</span>
-                        <span style="color: ${BRAND_COLORS.text};">We'll contact you to discuss your items and pricing</span>
+                        <span style="color: ${BRAND_COLORS.text};">We'll contact you to discuss ${isProperty ? 'your property and valuation' : 'your items and pricing'}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid ${BRAND_COLORS.grayBorder};">
                         <span style="font-size: 18px;">📸</span>
-                        <span style="color: ${BRAND_COLORS.text};">Professional photography and listing creation</span>
+                        <span style="color: ${BRAND_COLORS.text};">Professional ${isProperty ? 'property marketing and listing creation' : 'photography and listing creation'}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0;">
                         <span style="font-size: 18px;">💰</span>
-                        <span style="color: ${BRAND_COLORS.text};">Get paid quickly once your item sells</span>
+                        <span style="color: ${BRAND_COLORS.text};">Get paid quickly once your ${isProperty ? 'property sells' : 'item sells'}</span>
                     </div>
                 </div>
             `, 'default')}
@@ -2458,11 +2459,16 @@ const sellConfirmationEmail = async (name, email) => {
             </div>
         `;
 
-        const html = baseTemplate(content, 'Selling Request Received');
+        const html = baseTemplate(
+            content,
+            isProperty ? 'Property Request Received' : 'Selling Request Received'
+        );
         const info = await sendCategorizedEmail({
             to: email,
             emailKey: 'communication.sell_confirmation',
-            subject: `Selling Request Received - ${BRAND_NAME}`,
+            subject: isProperty
+                ? `Property Request Received - ${BRAND_NAME}`
+                : `Selling Request Received - ${BRAND_NAME}`,
             html,
             bypassPrefs: true,
         });
@@ -2474,7 +2480,16 @@ const sellConfirmationEmail = async (name, email) => {
     }
 };
 
-const sellAdminEmail = async (name, email, phone, location, itemType, description, preferredMethod, photos) => {
+const sellAdminEmail = async (
+    name, email, phone, location, itemType, description, preferredMethod, photos,
+    propertyDetails = {}
+) => {
+    const {
+        propertyType, propertyAddress, bedrooms, bathrooms,
+        squareFootage, yearBuilt, askingPrice,
+    } = propertyDetails;
+
+    const isProperty = !!propertyType;
     try {
         const methodLabels = {
             'auction': 'Auction',
@@ -2495,13 +2510,24 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
             </div>
             
             <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.secondary};">
-                <p style="margin: 0 0 12px 0;"><strong>Item Details</strong></p>
-                ${createSummaryRow('Item Type:', itemType)}
-                ${createSummaryRow('Preferred Method:', methodLabels[preferredMethod] || 'Not Specified')}
+                <p style="margin: 0 0 12px 0;"><strong>${isProperty ? 'Property Details' : 'Item Details'}</strong></p>
+                ${isProperty ? `
+                    ${createSummaryRow('Property Type:', propertyType)}
+                    ${createSummaryRow('Address:', propertyAddress || 'Not provided')}
+                    ${createSummaryRow('Bedrooms:', bedrooms ?? 'Not provided')}
+                    ${createSummaryRow('Bathrooms:', bathrooms ?? 'Not provided')}
+                    ${createSummaryRow('Square Footage:', squareFootage ? `${Number(squareFootage).toLocaleString()} sq ft` : 'Not provided')}
+                    ${createSummaryRow('Year Built:', yearBuilt ?? 'Not provided')}
+                    ${createSummaryRow('Asking Price:', askingPrice ? `$${Number(askingPrice).toLocaleString()}` : 'Not provided')}
+                    ${createSummaryRow('Preferred Method:', methodLabels[preferredMethod] || 'Not Specified')}
+                ` : `
+                    ${createSummaryRow('Item Type:', itemType)}
+                    ${createSummaryRow('Preferred Method:', methodLabels[preferredMethod] || 'Not Specified')}
+                `}
             </div>
             
             <div style="margin: 20px 0;">
-                <strong style="color: ${BRAND_COLORS.secondary};">Description:</strong>
+                <strong style="color: ${BRAND_COLORS.secondary};">${isProperty ? 'Property Description:' : 'Description:'}</strong>
                 <div style="background: ${BRAND_COLORS.grayBg}; padding: 16px; border-radius: 8px; margin-top: 8px; border: 1px solid ${BRAND_COLORS.grayBorder};">
                     ${description}
                 </div>
@@ -2537,11 +2563,16 @@ const sellAdminEmail = async (name, email, phone, location, itemType, descriptio
             </div>
         `;
 
-        const html = baseTemplate(content, 'New Selling Request');
+        const html = baseTemplate(
+            content,
+            isProperty ? 'New Property Sell Request' : 'New Selling Request'
+        );
         const info = await sendCategorizedEmail({
             to: process.env.EMAIL_USER,
             emailKey: 'admin.sell_request',
-            subject: `New Selling Request - ${itemType}`,
+            subject: isProperty
+                ? `New Property Request - ${propertyType}${propertyAddress ? ` at ${propertyAddress}` : ''}`
+                : `New Selling Request - ${itemType}`,
             html,
             bypassPrefs: true,
         });
