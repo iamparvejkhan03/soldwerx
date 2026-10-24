@@ -24,24 +24,28 @@ const RAW_CATEGORIES = {
                 description: "Sent when you first create your account",
                 default: true,
                 critical: true,
+                audience: "all"
             },
             approved: {
                 label: "Account approved",
                 description: "Sent when your account is approved by our team",
                 default: true,
                 critical: true,
+                audience: "all"
             },
             identity_rejected: {
                 label: "Identity verification issue",
                 description: "Sent if your ID document needs to be re-uploaded",
                 default: true,
                 critical: true,
+                audience: "all"
             },
             password_reset: {
                 label: "Password reset",
                 description: "Sent when you request a password reset",
                 default: true,
-                locked: true, // ← cannot be unsubscribed
+                locked: true,
+                audience: "all"
             },
         },
     },
@@ -55,65 +59,77 @@ const RAW_CATEGORIES = {
                 label: "Auction ending soon",
                 description: "Reminders before auctions you're bidding on close",
                 default: true,
+                audience: "bidder"
             },
             outbid: {
                 label: "You've been outbid",
                 description: "When another bidder places a higher bid",
                 default: true,
+                audience: "bidder"
             },
             new_bid: {
                 label: "New bid on your listing",
                 description: "When someone bids on an item you're selling",
                 default: true,
+                audience: "seller"
             },
             ended: {
                 label: "Your auction ended",
                 description: "Summary when your listing closes",
                 default: true,
+                audience: "seller"
             },
             bid_confirmation: {
                 label: "Bid confirmation",
                 description: "Confirmation each time you place a bid",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             won: {
                 label: "You won an auction",
                 description: "Winning notification with invoice details",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             proxy_bid_placed: {
                 label: "Proxy bid placed",
                 description: "Confirmation when you set up a proxy bid",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             proxy_bid_outbid: {
                 label: "Proxy bid outbid",
                 description: "When your proxy bid is raised automatically",
                 default: true,
+                audience: "bidder"
             },
             listing_approved: {
                 label: "Listing approved",
                 description: "When your listing passes review",
                 default: true,
+                audience: "seller"
             },
             listing_live: {
                 label: "Listing is live",
                 description: "When your listing goes live on the site",
                 default: true,
+                audience: "seller"
             },
             giveaway_entered: {
                 label: "Giveaway entry confirmed",
                 description: "Confirmation when you enter a giveaway",
                 default: true,
+                audience: "bidder"
             },
             giveaway_won: {
                 label: "Giveaway winner",
                 description: "When you win a giveaway",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
         },
     },
@@ -127,29 +143,34 @@ const RAW_CATEGORIES = {
                 label: "New offer received",
                 description: "When someone makes an offer on your listing",
                 default: true,
+                audience: "seller"
             },
             accepted: {
                 label: "Offer accepted",
                 description: "When a seller accepts your offer",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             rejected: {
                 label: "Offer rejected",
                 description: "When a seller rejects your offer",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             canceled: {
                 label: "Offer canceled",
                 description: "When a seller cancels your offer",
                 default: true,
+                audience: "bidder"
             },
             submitted: {
                 label: "Offer submitted",
                 description: "Confirmation when you submit an offer",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
         },
     },
@@ -164,24 +185,28 @@ const RAW_CATEGORIES = {
                 description: "Payment confirmation for your purchases",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             completed_seller: {
                 label: "Payment received (seller)",
                 description: "Notification when a buyer pays for your item",
                 default: true,
                 critical: true,
+                audience: "seller"
             },
             deposit_charged: {
                 label: "Winning deposit charged",
                 description: "When your 5% winning deposit is charged",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
             deposit_failed: {
                 label: "Winning deposit failed",
                 description: "When your deposit charge fails and action is needed",
                 default: true,
                 critical: true,
+                audience: "bidder"
             },
         },
     },
@@ -196,18 +221,21 @@ const RAW_CATEGORIES = {
                 description: "When a payout is started for your sale",
                 default: true,
                 critical: true,
+                audience: "seller"
             },
             completed: {
                 label: "Payout completed",
                 description: "When funds have been sent to you",
                 default: true,
                 critical: true,
+                audience: "seller"
             },
             failed: {
                 label: "Payout issue",
                 description: "When a payout fails and action is needed",
                 default: true,
                 critical: true,
+                audience: "seller"
             },
         },
     },
@@ -221,36 +249,46 @@ const RAW_CATEGORIES = {
                 label: "New message",
                 description: "When someone sends you a message",
                 default: true,
+                audience: "all"
             },
             new_comment_seller: {
                 label: "New comment on your listing",
                 description: "When someone comments on your listing",
                 default: true,
+                audience: "seller"
             },
             new_comment_bidder: {
                 label: "New comment on a listing you follow",
                 description: "When someone comments on a listing you're engaged with",
                 default: true,
+                audience: "bidder"
             },
             shipping_updated: {
                 label: "Shipping updated",
                 description: "When shipping details for your won item change",
                 default: true,
+                audience: "bidder"
             },
             contact_confirmation: {
                 label: "Contact form confirmation",
                 description: "Confirmation you submitted the contact form",
                 default: true,
+                audience: "all",
+                hidden: true
             },
             liquidation_confirmation: {
                 label: "Liquidation request confirmation",
                 description: "Confirmation you submitted a liquidation request",
                 default: true,
+                audience: "all",
+                hidden: true
             },
             sell_confirmation: {
                 label: "Sell request confirmation",
                 description: "Confirmation you submitted a sell request",
                 default: true,
+                audience: "all",
+                hidden: true
             },
         },
     },
@@ -264,6 +302,7 @@ const RAW_CATEGORIES = {
                 label: "New listing announcements",
                 description: "News about newly listed items on the platform",
                 default: true,
+                audience: "bidder"
             },
         },
     },
@@ -277,61 +316,76 @@ const RAW_CATEGORIES = {
                 label: "New user registered",
                 description: "When a new user signs up",
                 default: true,
+                audience: "admin"
             },
             auction_submitted: {
                 label: "Auction submitted for approval",
                 description: "When a seller submits a listing for review",
                 default: true,
+                audience: "admin"
             },
             auction_won: {
                 label: "Auction sold",
                 description: "When an auction is won by a bidder",
                 default: true,
+                audience: "admin"
             },
             auction_ended: {
                 label: "Auction ended",
                 description: "When an auction finishes",
                 default: true,
+                audience: "admin"
             },
             flagged_comment: {
                 label: "Comment flagged",
                 description: "When a comment is reported by a user",
                 default: true,
+                audience: "admin"
             },
             payment_initiated: {
                 label: "Bank payment initiated",
                 description: "When a buyer starts a bank transfer payment",
                 default: true,
+                audience: "admin"
             },
             card_payment_completed: {
                 label: "Card payment completed",
                 description: "When a buyer pays by card",
                 default: true,
+                audience: "admin"
             },
             deposit_failed: {
                 label: "Deposit charge failed",
                 description: "When a winning deposit charge fails",
                 default: true,
+                audience: "admin"
             },
             deposit_charged: {
                 label: "Deposit charged",
                 description: "When a winning deposit is successfully charged",
                 default: true,
+                audience: "admin"
             },
             liquidation_request: {
                 label: "Liquidation request",
                 description: "When someone submits a liquidation request",
                 default: true,
+                audience: "admin",
+                hidden: true
             },
             sell_request: {
                 label: "Sell request",
                 description: "When someone submits a sell request",
                 default: true,
+                audience: "admin",
+                hidden: true
             },
             contact_form: {
                 label: "Contact form submission",
                 description: "When someone submits the contact form",
                 default: true,
+                audience: "admin",
+                hidden: true
             },
         },
     },

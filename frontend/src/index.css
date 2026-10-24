@@ -75,3 +75,9 @@ body {
 .goog-te-gadget-simple {
     display: none !important;
 }
+
+.ql-editor {
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+}

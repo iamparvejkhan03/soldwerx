@@ -162,28 +162,43 @@ export const applyPreferencesBulk = async (userId, prefsObj) => {
     return { updated };
 };
 
-// ─────────────────────────────────────────────────────────────
-// Read for UI
-// ─────────────────────────────────────────────────────────────
-
 /**
- * Full UI shape for the profile page — categories + emails with current `enabled` state.
- * The admin category is only returned for admins/staff.
+ * Full UI shape for the profile page — filtered by user type.
+ * - Account category is always hidden.
+ * - Emails filtered by `audience` matching the user's role.
+ * - Hidden emails (bypassPrefs-only) excluded.
+ * - Categories with zero remaining emails are dropped.
  */
 export const getPreferencesForUI = (user) => {
-    const categories = getCategoriesForAudience(user.userType);
-    return categories.map((cat) => ({
-        key: cat.key,
-        label: cat.label,
-        description: cat.description,
-        audience: cat.audience,
-        emails: Object.values(cat.emails).map((cfg) => ({
-            key: cfg.key,
-            label: cfg.label,
-            description: cfg.description,
-            locked: !!cfg.locked,
-            critical: !!cfg.critical,
-            enabled: isEmailEnabled(user, cfg.key),
-        })),
-    }));
+    const userType = user.userType;
+
+    // Which audiences this user cares about
+    const audiences = new Set(
+        userType === "broker"
+            ? ["bidder", "seller", "all"]
+            : userType === "admin" || userType === "staff"
+                ? ["admin"]
+                : [userType, "all"]
+    );
+
+    return getCategoriesForAudience(userType)
+        .filter((cat) => cat.key !== "account") // never show Account
+        .map((cat) => ({
+            key: cat.key,
+            label: cat.label,
+            description: cat.description,
+            audience: cat.audience,
+            emails: Object.values(cat.emails)
+                .filter((cfg) => !cfg.hidden)
+                .filter((cfg) => audiences.has(cfg.audience || "all"))
+                .map((cfg) => ({
+                    key: cfg.key,
+                    label: cfg.label,
+                    description: cfg.description,
+                    locked: !!cfg.locked,
+                    critical: !!cfg.critical,
+                    enabled: isEmailEnabled(user, cfg.key),
+                })),
+        }))
+        .filter((cat) => cat.emails.length > 0); // drop empty categories
 };

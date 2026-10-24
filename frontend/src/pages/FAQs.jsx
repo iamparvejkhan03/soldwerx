@@ -27,11 +27,11 @@ const faqs = [
             },
             {
                 question: "Are there any fees for buyers?",
-                answer: "Yes. A 10% buyer's fee is applied to the final sale price of every successful purchase. It's shown clearly before you bid, and there are no other fees on top of it."
+                answer: "Yes. A buyer's premium applies to the final sale price. The premium is not fixed — it is auction-specific and is disclosed at the time you bid or make an offer."
             },
             {
                 question: "Can I inspect an item before bidding?",
-                answer: "Yes. If you'd like to inspect an item, message the seller through the listing and arrange a time directly. We recommend inspecting anything mechanical or high-value before you commit."
+                answer: "Yes. Inspections are allowed by appointment where available — especially for trucks and equipment. Each listing includes inspection availability and scheduling instructions. We recommend inspecting anything mechanical or high-value before you commit."
             },
             {
                 question: "What is a reserve auction?",
@@ -39,11 +39,11 @@ const faqs = [
             },
             {
                 question: "How does bidding work?",
-                answer: "Place your bid before the auction closes. The highest bid at closing wins. Depending on the listing, you may also be able to make an offer while the auction is live, or skip bidding entirely with Buy Now."
+                answer: "Place your bid before the auction closes. Auctions use soft-close anti-sniping: if a bid is placed close to closing, the auction extends to allow other bidders to respond. After the final close, the highest bid wins. Depending on the listing, you may also be able to make an offer while the auction is live, or skip bidding entirely with Buy Now where available."
             },
             {
                 question: "Are bids binding?",
-                answer: "Yes. Every bid is a legally binding commitment. Once you win, you're obligated to complete payment and the sale."
+                answer: "Yes. Every bid is a legally binding commitment. Once you win, you're obligated to complete payment and the sale. If you fail to complete the purchase, your deposit may be forfeited."
             },
             {
                 question: "Are items sold with a warranty?",
@@ -61,7 +61,7 @@ const faqs = [
         questions: [
             {
                 question: "What payment methods do you accept?",
-                answer: "We accept card payments, bank transfers, and other common payment methods. Available options are shown at checkout."
+                answer: "We accept card payments, bank transfers, and cash. Available options are shown at checkout or confirmed through the platform."
             },
             {
                 question: "How long do I have to make payment?",
@@ -70,10 +70,6 @@ const faqs = [
             {
                 question: "What happens after I make payment?",
                 answer: "Once your payment clears, we release the funds to the seller. The seller is then notified to arrange pickup or delivery with you directly."
-            },
-            {
-                question: "Is sales tax charged?",
-                answer: "Depending on where you and the seller are located and what you're buying, sales tax may apply. Rates vary, so any applicable tax is confirmed as part of the sale rather than set at a flat rate."
             },
             {
                 question: "Is off-platform communication or payment allowed?",
@@ -98,10 +94,6 @@ const faqs = [
                 answer: "No. Title transfer is handled between the buyer and the seller directly. We recommend confirming title status and any liens with the seller before bidding."
             },
             {
-                question: "When does ownership transfer to me?",
-                answer: "Ownership and risk transfer when you and the seller finalize the handoff — whether that's pickup or delivery. We recommend putting the details in writing through the platform so both sides have a record."
-            },
-            {
                 question: "Can you share tracking or shipping labels?",
                 answer: "Yes. Sellers can upload tracking details or shipping documents through the platform once the item is on its way. Personal contact information should never be shared outside SoldWerX."
             }
@@ -112,12 +104,8 @@ const faqs = [
         icon: <Store size={20} />,
         questions: [
             {
-                question: "I have assets to sell — how does it work?",
-                answer: "Create an account, then list your asset directly or let our team list it on your behalf. You choose the format — standard auction, reserve auction, make offer, or Buy Now — and buyers bid. We collect payment and release funds to you once the sale completes."
-            },
-            {
                 question: "What are your seller fees?",
-                answer: "A flat 8% commission on the final sale price. No listing fees, no photography fees, no hidden charges."
+                answer: "Seller fees depend on the specific listing and are disclosed up front."
             },
             {
                 question: "Do you help with listings?",
@@ -125,11 +113,7 @@ const faqs = [
             },
             {
                 question: "How and when do I get paid?",
-                answer: "Once the buyer's payment clears and the item has been picked up or delivered, we release your funds — minus the 8% commission. Payouts go out by bank transfer."
-            },
-            {
-                question: "Do I need to verify my identity to sell?",
-                answer: "There are no verification requirements to start selling right now. That may change as the marketplace grows, and we'll give you plenty of notice if it does."
+                answer: "Once the buyer's payment clears and the item has been picked up or delivered, we release your funds — minus applicable seller fees. Payouts go out by bank transfer."
             }
         ]
     },

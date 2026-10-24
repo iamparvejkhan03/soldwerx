@@ -208,8 +208,8 @@ const AvailableAuctions = ({ auctions, selectedAuctions, onToggleAuction, loadin
                             key={auction._id}
                             onClick={() => onToggleAuction(auction._id)}
                             className={`border rounded-lg p-4 cursor-pointer transition-all ${isSelected
-                                    ? 'border-green-500 bg-green-50'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-start gap-3">
@@ -228,8 +228,8 @@ const AvailableAuctions = ({ auctions, selectedAuctions, onToggleAuction, loadin
                                         <span>{auction.bidCount || 0} bids</span>
                                         <span>•</span>
                                         <span className={`px-2 py-0.5 rounded-full text-xs ${auction.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                auction.status === 'draft' ? 'bg-amber-100 text-amber-800' :
-                                                    'bg-gray-100 text-gray-800'
+                                            auction.status === 'draft' ? 'bg-amber-100 text-amber-800' :
+                                                'bg-gray-100 text-gray-800'
                                             }`}>
                                             {auction.status}
                                         </span>
@@ -736,7 +736,7 @@ function EditEvent() {
                                     {['Event Info', 'Assign Auctions', 'Review & Submit'].map((label, index) => (
                                         <div key={index} className="flex flex-col items-center">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > index + 1 ? 'bg-green-500 text-white' :
-                                                    step === index + 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
+                                                step === index + 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
                                                 }`}>
                                                 {step > index + 1 ? <CheckCircle size={20} /> : index + 1}
                                             </div>
@@ -784,12 +784,10 @@ function EditEvent() {
                                             <RTE
                                                 name="description"
                                                 control={control}
-                                                label="Description:"
-                                                defaultValue={getValues('description') || ''}
-                                                onBlur={(value) => {
-                                                    setValue('description', value, { shouldValidate: true });
-                                                }}
+                                                rules={{ required: "Description is required" }}
+                                                placeholder="Describe the item's history, condition, and any notable details..."
                                             />
+                                            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
 
@@ -1086,12 +1084,22 @@ function EditEvent() {
 
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
                                                         <h4 className="font-medium mb-3">Description Preview</h4>
-                                                        <div className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50 max-h-40 overflow-y-auto">
-                                                            {watch('description') ? (
-                                                                parse(watch('description'))
-                                                            ) : (
-                                                                <p className="text-gray-500 italic">No description provided</p>
-                                                            )}
+
+                                                        <div className="w-full overflow-hidden">
+                                                            <div
+                                                                className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50
+                                                                max-h-[190px] overflow-y-auto[overflow-wrap:anywhere]
+                                                                [&_img]:max-w-full [&_img]:h-auto
+                                                                [&_pre]:overflow-x-auto [&_pre]:max-w-full
+                                                                [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto
+                                                                [&_iframe]:max-w-full text-sm"
+                                                            >
+                                                                {watch("description") ? (
+                                                                    parse(watch("description"))
+                                                                ) : (
+                                                                    <p className="text-gray-500 italic">No description provided</p>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

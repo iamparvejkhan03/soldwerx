@@ -453,47 +453,35 @@ export const getAuctions = async (req, res) => {
     }
 
     // ========== CATEGORY FILTERING - UPDATED ==========
-    // Handle both single category (for backward compatibility) and multiple categories
     if (categories || category) {
-      // If categories is sent as array (from multi-select)
-      if (categories) {
-        // Handle both array and string formats
-        let categoriesArray = [];
+      let categoriesArray = [];
 
+      if (categories) {
         if (Array.isArray(categories)) {
           categoriesArray = categories;
         } else if (typeof categories === "string") {
-          // If sent as comma-separated string
-          categoriesArray = categories
-            .split(",")
-            .filter((c) => c.trim() !== "");
+          categoriesArray = categories.split(",").filter((c) => c.trim() !== "");
         }
-
-        // Normalize
         categoriesArray = categoriesArray.filter(Boolean).map((c) => c.trim());
-
-        if (categoriesArray.length > 0) {
-          filter.categories = { $in: categoriesArray };
-
-          // Exclude real-estate unless it was explicitly requested
-          if (!categoriesArray.includes("real-estate")) {
-            filter.categories.$ne = "real-estate";
-          }
-        }
+      } else if (category) {
+        categoriesArray = [category];
       }
-      // Fallback to single category for backward compatibility
-      else if (category) {
-        filter.categories = { $in: [category] };
 
-        // Exclude real-estate unless it was explicitly requested
-        if (category !== "real-estate") {
+      if (categoriesArray.length > 0) {
+        if (categoriesArray.length > 1) {
+          // Parent + subcategory → require BOTH (AND)
+          filter.categories = { $all: categoriesArray };
+        } else {
+          // Single category → OR is fine (only one value anyway)
+          filter.categories = { $in: categoriesArray };
+        }
+
+        // Exclude real-estate unless explicitly requested
+        if (!categoriesArray.includes("real-estate")) {
           filter.categories.$ne = "real-estate";
         }
       }
     } else {
-      // No category specified — exclude real-estate by default.
-      // Real estate has its own dedicated section:
-      //   /auctions?category=real-estate
       filter.categories = { $ne: "real-estate" };
     }
     // ===================================================

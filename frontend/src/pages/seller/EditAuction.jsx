@@ -1308,11 +1308,8 @@ const EditAuction = () => {
                                             <RTE
                                                 name="description"
                                                 control={control}
-                                                label="Description:"
-                                                defaultValue={getValues('description') || ''}
-                                                onBlur={(value) => {
-                                                    setValue('description', value, { shouldValidate: true });
-                                                }}
+                                                rules={{ required: "Description is required" }}
+                                                placeholder="Describe the item's history, condition, and any notable details..."
                                             />
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
@@ -1874,12 +1871,22 @@ const EditAuction = () => {
                                             {/* Description Preview */}
                                             <div className="bg-white p-4 rounded-lg shadow-sm mt-4">
                                                 <h4 className="font-medium text-black mb-3">Description Preview</h4>
-                                                <div className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50">
-                                                    {watch('description') ? (
-                                                        parse(watch('description'))
-                                                    ) : (
-                                                        <p className="text-gray-500 italic">No description provided</p>
-                                                    )}
+
+                                                <div className="w-full overflow-hidden">
+                                                    <div
+                                                        className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50
+                                                        [overflow-wrap:anywhere]
+                                                        [&_img]:max-w-full [&_img]:h-auto
+                                                        [&_pre]:overflow-x-auto [&_pre]:max-w-full
+                                                        [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto
+                                                        [&_iframe]:max-w-full"
+                                                    >
+                                                        {watch("description") ? (
+                                                            parse(watch("description"))
+                                                        ) : (
+                                                            <p className="text-gray-500 italic">No description provided</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

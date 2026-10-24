@@ -11,7 +11,7 @@ const PrivacyPolicy = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Privacy Policy</h1>
-                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 24, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-700 text-sm">
@@ -48,10 +48,8 @@ const PrivacyPolicy = () => {
                                 <li>Full name and contact details</li>
                                 <li>Email address and telephone number</li>
                                 <li>Business name, physical address, and, where applicable, registered business details</li>
-                                <li>Government-issued identification</li>
-                                <li>Photo of yourself and, where applicable, of an authorised company representative</li>
-                                <li>Photo of your government-issued ID document</li>
-                                <li>Bank account details for payment and payout processing</li>
+                                <li>Government-issued identification and photo of yourself (only required when legally required, for high-value bidding verification, or for account authentication)</li>
+                                <li>Payment and payout details (processed securely via our third-party payment processor, Stripe)</li>
                             </ul>
 
                             <h3 className="font-semibold text-gray-800 mb-2 mt-4">Platform & Transaction Data</h3>
@@ -59,7 +57,7 @@ const PrivacyPolicy = () => {
                                 <li>Account credentials and login information</li>
                                 <li>Listings, bids, offers, and purchase history for equipment, vehicles, and other assets</li>
                                 <li>Communication records with other users</li>
-                                <li>Payment and transaction records</li>
+                                <li>Payment and transaction records, including cash transaction logs for compliance</li>
                                 <li>Shipping, freight, delivery, or pickup information</li>
                                 <li>Inspection reports, condition disclosures, and asset documentation you upload</li>
                             </ul>
@@ -81,7 +79,8 @@ const PrivacyPolicy = () => {
                                 <li>Verifying user and business identity and authenticating accounts</li>
                                 <li>Processing purchases, bids, offers, and payments for listed assets</li>
                                 <li>Sending service updates and transaction alerts</li>
-                                <li>Preventing fraud, verifying asset ownership, and ensuring platform security</li>
+                                <li>Preventing fraud, verifying asset ownership, and ensuring platform security (including logging cash transactions processed via platform instructions)</li>
+                                <li>Processing listing data and photos using AI tools to help generate and format listings</li>
                                 <li>Complying with legal obligations</li>
                                 <li>Analysing platform usage and improving experience</li>
                                 <li>Facilitating secure communication between buyers and sellers</li>
@@ -105,8 +104,9 @@ const PrivacyPolicy = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Information Sharing</h2>
                             <p className="text-gray-700 mb-3">We may share your information with:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Service providers (payment processors, IT services, hosting partners, logistics and freight partners)</li>
-                                <li>Other users (limited information necessary for transaction completion, including contact and shipping details)</li>
+                                <li>Service providers (IT services, hosting partners, logistics and freight partners)</li>
+                                <li>Payment processors (e.g., Stripe) that securely handle card and bank details. SoldWerX does not store raw financial data on its own servers.</li>
+                                <li>Other users (limited information necessary to complete the transaction, such as shipping/tracking details. This is shared strictly through the platform's secure communication window. Personal contact information is never shared).</li>
                                 <li>Legal authorities when required by law</li>
                                 <li>Successors in business transfers (mergers, acquisitions)</li>
                             </ul>
@@ -137,9 +137,8 @@ const PrivacyPolicy = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">6. Cookies</h2>
                             <p className="text-gray-700 mb-3">
-                                We use cookies for platform functionality, analytics, and marketing.
-                                You can manage cookies through your browser settings. For more information,
-                                see our Cookie Policy.
+                                We use cookies for platform functionality and analytics.
+                                You can manage cookies through your browser settings.
                             </p>
                         </div>
 
@@ -155,29 +154,34 @@ const PrivacyPolicy = () => {
                                 <li>Data portability</li>
                                 <li>Withdraw consent at any time</li>
                             </ul>
-                            <p className="text-gray-600 text-sm mt-3">
-                                To exercise these rights, contact us at {email}. We may need to verify your identity first.
-                            </p>
+                            <div className="bg-gray-50 p-4 rounded mt-3">
+                                <p className="text-gray-600 text-sm">
+                                    Please note that transaction and financial records cannot be deleted even upon account closure, as we are legally required to retain them for tax, legal, and fraud prevention purposes.
+                                    To exercise these rights, contact us at {email}. We may need to verify your identity first.
+                                </p>
+                            </div>
                         </div>
 
                         {/* Section 8 */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. Data Retention</h2>
                             <p className="text-gray-700 mb-3">We retain information as long as necessary for:</p>
-                            <ul className="text-gray-700 space-y-2 list-disc pl-5">
+                            <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
                                 <li>Duration of your account activity</li>
                                 <li>Legal requirements, including tax and transaction record retention</li>
                                 <li>Business needs and operational requirements</li>
                                 <li>Dispute resolution and legal claims</li>
                             </ul>
+                            <p className="text-gray-700">
+                                Upon account closure, we permanently delete your personal data, except where retention is required for legal, tax, fraud prevention, or dispute resolution purposes.
+                            </p>
                         </div>
 
                         {/* Section 9 */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. International Transfers</h2>
                             <p className="text-gray-700">
-                                Your information is primarily processed within the United States of America. If transferred outside the United States of America,
-                                we ensure appropriate safeguards are in place to protect your data.
+                                Your information is processed within the United States of America. We do not transfer personal data outside the United States.
                             </p>
                         </div>
 
@@ -201,7 +205,15 @@ const PrivacyPolicy = () => {
 
                         {/* Section 12 */}
                         <div className="border-t pt-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">12. Contact Us</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-3">12. Children's Privacy</h2>
+                            <p className="text-gray-700">
+                                Our platform is intended for users 18 years of age and older. We do not knowingly collect personal information from anyone under 18. If we become aware that we have inadvertently collected data from a minor, we will take prompt steps to delete it.
+                            </p>
+                        </div>
+
+                        {/* Section 13 */}
+                        <div className="border-t pt-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">13. Contact Us</h2>
                             <p className="text-gray-700 mb-4">
                                 For questions about this policy or to exercise your data protection rights:
                             </p>
@@ -219,8 +231,8 @@ const PrivacyPolicy = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Privacy Policy is governed by the laws of the United States of America. Any disputes
-                                will be subject to the exclusive jurisdiction of the courts of the United States of America.
+                                This Privacy Policy is governed by the laws of the State of Michigan. Any disputes
+                                will be subject to the exclusive jurisdiction of the courts of the State of Michigan.
                             </p>
                         </div>
                     </div>
@@ -239,6 +251,12 @@ const PrivacyPolicy = () => {
                                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm font-medium transition-colors"
                             >
                                 Buyer Agreement
+                            </Link>
+                            <Link
+                                to="/seller-agreement"
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm font-medium transition-colors"
+                            >
+                                Seller Agreement
                             </Link>
                         </div>
                     </div>

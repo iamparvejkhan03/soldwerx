@@ -2153,27 +2153,6 @@ export const updatePaymentStatus = async (req, res) => {
       (updatedAuction.buyerFeeAmount || 0) +
       (updatedAuction.taxAmount || 0);
 
-    if (paymentStatus === 'completed') {
-      if (buyerId) {
-        notifyUser(buyerId, 'PAYMENT_CONFIRMED', {
-          title: 'Payment confirmed',
-          message: `Your payment for "${updatedAuction.title}" is confirmed.`,
-          actionUrl: `/bidder/payments`,
-          relatedEntity: { type: 'Auction', id: updatedAuction._id },
-          metadata: { amount: totalAmount, method: auction.paymentMethod },
-        }).catch((err) => console.error('notify PAYMENT_CONFIRMED (admin):', err));
-      }
-      if (sellerId) {
-        notifyUser(sellerId, 'BUYER_PAID', {
-          title: `Buyer paid — "${updatedAuction.title}"`,
-          message: `Payment completed. Ready for payout.`,
-          actionUrl: `/seller/payouts`,
-          relatedEntity: { type: 'Auction', id: updatedAuction._id },
-          metadata: { amount: totalAmount },
-        }).catch((err) => console.error('notify BUYER_PAID (admin):', err));
-      }
-    }
-
     if (paymentStatus === "completed") {
       agendaService.scheduleInvoiceUpdate(auction._id, admin?._id).catch((err) =>
         console.error("Failed to schedule invoice update job:", err)

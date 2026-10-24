@@ -367,12 +367,22 @@ function SingleEvent() {
                     {/* Description */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">About This Event</h2>
-                        <div className="prose prose-lg max-w-none">
-                            {event.description ? (
-                                <div dangerouslySetInnerHTML={{ __html: event.description }} />
-                            ) : (
-                                <p className="text-gray-500">No description provided.</p>
-                            )}
+
+                        <div className="w-full overflow-hidden">
+                            <div
+                                className="prose prose-lg max-w-none
+                                [overflow-wrap:anywhere]
+                                [&_img]:max-w-full [&_img]:h-auto
+                                [&_pre]:overflow-x-auto [&_pre]:max-w-full
+                                [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto
+                                [&_iframe]:max-w-full"
+                            >
+                                {event.description ? (
+                                    <div dangerouslySetInnerHTML={{ __html: event.description }} />
+                                ) : (
+                                    <p className="text-gray-500">No description provided.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
 

@@ -11,7 +11,7 @@ const BuyerAgreement = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Buyer Agreement</h1>
-                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: August 9, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 24, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
@@ -54,9 +54,15 @@ const BuyerAgreement = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Binding Contract</h2>
                             <p className="text-gray-700 mb-3">A legally binding contract is formed when:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>You win an auction (highest bid at closing)</li>
+                                <li>You win an auction (highest bid at final close)</li>
                                 <li>You confirm a direct purchase at the listed price</li>
+                                <li>Your offer is accepted by the seller</li>
                             </ul>
+                            <p className="text-gray-700 mb-3">
+                                Auctions use a soft-close rule. If a bid is placed close to the scheduled closing time,
+                                the auction is extended to allow other bidders to respond. The highest bid at the
+                                <strong> final </strong> close wins.
+                            </p>
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-red-600 font-semibold text-sm">
                                     All bids and direct purchases are legally binding. Bid retractions are not permitted.
@@ -68,8 +74,10 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Buyer Fees</h2>
                             <p className="text-gray-700">
-                                A 10% buyer's fee applies to all successful purchases. The fee is clearly displayed
-                                before you bid or confirm a direct purchase. All fees are in USD and are non-refundable.
+                                A buyer's premium applies to all successful purchases. The premium is not fixed —
+                                it depends on the specific auction and is disclosed at the time you bid or make an
+                                offer, and is clearly displayed before you commit. All fees are in USD and are
+                                non-refundable.
                             </p>
                         </div>
 
@@ -80,7 +88,6 @@ const BuyerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
                                 <li>As-is, where-is, with all faults</li>
                                 <li>Without any warranty, express or implied</li>
-                                <li>Without consumer protection rights</li>
                             </ul>
                             <p className="text-gray-600 text-sm">
                                 Descriptions, photographs, specifications, hours, mileage, and inspection reports are
@@ -94,10 +101,11 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. Inspections</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>On-site inspections are not available before bidding or purchasing</li>
+                                <li>Inspections are allowed by appointment where available — especially for trucks and equipment</li>
+                                <li>Each listing includes inspection availability and scheduling instructions</li>
                                 <li>If you have questions about a listing, please ask the seller through our secure communication window</li>
-                                <li>We strongly recommend asking questions and reviewing all available documentation before placing a bid or confirming a purchase</li>
-                                <li>Failure to ask questions before purchasing is at the buyer's sole risk</li>
+                                <li>We strongly recommend inspecting and/or asking questions before placing a bid or confirming a purchase</li>
+                                <li>Failure to inspect or ask questions before purchasing is at the buyer's sole risk</li>
                             </ul>
                         </div>
 
@@ -119,9 +127,10 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">7. Payment</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Bank transfer in USD is the only accepted payment method</li>
-                                <li>Payment must be completed within 48 hours of winning an auction or confirming a direct purchase</li>
-                                <li>All payments must be made to the SoldWerX collection account</li>
+                                <li>Accepted payment methods are card, bank transfer, and cash</li>
+                                <li>All payments must be made in USD and to the SoldWerX collection account</li>
+                                <li>Cash payments are only accepted where permitted and only through the payment instructions provided on the platform — never off-platform</li>
+                                <li>Payment should be made as soon as possible after winning an auction or confirming a direct purchase; failure to pay may result in forfeiture of your deposit</li>
                                 <li>Assets will not be released until full payment clears</li>
                                 <li>Title and ownership pass only after full payment is received and confirmed</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
@@ -154,8 +163,9 @@ const BuyerAgreement = () => {
                         {/* Section 10 - Default & Enforcement */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">10. Default & Enforcement</h2>
-                            <p className="text-gray-700 mb-2">If payment is not completed within the required timeframe, we may:</p>
+                            <p className="text-gray-700 mb-2">If payment is not completed as required, we may:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
+                                <li>Forfeit your deposit</li>
                                 <li>Cancel the sale and relist the asset</li>
                                 <li>Seek recovery of any losses or costs incurred</li>
                                 <li>Suspend or permanently terminate the buyer's account</li>
@@ -178,8 +188,8 @@ const BuyerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>This Agreement is governed by the laws of the United States of America</li>
-                                <li>Any disputes shall be resolved by the courts of the United States of America</li>
+                                <li>This Agreement is governed by the laws of the State of Michigan</li>
+                                <li>Any disputes shall be resolved by the courts of the State of Michigan</li>
                             </ul>
                         </div>
 
@@ -212,7 +222,7 @@ const BuyerAgreement = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Buyer Agreement was last updated on August 9, 2026. It forms an integral part of
+                                This Buyer Agreement was last updated on October 24, 2026. It forms an integral part of
                                 the contract for every asset purchase made through SoldWerX.
                             </p>
                         </div>

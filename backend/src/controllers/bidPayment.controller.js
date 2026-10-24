@@ -528,24 +528,6 @@ export const confirmWinnerPayment = async (req, res) => {
             const sellerId = auction.seller?._id || auction.seller;
             const totalAmount = bidPayment.totalAmount;
 
-            // Buyer
-            notifyUser(buyerId, 'PAYMENT_CONFIRMED', {
-                title: 'Payment confirmed',
-                message: `Your payment of $${totalAmount.toLocaleString()} for "${auction.title}" was successful.`,
-                actionUrl: `/bidder/payments`,
-                relatedEntity: { type: 'Auction', id: auction._id },
-                metadata: { amount: totalAmount, paymentIntentId },
-            }).catch((err) => console.error('notify PAYMENT_CONFIRMED:', err));
-
-            // Seller
-            notifyUser(sellerId, 'BUYER_PAID', {
-                title: `Buyer paid for "${auction.title}"`,
-                message: `The buyer has completed payment. Funds are ready for payout.`,
-                actionUrl: `/seller/payouts`,
-                relatedEntity: { type: 'Auction', id: auction._id },
-                metadata: { amount: totalAmount },
-            }).catch((err) => console.error('notify BUYER_PAID:', err));
-
             // Admins
             notifyAdminsAndStaffWithPermission('ADMIN_CARD_PAYMENT_COMPLETED', {
                 title: `Card payment completed — "${auction.title}"`,

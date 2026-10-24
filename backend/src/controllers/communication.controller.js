@@ -256,15 +256,6 @@ export const sendMessage = async (req, res) => {
             }).catch((err) => console.error('notify NEW_MESSAGE:', err));
         }
 
-        // Admin queue notification — unchanged (already correct)
-        notifyAdminsAndStaffWithPermission('ADMIN_NEW_MESSAGE', {
-            title: `New message in auction`,
-            message: `${sender.username} → "${auction.title}"`,
-            actionUrl: `/admin/communications/all`,
-            relatedEntity: { type: 'Auction', id: auction._id },
-            metadata: { senderId: sender._id, auctionId: auction._id },
-        }).catch((err) => console.error('notify ADMIN_NEW_MESSAGE:', err));
-
         res.status(201).json({
             success: true,
             message: "Message sent",

@@ -26,23 +26,15 @@ const faqs = [
         questions: [
             {
                 question: "Who can buy property on SoldWerX?",
-                answer: "Anyone — individual buyers, investors, developers, and businesses. You'll need a verified SoldWerX account to bid, and you must be legally able to enter into a property contract in the jurisdiction where the property is located."
+                answer: "Anyone — individual buyers, investors, developers, and businesses. You'll need a SoldWerX account to bid, and you must be legally able to enter into a property contract in the jurisdiction where the property is located."
             },
             {
                 question: "Are there any fees for buyers?",
-                answer: "Yes. A buyer's premium is applied to the final sale price and is clearly shown on each listing before you bid. On top of that, standard closing costs (title, escrow, recording) apply and are handled during the closing process."
+                answer: "Yes. A buyer's premium applies to the final sale price. The buyer's premium is not fixed and is specific to each listing; it is clearly shown on each listing before you bid. Standard closing costs may also apply."
             },
             {
                 question: "Can I inspect a property before bidding?",
-                answer: "Yes. Every listing includes open-house windows and/or a way to schedule a private showing through the platform. We strongly recommend inspecting any property — and having it professionally inspected if you're financing — before you commit."
-            },
-            {
-                question: "Are property disclosures provided?",
-                answer: "Where required by law and where the seller has them on file, disclosures are attached to the listing. If a required disclosure isn't posted, message the seller through the platform before bidding."
-            },
-            {
-                question: "Can I get financing before bidding?",
-                answer: "Yes — and we recommend it. Getting a pre-approval letter from a lender before you bid puts you in a stronger position and helps you know exactly how far you can go. Cash offers are also welcome."
+                answer: "Yes. Inspections are available, and details are provided in each listing."
             },
             {
                 question: "What happens if I win but can't complete the purchase?",
@@ -60,7 +52,7 @@ const faqs = [
         questions: [
             {
                 question: "How do property auctions work on SoldWerX?",
-                answer: "Live auctions accept bids until the closing time, and the highest bid wins. Upcoming auctions are visible ahead of time so you can plan inspections and financing. You can browse live and upcoming listings from the Real Estate menu in the header."
+                answer: "Live auctions accept bids until closing time, and the highest bid wins. Auctions use a soft-close rule: if a bid is placed close to the closing time, the auction extends so other bidders can respond. Upcoming auctions are visible ahead of time so you can plan inspections and financing. You can browse live and upcoming listings from the Real Estate menu in the header."
             },
             {
                 question: "What is the difference between a live and an upcoming listing?",
@@ -68,71 +60,11 @@ const faqs = [
             },
             {
                 question: "What is a reserve auction?",
-                answer: "A reserve auction has a minimum price the seller will accept. You'll see whether the reserve has been met, but not the reserve amount itself. If bidding closes without meeting the reserve, the property does not sell."
-            },
-            {
-                question: "Can I retract a bid?",
-                answer: "Generally, no. Bids are binding once placed. If there's a genuine error, contact us immediately — we'll review it, but retraction is not guaranteed."
-            },
-            {
-                question: "How long does a property auction run?",
-                answer: "Auction length varies by listing — some run for a few days, others longer. The exact opening and closing times are always shown on the listing page."
+                answer: "A reserve auction has a minimum price the seller will accept. You'll see whether the reserve has been met, but not the reserve amount itself. If bidding closes without meeting the reserve, the property does not sell and goes unsold."
             },
             {
                 question: "Can I make an offer outside the auction?",
-                answer: "Some listings allow offers, and some are Buy It Now. If the option is available, you'll see it on the listing. All offers must go through SoldWerX — off-platform offers are prohibited."
-            }
-        ]
-    },
-    {
-        category: "Payments",
-        icon: <CreditCard size={20} />,
-        questions: [
-            {
-                question: "What payment methods are accepted for property?",
-                answer: "Wire transfers and bank-to-bank payments are the standard for property purchases. Some listings may accept certified checks or other forms — the accepted method is specified on the listing and in the closing documents."
-            },
-            {
-                question: "Is a deposit required?",
-                answer: "Most property listings require an earnest money deposit to bind the contract once you've won. The amount and timing are specified in the listing. Deposits are held in escrow until closing."
-            },
-            {
-                question: "How long do I have to complete payment?",
-                answer: "Timelines vary by listing and are stated up front. Most property purchases close within 30–45 days from the end of the auction, but cash buyers can often close much faster."
-            },
-            {
-                question: "What happens after I make payment?",
-                answer: "Funds move into escrow and the closing process begins. Title is searched and cleared, documents are prepared, and once all conditions are met, the sale is recorded and the property transfers to you."
-            },
-            {
-                question: "Is sales tax or transfer tax charged?",
-                answer: "Property sales are typically subject to transfer taxes, recording fees, and prorated property taxes at closing — not the same as retail sales tax. Exact amounts depend on the jurisdiction and are itemized in your closing statement."
-            }
-        ]
-    },
-    {
-        category: "Closing & Title",
-        icon: <FileText size={20} />,
-        questions: [
-            {
-                question: "Who handles the title transfer?",
-                answer: "Closing is handled by a licensed title company or attorney in the jurisdiction where the property is located. SoldWerX coordinates with them so the process runs smoothly, but the actual transfer is executed by that licensed party."
-            },
-            {
-                question: "Do you provide a title search?",
-                answer: "Yes — a title search is part of the standard closing process. It confirms the seller's ownership, identifies liens or encumbrances, and determines what must be cleared before the sale can complete."
-            },
-            {
-                question: "Who handles escrow?",
-                answer: "Escrow is held by a licensed escrow or title company — never by SoldWerX directly. This protects both buyer and seller throughout the transaction."
-            },
-            {
-                question: "What if there are liens on the property?",
-                answer: "Any liens must be satisfied or released before the property can transfer cleanly. This is discovered during the title search and addressed through escrow before closing. If we find a lien issue, your closing coordinator will walk you through it."
-            },
-            {
-                question: "Can I use my own attorney or title company?",
-                answer: "In most cases, yes. Let us know during the offer process and we'll coordinate with your preferred professional. Some sellers may have a preferred provider, which will be stated in the listing."
+                answer: "Some listings may allow offers or Buy It Now where available, but all offers must go through SoldWerX — off-platform offers are prohibited. After you win a property auction, support will reach out to you for the next steps."
             }
         ]
     },
@@ -142,27 +74,15 @@ const faqs = [
         questions: [
             {
                 question: "How do I list a property on SoldWerX?",
-                answer: "Click Sell a Property in the Real Estate menu, fill out the listing form with property details and photos, and submit. Our team reviews your submission within 24 hours and then works with you to schedule the auction or listing."
+                answer: "Click Sell a Property in the Real Estate menu, fill out the listing form with property details and photos, and submit. Our team reviews your submission within 24 hours and then works with you to schedule the auction or listing. You can also create a real estate auction directly from your seller dashboard."
             },
             {
                 question: "What are the seller fees?",
-                answer: "Seller commission is a flat percentage of the final sale price, disclosed up front. No listing fees, no photography fees, no hidden charges beyond standard closing costs."
-            },
-            {
-                question: "Do you help with listing photos and marketing?",
-                answer: "Yes. Professional photography and marketing support are included for approved listings. Our team also advises on pricing, timing, and strategy to help you get the best outcome."
+                answer: "Seller fees depend on the specific listing. Details are disclosed up front."
             },
             {
                 question: "Can I set a reserve price?",
                 answer: "Yes. You can list with a reserve that protects your minimum acceptable price. If the reserve isn't met, the property doesn't sell and you keep ownership."
-            },
-            {
-                question: "How and when do I get paid?",
-                answer: "Once the sale closes and the title is transferred, your funds are released from escrow — minus the seller commission and any agreed closing costs. Payout is by bank transfer."
-            },
-            {
-                question: "Do I need to verify my identity to sell?",
-                answer: "Yes. Property sales require identity verification and ownership verification for anti-fraud and legal compliance reasons. Your closing coordinator will guide you through this during onboarding."
             },
             {
                 question: "Can I cancel a listing after it's live?",
@@ -176,11 +96,11 @@ const faqs = [
         questions: [
             {
                 question: "What is SoldWerX Real Estate?",
-                answer: "SoldWerX Real Estate is the property vertical of SoldWerX — an auction and marketplace for houses, apartments, condos, townhouses, land, and commercial properties. It runs on the same trusted infrastructure as our equipment and business-asset auctions."
+                answer: "SoldWerX Real Estate is the property vertical of SoldWerX — an auction and marketplace for houses, apartments, condos, townhouses, land, and commercial properties. It runs on the same trusted infrastructure as our equipment and business-asset auctions. SoldWerX is a marketplace/auction platform and is not a broker, title company, or escrow holder."
             },
             {
                 question: "Where do you operate?",
-                answer: "Currently we operate across the United States. Listings indicate the state and jurisdiction so you know exactly where the property and its closing process are located."
+                answer: "Currently we operate across the United States only. Listings indicate the state and jurisdiction so you know exactly where the property and its closing process are located."
             },
             {
                 question: "How do I create an account?",

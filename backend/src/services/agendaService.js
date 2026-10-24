@@ -61,11 +61,11 @@ class AgendaService {
           // Send email to seller
           auctionListedEmail(auction, auction.seller).catch(err => console.error(`Failed to send auction listed email to seller: `, err));
 
-          // Send bulk notifications to all users (except admin and auction seller)
+          // Send bulk notifications to all users (except admin, bidder, and auction seller)
           const allUsers = await User.find({
-            _id: { $ne: auction.seller._id }, // Exclude auction owner
-            userType: { $ne: "admin" }, // Exclude admin users
-            isActive: true, // Only active users
+            _id: { $ne: auction.seller._id },       // Exclude auction owner
+            userType: { $nin: ["admin", "seller", "staff", "broker"] }, // Exclude admin and bidder users
+            isActive: true,                          // Only active users
           }).select("email username firstName userType emailPreferences");
 
           // In-app: notify seller + broadcast to interested bidders
@@ -661,7 +661,7 @@ class AgendaService {
   async scheduleAuctionEnd(auctionId, endDate) {
     await this.agenda.schedule(endDate, "end auction", { auctionId });
     // console.log(`📅 Scheduled ending for auction ${auctionId} at ${endDate}`);
-    
+
     // Also schedule the 30-second warning job (if the auction ends far
     // enough in the future that the warning moment is still ahead of us).
     const endMs = new Date(endDate).getTime();

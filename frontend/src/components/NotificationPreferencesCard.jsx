@@ -21,6 +21,38 @@ const ADMIN_CATEGORIES = [
     { key: 'system', label: 'System', desc: 'Platform-level notifications' },
 ];
 
+const CATEGORIES_BY_ROLE = {
+    bidder: [
+        { key: 'auction', label: 'Auctions', desc: 'Bids, outbids, auction results' },
+        { key: 'offer', label: 'Offers', desc: 'Offers you made, responses, counters' },
+        { key: 'payment', label: 'Payments', desc: 'Payment confirmations and deposits' },
+        { key: 'communication', label: 'Messages', desc: 'Chat with sellers, shipping, comments' },
+        { key: 'account', label: 'Account', desc: 'Account updates' },
+    ],
+    seller: [
+        { key: 'auction', label: 'Auctions', desc: 'Bids on your items, listings, results' },
+        { key: 'offer', label: 'Offers', desc: 'Offers on your items, counter-acceptance' },
+        { key: 'payment', label: 'Payments', desc: 'Buyer payment confirmations' },
+        { key: 'payout', label: 'Payouts', desc: 'Payout progress and status' },
+        { key: 'communication', label: 'Messages', desc: 'Chat with buyers, comments' },
+        { key: 'account', label: 'Account', desc: 'Account updates' },
+    ],
+    admin: [
+        { key: 'auction', label: 'Auctions', desc: 'Auction results' },
+        { key: 'payment', label: 'Payments', desc: 'Payment confirmations and deposits' },
+        { key: 'communication', label: 'Messages', desc: 'Chat with sellers, bidder, shipping, comments' },
+        { key: 'account', label: 'Account', desc: 'Registration and account updates' },
+        { key: 'moderation', label: 'Moderation Queue', desc: 'Flags, approvals, reports, payments to review' },
+    ],
+    staff: [
+        { key: 'auction', label: 'Auctions', desc: 'Auction results' },
+        { key: 'payment', label: 'Payments', desc: 'Payment confirmations and deposits' },
+        { key: 'communication', label: 'Messages', desc: 'Chat with sellers, bidder, shipping, comments' },
+        { key: 'account', label: 'Account', desc: 'Registration and account updates' },
+        { key: 'moderation', label: 'Moderation Queue', desc: 'Flags, approvals, reports, payments to review' },
+    ],
+};
+
 const NotificationPreferencesCard = () => {
     const { user } = useAuth();
     const { soundEnabled, setSoundEnabled } = useNotifications();
@@ -31,9 +63,8 @@ const NotificationPreferencesCard = () => {
     const isAdminOrStaff =
         user?.userType === 'admin' || user?.userType === 'staff';
 
-    const categories = isAdminOrStaff
-        ? [...USER_CATEGORIES, ...ADMIN_CATEGORIES]
-        : USER_CATEGORIES;
+    const role = user?.userType === 'broker' ? 'seller' : user?.userType;
+    const categories = CATEGORIES_BY_ROLE[role] || CATEGORIES_BY_ROLE.bidder;
 
     useEffect(() => {
         (async () => {

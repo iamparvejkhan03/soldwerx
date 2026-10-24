@@ -46,18 +46,16 @@ const FiltersSection = ({
         const parentSlug = e.target.value;
         setSelectedParent(parentSlug);
 
-        // Update filters with parent category only
         const newFilters = {
             ...uiFilters,
-            categories: parentSlug ? [parentSlug] : [], // Set categories array with parent
-            category: '' // Clear subcategory selection
+            categories: parentSlug ? [parentSlug] : [],
+            category: ''
         };
 
         setUiFilters(newFilters);
         updateFilters(newFilters);
 
-        // Update URL
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(window.location.search);
         if (parentSlug) {
             searchParams.set('category', parentSlug);
             searchParams.delete('subcategory');
@@ -65,7 +63,7 @@ const FiltersSection = ({
             searchParams.delete('category');
             searchParams.delete('subcategory');
         }
-        const newUrl = `${location.pathname}?${searchParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
         window.history.replaceState(null, '', newUrl);
     };
 
@@ -73,20 +71,18 @@ const FiltersSection = ({
     const handleSubcategoryChange = (e) => {
         const subcategorySlug = e.target.value;
 
-        // Update filters based on selection
         const newFilters = {
             ...uiFilters,
-            categories: subcategorySlug ?
-                [selectedParent, subcategorySlug] : // Both parent and subcategory
-                (selectedParent ? [selectedParent] : []), // Only parent or empty
+            categories: subcategorySlug
+                ? [selectedParent, subcategorySlug]
+                : (selectedParent ? [selectedParent] : []),
             category: subcategorySlug
         };
 
         setUiFilters(newFilters);
         updateFilters(newFilters);
 
-        // Update URL
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(window.location.search);
         if (selectedParent) {
             searchParams.set('category', selectedParent);
             if (subcategorySlug) {
@@ -95,7 +91,7 @@ const FiltersSection = ({
                 searchParams.delete('subcategory');
             }
         }
-        const newUrl = `${location.pathname}?${searchParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
         window.history.replaceState(null, '', newUrl);
     };
 
@@ -388,6 +384,7 @@ function Auctions() {
 
     const [uiFilters, setUiFilters] = useState({
         categories: [],
+        category: "",
         status: "",
         search: "",
         priceMin: "",
@@ -414,60 +411,33 @@ function Auctions() {
     // Read URL parameters on page load
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
+
         const categoryParam = searchParams.get('category');
         const subcategoryParam = searchParams.get('subcategory');
-        const statusParam = searchParams.get('status');
-        const auctionTypeParam = searchParams.get('auctionType');
-        const allowOffersParam = searchParams.get('allowOffers');
-        const isFeaturedParam = searchParams.get('featured');
 
-        const newFilters = { ...uiFilters };
+        // Build categories from scratch — always
+        const categorySlugs = [];
+        if (categoryParam) categorySlugs.push(categoryParam);
+        if (subcategoryParam) categorySlugs.push(subcategoryParam);
 
-        // Build categories array from URL params
-        if (categoryParam || subcategoryParam) {
-            const categorySlugs = [];
+        // Parent dropdown: '' when absent → clears on navigation away
+        setSelectedParent(categoryParam || '');
 
-            if (categoryParam) {
-                categorySlugs.push(categoryParam);
-                setSelectedParent(categoryParam);
-            }
-
-            if (subcategoryParam) {
-                categorySlugs.push(subcategoryParam);
-                newFilters.category = subcategoryParam;
-            }
-
-            newFilters.categories = categorySlugs;
-        }
-
-        // Set auction type from URL if exists
-        if (auctionTypeParam) {
-            newFilters.auctionType = auctionTypeParam;
-        }
-
-        // Set allow offers from URL if exists
-        if (allowOffersParam) {
-            newFilters.allowOffers = allowOffersParam;
-        }
-
-        // Set featured from URL if exists
-        if (isFeaturedParam) {
-            newFilters.featured = isFeaturedParam;
-        }
-
-        // IMPORTANT: Only set status from URL if it exists, otherwise keep 'active'
-        if (statusParam) {
-            newFilters.status = statusParam;
-        } else {
-            newFilters.status = 'active'; // Default to active
-        }
-
-        setUiFilters(newFilters);
-
-        // Only update API filters if we have parameters
-        // if (categoryParam || subcategoryParam || statusParam || auctionTypeParam || allowOffersParam) {
-        //     updateFilters(newFilters);
-        // }
+        // Full replacement — no spread of prev — so nothing stale survives
+        setUiFilters({
+            categories: categorySlugs,
+            category: subcategoryParam || '',
+            status: searchParams.get('status') || 'active',
+            search: searchParams.get('search') || '',
+            priceMin: searchParams.get('priceMin') || '',
+            priceMax: searchParams.get('priceMax') || '',
+            location: searchParams.get('location') || '',
+            auctionType: searchParams.get('auctionType') || '',
+            allowOffers: searchParams.get('allowOffers') || '',
+            featured: searchParams.get('featured') || '',
+            sortBy: searchParams.get('sortBy') || 'createdAt',
+            sortOrder: searchParams.get('sortOrder') || 'desc',
+        });
     }, [location.search]);
 
     // Fetch parent categories on mount
@@ -576,17 +546,15 @@ function Auctions() {
 
         setUiFilters(newFilters);
 
-        // Update URL with the new filter
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(window.location.search);
         if (value) {
             searchParams.set(name, value);
         } else {
             searchParams.delete(name);
         }
-        const newUrl = `${location.pathname}?${searchParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
         window.history.replaceState(null, '', newUrl);
 
-        // Use debounce for text inputs, immediate for others
         if (['search', 'location', 'make', 'model'].includes(name)) {
             debouncedUpdateFilters(newFilters);
         } else {
@@ -608,6 +576,7 @@ function Auctions() {
     const resetFilters = () => {
         const resetFilters = {
             categories: [],
+            category: "",
             status: "",
             search: "",
             priceMin: "",
@@ -623,7 +592,7 @@ function Auctions() {
         updateFilters(resetFilters);
         setShowMobileFilters(false);
         // Reset URL
-        window.history.replaceState(null, '', location.pathname);
+        window.history.replaceState(null, '', window.location.pathname);
     };
 
     const handleLoadMore = () => {
@@ -656,11 +625,10 @@ function Auctions() {
         setUiFilters(newFilters);
         updateFilters(newFilters);
 
-        // Update URL with new sort parameters while preserving other filters
-        const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(window.location.search);
         searchParams.set('sortBy', sortBy);
         searchParams.set('sortOrder', sortOrder);
-        const newUrl = `${location.pathname}?${searchParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
         window.history.replaceState(null, '', newUrl);
     };
 

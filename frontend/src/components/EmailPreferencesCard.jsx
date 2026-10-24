@@ -16,6 +16,7 @@ const EmailPreferencesCard = () => {
             try {
                 const { data } = await axiosInstance.get('/api/v1/users/email-preferences');
                 if (data.success) {
+                    console.log(data.data)
                     setCategories(data.data.categories);
                     if (data.data.categories.length > 0) {
                         setExpandedCategory(data.data.categories[0].key);

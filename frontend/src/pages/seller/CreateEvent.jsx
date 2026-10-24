@@ -196,11 +196,10 @@ const AvailableAuctions = ({ auctions, selectedAuctions, onToggleAuction, loadin
                     <div
                         key={auction._id}
                         onClick={() => onToggleAuction(auction._id)}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            isSelected
-                                ? 'border-green-500 bg-green-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${isSelected
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
                     >
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0">
@@ -217,11 +216,10 @@ const AvailableAuctions = ({ auctions, selectedAuctions, onToggleAuction, loadin
                                     <span>•</span>
                                     <span>{auction.bidCount || 0} bids</span>
                                     <span>•</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                        auction.status === 'active' ? 'bg-green-100 text-green-800' :
+                                    <span className={`px-2 py-0.5 rounded-full text-xs ${auction.status === 'active' ? 'bg-green-100 text-green-800' :
                                         auction.status === 'draft' ? 'bg-amber-100 text-amber-800' :
-                                        'bg-gray-100 text-gray-800'
-                                    }`}>
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
                                         {auction.status}
                                     </span>
                                 </div>
@@ -487,7 +485,7 @@ function CreateEvent() {
         <DndProvider backend={HTML5Backend}>
             <section className="flex min-h-screen bg-gray-50">
                 <SellerSidebar />
-                
+
                 <UploadProgressModal
                     isOpen={isLoading}
                     fileCount={allPhotos.filter(p => !p.isExisting).length + uploadedDocuments.length}
@@ -505,10 +503,9 @@ function CreateEvent() {
                                 <div className="flex items-center justify-between mb-4">
                                     {['Event Info', 'Assign Auctions', 'Review & Submit'].map((label, index) => (
                                         <div key={index} className="flex flex-col items-center">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                step > index + 1 ? 'bg-green-500 text-white' :
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > index + 1 ? 'bg-green-500 text-white' :
                                                 step === index + 1 ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
-                                            }`}>
+                                                }`}>
                                                 {step > index + 1 ? <CheckCircle size={20} /> : index + 1}
                                             </div>
                                             <span className="text-sm mt-2 hidden md:block">{label}</span>
@@ -555,9 +552,8 @@ function CreateEvent() {
                                             <RTE
                                                 name="description"
                                                 control={control}
-                                                label="Description:"
-                                                defaultValue={getValues('description') || ''}
-                                                placeholder="Describe the event, what to expect, special guests, etc..."
+                                                rules={{ required: "Description is required" }}
+                                                placeholder="Describe the item's history, condition, and any notable details..."
                                             />
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
@@ -702,7 +698,7 @@ function CreateEvent() {
 
                                         <div className="mb-4">
                                             <p className="text-gray-600">
-                                                Select the auctions you want to include in this event. 
+                                                Select the auctions you want to include in this event.
                                                 Selected auctions will be displayed together when users view this event.
                                             </p>
                                             <p className="text-sm text-secondary mt-2">
@@ -803,12 +799,22 @@ function CreateEvent() {
 
                                                     <div className="bg-white p-4 rounded-lg shadow-sm">
                                                         <h4 className="font-medium mb-3">Description Preview</h4>
-                                                        <div className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50 max-h-40 overflow-y-auto">
-                                                            {watch('description') ? (
-                                                                parse(watch('description'))
-                                                            ) : (
-                                                                <p className="text-gray-500 italic">No description provided</p>
-                                                            )}
+
+                                                        <div className="w-full overflow-hidden">
+                                                            <div
+                                                                className="prose prose-lg max-w-none border rounded-lg p-4 bg-gray-50
+                                                                max-h-[190px] overflow-y-auto[overflow-wrap:anywhere]
+                                                                [&_img]:max-w-full [&_img]:h-auto
+                                                                [&_pre]:overflow-x-auto [&_pre]:max-w-full
+                                                                [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto
+                                                                [&_iframe]:max-w-full text-sm"
+                                                            >
+                                                                {watch("description") ? (
+                                                                    parse(watch("description"))
+                                                                ) : (
+                                                                    <p className="text-gray-500 italic">No description provided</p>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
