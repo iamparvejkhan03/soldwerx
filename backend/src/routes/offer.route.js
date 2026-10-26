@@ -16,7 +16,9 @@ import {
   getAdminOfferStats,
   adminEndAuctionWithOffer,
   reactivateOffer,
-  getSellerOfferStats
+  getSellerOfferStats,
+  respondToCounterOffer,
+  buyerCounterOffer
 } from "../controllers/offer.controller.js";
 import { auth, authAdmin } from "../middlewares/auth.middleware.js";
 import { requirePermission } from "../middlewares/permission.middleware.js";
@@ -48,6 +50,20 @@ offerRouter.post("/auction/:auctionId/offer/:offerId/accept-counter", auth, acce
 // 6. Buyer withdraws their offer
 // POST /api/v1/offers/auction/:auctionId/offer/:offerId/withdraw
 offerRouter.post("/auction/:auctionId/offer/:offerId/withdraw", auth, withdrawOffer);
+
+// Buyer accepts / rejects a seller's counter offer
+offerRouter.post(
+  "/auction/:auctionId/offer/:offerId/respond-to-counter",
+  auth,
+  respondToCounterOffer
+);
+
+// Buyer counters the seller's counter offer
+offerRouter.post(
+  "/auction/:auctionId/offer/:offerId/buyer-counter",
+  auth,
+  buyerCounterOffer
+);
 
 // 7. Get all user's offers across all auctions
 // GET /api/v1/offers/my

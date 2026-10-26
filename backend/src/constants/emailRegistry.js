@@ -172,6 +172,32 @@ const RAW_CATEGORIES = {
                 critical: true,
                 audience: "bidder"
             },
+            counter_accepted_seller: {
+                label: "Counter offer accepted",
+                description: "When a buyer accepts your counter offer",
+                default: true,
+                critical: true,
+                audience: "seller",
+            },
+            counter_received: {
+                label: "Counter offer received",
+                description: "When a seller sends you a counter offer",
+                default: true,
+                critical: true,
+                audience: "bidder",
+            },
+            counter_from_buyer: {
+                label: "Buyer countered your offer",
+                description: "When a buyer sends a counter proposal",
+                default: true,
+                audience: "seller",
+            },
+            counter_rejected: {
+                label: "Counter offer declined",
+                description: "When a buyer declines your counter offer",
+                default: true,
+                audience: "seller",
+            },
         },
     },
 

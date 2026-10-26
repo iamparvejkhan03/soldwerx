@@ -41,6 +41,12 @@ export const NOTIFICATION_TYPES = {
     // ─── Offers (seller side) ────────────────────────────────
     NEW_OFFER: { category: 'offer', priority: 'high', permission: null, audience: 'user' },
     OFFER_COUNTERED: { category: 'offer', priority: 'urgent', permission: null, audience: 'user' },
+    
+    // ─── Counter-offer flow ─────────────────────────────────
+    COUNTER_OFFER_SENT: { category: 'offer', priority: 'high', permission: null, audience: 'user' },
+    COUNTER_OFFER_ACCEPTED: { category: 'offer', priority: 'urgent', permission: null, audience: 'user' },
+    COUNTER_OFFER_REJECTED: { category: 'offer', priority: 'medium', permission: null, audience: 'user' },
+    COUNTER_OFFER_COUNTERED: { category: 'offer', priority: 'high', permission: null, audience: 'user' },
 
     // ─── Seller: auction events ──────────────────────────────
     NEW_BID: { category: 'auction', priority: 'high', permission: null, audience: 'user' },

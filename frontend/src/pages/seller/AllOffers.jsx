@@ -165,14 +165,16 @@ function AllOffers() {
     const handleRespondToOffer = async () => {
         if (!selectedOffer) return;
 
-        // Validate counter offer amount
         if (responseData.action === 'counter') {
             const counterAmount = parseFloat(responseData.counterAmount);
             if (isNaN(counterAmount) || counterAmount <= selectedOffer.amount) {
                 toast.error('Counter offer must be higher than the original offer');
                 return;
             }
-            if (selectedOffer.auction.buyNowPrice && counterAmount >= selectedOffer.auction.buyNowPrice) {
+            if (
+                selectedOffer.auction.buyNowPrice &&
+                counterAmount >= selectedOffer.auction.buyNowPrice
+            ) {
                 toast.error('Counter offer cannot exceed Buy Now price');
                 return;
             }
@@ -184,7 +186,7 @@ function AllOffers() {
             const payload = {
                 auctionId: selectedOffer.auction._id,
                 response: responseData.action,
-                message: responseData.message
+                message: responseData.message,
             };
 
             if (responseData.action === 'counter') {
@@ -201,8 +203,6 @@ function AllOffers() {
                 toast.success(`Offer ${responseData.action}ed successfully`);
                 setShowRespondModal(false);
                 setResponseData({ action: 'accept', message: '', counterAmount: '' });
-
-                // Refresh offers
                 await fetchSellerOffers();
             }
         } catch (error) {
@@ -669,7 +669,7 @@ function AllOffers() {
                                                     <div>
                                                         <div className="text-sm text-blue-600">Counter Amount</div>
                                                         <div className="text-xl font-bold text-blue-700">
-                                                            {formatCurrency(selectedOffer.counterOffer.amount)}
+                                                            {formatCurrency(selectedOffer.counterOffer?.amount)}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
@@ -719,7 +719,7 @@ function AllOffers() {
                                                             <XCircle size={16} />
                                                             Reject Offer
                                                         </button>
-                                                        {/* <button
+                                                        <button
                                                             onClick={() => {
                                                                 setResponseData({ action: 'counter', message: '', counterAmount: '' });
                                                                 setShowRespondModal(true);
@@ -728,7 +728,7 @@ function AllOffers() {
                                                         >
                                                             <TrendingUp size={16} />
                                                             Make Counter Offer
-                                                        </button> */}
+                                                        </button>
                                                     </div>
                                                     <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                                                         <AlertCircle size={16} className="inline mr-1 text-yellow-600" />
@@ -876,8 +876,8 @@ function AllOffers() {
                             <button
                                 onClick={handleRespondToOffer}
                                 className={`px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${responseData.action === 'accept' ? 'bg-green-600 hover:bg-green-700' :
-                                        responseData.action === 'reject' ? 'bg-red-600 hover:bg-red-700' :
-                                            'bg-blue-600 hover:bg-blue-700'
+                                    responseData.action === 'reject' ? 'bg-red-600 hover:bg-red-700' :
+                                        'bg-blue-600 hover:bg-blue-700'
                                     }`}
                                 disabled={processing || (responseData.action === 'counter' && !responseData.counterAmount)}
                             >

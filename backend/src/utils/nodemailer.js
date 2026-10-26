@@ -2894,6 +2894,263 @@ const cardPaymentCompletedAdminEmail = async (adminUser, payment, buyer, auction
     }
 };
 
+// 24b. Seller sent a counter offer — notify buyer
+const offerCounteredEmail = async (
+    buyer,
+    seller,
+    listing,
+    originalOfferAmount,
+    counterAmount,
+    counterMessage,
+    offerId,
+    expiresAt
+) => {
+    try {
+        const diff = Number(counterAmount) - Number(originalOfferAmount);
+        const expiresStr = expiresAt
+            ? new Date(expiresAt).toLocaleString('en-IE')
+            : '48 hours from now';
+
+        const content = `
+            <h2 style="text-align: center;">Seller Sent a Counter Offer</h2>
+            <p style="text-align: center;">The seller has responded to your offer with a counter proposal.</p>
+
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">
+                    ${listing?.title}
+                </p>
+                ${listing?.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
+
+                <p style="margin: 15px 0; font-size: 28px; font-weight: bold; color: ${BRAND_COLORS.primary}; text-align: center;">
+                    ${formatCurrency(counterAmount)}
+                </p>
+
+                ${createSummaryRow('Your Offer:', formatCurrency(originalOfferAmount))}
+                ${createSummaryRow('Seller Counter:', formatCurrency(counterAmount))}
+                ${createSummaryRow('Difference:', `+ ${formatCurrency(diff)}`)}
+                ${createSummaryRow('Offer ID:', offerId)}
+            `)}
+
+            ${counterMessage ? `
+                <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 16px; border-radius: 6px; margin: 20px 0;">
+                    <strong style="color: #1E40AF;">Seller's message</strong>
+                    <p style="margin: 6px 0 0 0; color: ${BRAND_COLORS.text};">"${counterMessage}"</p>
+                </div>
+            ` : ''}
+
+            <div style="background: #FFF7ED; border-left: 4px solid #F97316; padding: 14px 16px; border-radius: 6px; margin: 20px 0;">
+                <strong style="color: #9A3412;">⏳ Respond before it expires</strong>
+                <p style="margin: 6px 0 0 0; color: ${BRAND_COLORS.textLight};">
+                    This counter offer expires on <strong>${expiresStr}</strong>.
+                </p>
+            </div>
+
+            <p>Hi ${buyer.firstName || buyer.username || 'there'}, you have three options on the counter offer:</p>
+            <ul style="color: ${BRAND_COLORS.text}; padding-left: 20px;">
+                <li><strong>Accept</strong> — the auction will be sold to you at the counter price.</li>
+                <li><strong>Counter</strong> — propose your own amount back to the seller.</li>
+                <li><strong>Decline</strong> — end the negotiation.</li>
+            </ul>
+
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('Review Counter Offer', `${FRONTEND_URL}/bidder/offers`, 'primary')}
+            </div>
+        `;
+
+        const html = baseTemplate(content, 'Counter Offer Received');
+
+        const info = await sendCategorizedEmail({
+            user: buyer,
+            emailKey: 'offer.counter_received',
+            subject: `Counter Offer Received - ${listing?.title}`,
+            html,
+        });
+
+        console.log(`Offer countered email sent to buyer ${buyer.email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`Failed to send offer countered email:`, error);
+        return false;
+    }
+};
+
+// 24c. Buyer counter-countered — notify seller
+const buyerCounteredEmail = async (
+    seller,
+    buyer,
+    listing,
+    previousCounterAmount,
+    newAmount,
+    message,
+    offerId
+) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">Buyer Countered Your Offer</h2>
+            <p style="text-align: center;">The buyer has sent a counter proposal back to you.</p>
+
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">
+                    ${listing?.title}
+                </p>
+                ${listing?.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
+
+                <p style="margin: 15px 0; font-size: 28px; font-weight: bold; color: ${BRAND_COLORS.primary}; text-align: center;">
+                    ${formatCurrency(newAmount)}
+                </p>
+
+                ${createSummaryRow('Your Counter:', formatCurrency(previousCounterAmount))}
+                ${createSummaryRow('Buyer Counter:', formatCurrency(newAmount))}
+                ${createSummaryRow('Offer ID:', offerId)}
+            `)}
+
+            ${message ? `
+                <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 16px; border-radius: 6px; margin: 20px 0;">
+                    <strong style="color: #1E40AF;">Buyer's message</strong>
+                    <p style="margin: 6px 0 0 0; color: ${BRAND_COLORS.text};">"${message}"</p>
+                </div>
+            ` : ''}
+
+            ${buyer ? `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <p style="margin: 0 0 8px 0;"><strong>Buyer Information</strong></p>
+                    ${createSummaryRow('Name:', `${buyer?.firstName || ''} ${buyer?.lastName || ''}`.trim() || buyer?.username || buyer?.companyName || 'N/A')}
+                    ${createSummaryRow('Username:', buyer?.username || buyer?.companyName || 'N/A')}
+                </div>
+            ` : ''}
+
+            <div style="background: #FFF7ED; border-left: 4px solid #F97316; padding: 14px 16px; border-radius: 6px; margin: 20px 0;">
+                <strong style="color: #9A3412;">Respond within 48 hours</strong>
+                <p style="margin: 6px 0 0 0; color: ${BRAND_COLORS.textLight};">
+                    You can accept, reject, or send another counter offer.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('Review Counter', `${FRONTEND_URL}/seller/offers/all`, 'primary')}
+            </div>
+        `;
+
+        const html = baseTemplate(content, 'Buyer Countered');
+
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'offer.counter_from_buyer',
+            subject: `Buyer Countered - ${listing?.title}`,
+            html,
+        });
+
+        console.log(`Buyer countered email sent to seller ${seller.email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`Failed to send buyer countered email:`, error);
+        return false;
+    }
+};
+
+// 24d. Buyer declined seller's counter — notify seller
+const counterOfferRejectedEmail = async (
+    seller,
+    buyer,
+    listing,
+    counterAmount,
+    offerId
+) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">Counter Offer Declined</h2>
+            <p style="text-align: center;">The buyer has declined your counter offer.</p>
+
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">
+                    ${listing?.title}
+                </p>
+                ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
+
+                ${createSummaryRow('Your Counter:', formatCurrency(counterAmount))}
+                ${createSummaryRow('Offer ID:', offerId)}
+            `)}
+
+            <div style="background: #FEF2F2; border-left: 4px solid ${BRAND_COLORS.danger}; padding: 14px 16px; border-radius: 6px; margin: 20px 0;">
+                <strong style="color: #991B1B;">Negotiation ended</strong>
+                <p style="margin: 6px 0 0 0; color: ${BRAND_COLORS.textLight};">
+                    The buyer has walked away from this offer. You can continue receiving new offers from other bidders.
+                </p>
+            </div>
+
+            ${buyer ? `
+                <div style="background: ${BRAND_COLORS.grayBg}; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <p style="margin: 0 0 8px 0;"><strong>Buyer Information</strong></p>
+                    ${createSummaryRow('Name:', `${buyer?.firstName || ''} ${buyer?.lastName || ''}`.trim() || buyer?.username || buyer?.companyName || 'N/A')}
+                    ${createSummaryRow('Username:', buyer?.username || buyer?.companyName || 'N/A')}
+                </div>
+            ` : ''}
+
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View All Offers', `${FRONTEND_URL}/seller/offers/all`, 'primary')}
+            </div>
+        `;
+
+        const html = baseTemplate(content, 'Counter Offer Declined');
+
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'offer.counter_rejected',
+            subject: `Counter Offer Declined - ${listing?.title}`,
+            html,
+        });
+
+        console.log(`Counter offer rejected email sent to seller ${seller.email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`Failed to send counter offer rejected email:`, error);
+        return false;
+    }
+};
+
+// 22b. Counter offer accepted — sent to SELLER when buyer accepts their counter
+const offerCounterAcceptedSellerEmail = async (seller, listing, counterAmount) => {
+    try {
+        const content = `
+            <h2 style="text-align: center;">Counter Offer Accepted</h2>
+            <p style="text-align: center;">Great news! The buyer has accepted your counter offer.</p>
+            ${createInfoCard(`
+                <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: ${BRAND_COLORS.secondary};">${listing?.title}</p>
+                ${listing.subTitle ? `<p style="margin: 0 0 16px 0; text-align: center; color: ${BRAND_COLORS.textLight};">${listing.subTitle}</p>` : ''}
+                ${listing.specifications && listing.specifications.size > 0 ? `
+                    <div style="margin: 16px 0 0 0;">
+                        <strong style="color: ${BRAND_COLORS.secondary};">Item Details</strong>
+                        ${renderSpecifications(listing.specifications)}
+                    </div>
+                ` : ''}
+                ${createSummaryRow('Original Price:', formatCurrency(listing?.buyNowPrice || listing?.startPrice || 0))}
+                ${createSummaryRow('Accepted Counter Amount:', formatCurrency(counterAmount))}
+                ${createSummaryRow('Sale Status:', 'Sold — awaiting payment')}
+            `)}
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_COLORS.success};">
+                <p style="margin: 0; color: #166534;"><strong>✅ Your item is now sold.</strong></p>
+                <p style="margin: 8px 0 0 0; color: #166534;">The buyer has been notified and will complete payment. You'll receive another email when payment is confirmed.</p>
+            </div>
+            <div style="text-align: center; margin: 25px 0;">
+                ${createButton('View Sold Items', `${FRONTEND_URL}/seller/auctions/sold`, 'primary')}
+            </div>
+            <p>Thank you for selling with ${BRAND_NAME}. We'll keep you updated on the next steps.</p>
+        `;
+        const html = baseTemplate(content, 'Counter Offer Accepted');
+        const info = await sendCategorizedEmail({
+            user: seller,
+            emailKey: 'offer.counter_accepted_seller',
+            subject: `Counter Offer Accepted - ${listing?.title}`,
+            html,
+        });
+        console.log(`Counter offer accepted email sent to seller ${seller.email}`);
+        return !!info;
+    } catch (error) {
+        console.error(`Failed to send counter offer accepted email:`, error);
+        return false;
+    }
+};
+
 // Export all
 export {
     contactEmail, //done
@@ -2948,4 +3205,8 @@ export {
     depositFailedAdminEmail,
     depositChargedAdminEmail,
     cardPaymentCompletedAdminEmail,
+    offerCounteredEmail,
+    buyerCounteredEmail,
+    counterOfferRejectedEmail,
+    offerCounterAcceptedSellerEmail,
 };

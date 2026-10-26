@@ -48,6 +48,16 @@ const offerSchema = new Schema(
       ],
       default: "pending",
     },
+    negotiationHistory: [
+      {
+        by: { type: Schema.Types.ObjectId, ref: "User" },
+        role: { type: String, enum: ["buyer", "seller"] },
+        type: { type: String, enum: ["offer", "counter", "accept", "reject"] },
+        amount: Number,
+        message: String,
+        at: { type: Date, default: Date.now },
+      },
+    ],
     sellerResponse: {
       type: String,
       trim: true,
@@ -828,9 +838,12 @@ auctionSchema.methods.respondToOffer = async function (
       }
       offer.status = "countered";
       offer.counterOffer = {
-        amount: counterAmount,
+        amount: counterAmount,       // ⚠️ stored in BASE currency
         message: counterMessage,
+        createdAt: new Date(),
       };
+      // Give the buyer a fresh 48h window to respond
+      offer.expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
       break;
 
     default:
@@ -847,6 +860,54 @@ auctionSchema.methods.respondToOffer = async function (
   }
 
   return this;
+};
+
+// Buyer counters the seller's counter offer (starts a new round)
+auctionSchema.methods.buyerCounterOffer = async function (offerId, buyerId, amount, message = "") {
+  const offer = this.offers.id(offerId);
+  if (!offer) throw new Error("Offer not found");
+
+  if (offer.status !== "countered") {
+    throw new Error("You can only counter a seller's counter offer");
+  }
+  if (offer.expiresAt && new Date() > offer.expiresAt) {
+    offer.status = "expired";
+    return this.save();
+  }
+  if (!offer.counterOffer?.amount) {
+    throw new Error("No seller counter offer to respond to");
+  }
+  if (amount <= 0) throw new Error("Invalid counter amount");
+  if (amount >= offer.counterOffer.amount) {
+    throw new Error("Your counter must be lower than the seller's counter");
+  }
+
+  // Record the previous round for audit
+  offer.negotiationHistory.push({
+    by: offer.buyer,
+    role: "seller",
+    type: "counter",
+    amount: offer.counterOffer.amount,
+    message: offer.counterOffer.message,
+  });
+
+  // Buyer's new active offer
+  offer.negotiationHistory.push({
+    by: buyerId,
+    role: "buyer",
+    type: "counter",
+    amount,
+    message,
+  });
+
+  offer.amount = amount;            // current active amount
+  offer.message = message;          // latest message shown to seller
+  offer.counterOffer = undefined;   // clear seller's counter
+  offer.status = "pending";         // back to seller's turn
+  offer.sellerResponse = "";        // reset
+  offer.expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // fresh window
+
+  return this.save();
 };
 
 // NEW: Method for buyer to respond to counter offer

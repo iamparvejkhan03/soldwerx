@@ -2,10 +2,14 @@ import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";
 import {
   auctionWonAdminEmail,
+  buyerCounteredEmail,
+  counterOfferRejectedEmail,
   newOfferNotificationEmail,
   offerAcceptedEmail,
   offerCanceledEmail,
   offerConfirmationEmail,
+  offerCounterAcceptedSellerEmail,
+  offerCounteredEmail,
   offerRejectedEmail,
   sendAuctionEndedSellerEmail,
   sendAuctionWonEmail,
@@ -53,8 +57,8 @@ export const makeOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email")
-      .populate("offers.buyer", "username firstName lastName email");
+      .populate("seller", "username firstName lastName email phone userType emailPreferences")
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -322,76 +326,43 @@ export const getAuctionOffersForSeller = async (req, res) => {
  */
 export const respondToOffer = async (req, res) => {
   try {
-    const { offerId } = req.params; // Changed from auctionId to getting from body
-    const { auctionId, response, counterAmount, counterMessage } = req.body; // Get auctionId from body
+    const { auctionId, offerId } = req.params;
+    const { response, counterAmount, counterMessage } = req.body;
     const sellerId = req.user._id;
 
-    // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
-      .populate("seller", "username firstName lastName email phone userType emailPreferences");
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences");
 
-    if (!auction) {
-      return res.status(404).json({
-        success: false,
-        message: "Auction not found",
-      });
-    }
-
-    // Verify user is the seller
+    if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
     if (auction.seller._id.toString() !== sellerId.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to respond to offers for this auction",
-      });
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+    if (auction.status !== "active" && auction.status !== "reserve_not_met") {
+      return res.status(400).json({ success: false, message: `Cannot respond. Auction status: ${auction.status}` });
     }
 
-    // Validate auction status
-    if (auction.status !== "active") {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot respond to offer. Auction status: ${auction.status}`,
-      });
-    }
-
-    // Find the offer
     const offer = auction.offers.id(offerId);
-    if (!offer) {
-      return res.status(404).json({
-        success: false,
-        message: "Offer not found",
-      });
-    }
+    if (!offer) return res.status(404).json({ success: false, message: "Offer not found" });
 
-    // Validate response type
     const validResponses = ["accept", "reject", "counter"];
     if (!validResponses.includes(response)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid response type. Must be: accept, reject, or counter",
-      });
+      return res.status(400).json({ success: false, message: "Invalid response" });
     }
 
-    // Validate counter offer if response is counter
     if (response === "counter") {
       const counterAmountValue = parseFloat(counterAmount);
       if (isNaN(counterAmountValue) || counterAmountValue <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Valid counter amount is required",
-        });
+        return res.status(400).json({ success: false, message: "Valid counter amount is required" });
       }
 
-      // Counter must be higher than original offer
-      if (counterAmountValue <= offer.amount) {
+      if (counterAmount <= offer.amount) {
         return res.status(400).json({
           success: false,
           message: "Counter offer must be higher than the original offer",
         });
       }
-
-      // Check if counter is higher than buy now price
-      if (auction.buyNowPrice && counterAmountValue >= auction.buyNowPrice) {
+      if (auction.buyNowPrice && counterAmount >= auction.buyNowPrice) {
         return res.status(400).json({
           success: false,
           message: "Counter offer cannot exceed Buy Now price",
@@ -399,103 +370,96 @@ export const respondToOffer = async (req, res) => {
       }
     }
 
-    // Respond to offer
-    await auction.respondToOffer(
-      offerId,
-      response,
-      response === "counter" ? parseFloat(counterAmount) : null,
-      counterMessage || ""
-    );
-
-    // Save auction
+    await auction.respondToOffer(offerId, response, counterAmount, counterMessage || "");
     await auction.save();
 
-    // Populate updated auction
     const updatedAuction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName")
-      .populate("seller", "username firstName lastName")
-      .populate("winner", "username firstName lastName");
-
-    // Send email notification to buyer
-    try {
-      if (response === "accept") {
-        offerAcceptedEmail(
-          offer.buyer,
-          updatedAuction,
-          offer.amount
-        ).catch((error) =>
-          console.error("Failed to send offer accepted email:", error),
-        );
-      } else if (response === "reject") {
-        offerRejectedEmail(
-          offer.buyer,
-          updatedAuction,
-          offer.amount,
-          offer?.sellerResponse || "Offer rejected by seller",
-        ).catch((error) =>
-          console.error("Failed to send offer rejected email:", error),
-        );
-      }
-    } catch (emailError) {
-      console.error("Failed to send response notification email:", emailError);
-      // Don't fail the request if email fails
-    }
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("winner", "username companyName firstName lastName email phone userType emailPreferences");
 
     broadcastAuctionChange(auctionId);
 
     res.status(200).json({
       success: true,
       message: `Offer ${response}ed successfully`,
-      data: {
-        auction: updatedAuction,
-      },
+      data: { auction: updatedAuction },
     });
 
-    // ─── In-app notifications ────────────────────────────────
-    const buyerId = offer.buyer._id || offer.buyer;
-    const amountNum = parseFloat(offer.amount);
-    const auctionUrl = `/auction/${updatedAuction._id}`;
+    // Email notifications (non-blocking)
+    try {
+      if (response === "accept") {
+        offerAcceptedEmail(
+          offer.buyer,
+          updatedAuction,
+          offer.amount
+        ).catch((e) => console.error("accept email:", e));
 
-    if (response === 'accept') {
-      notifyUser(buyerId, 'OFFER_ACCEPTED', {
-        title: 'Your offer was accepted!',
-        message: `"${updatedAuction.title}" is yours for $${amountNum.toLocaleString()}.`,
-        actionUrl: `/bidder/auctions/won`,
-        relatedEntity: { type: 'Auction', id: updatedAuction._id },
-        metadata: { amount: amountNum },
-      }).catch((err) => console.error('notify OFFER_ACCEPTED:', err));
+        sendAuctionEndedSellerEmail(updatedAuction).catch(() => { });
+        sendAuctionWonEmail(updatedAuction).catch(() => { });
 
-      // Admin queue
-      notifyAdminsAndStaffWithPermission('ADMIN_OFFER_RESPONDED', {
-        title: `Offer accepted — "${updatedAuction.title}"`,
-        message: `$${amountNum.toLocaleString()} — buyer: ${offer.buyer.username}`,
-        actionUrl: `/admin/offers`,
-        relatedEntity: { type: 'Auction', id: updatedAuction._id },
-        metadata: { amount: amountNum, buyerId },
-      }).catch((err) => console.error('notify ADMIN_OFFER_RESPONDED:', err));
-    } else if (response === 'reject') {
-      notifyUser(buyerId, 'OFFER_REJECTED', {
-        title: 'Your offer was declined',
-        message: `Seller declined your offer on "${updatedAuction.title}".`,
-        actionUrl: `/bidder/offers`,
-        relatedEntity: { type: 'Auction', id: updatedAuction._id },
-        metadata: { amount: amountNum },
-      }).catch((err) => console.error('notify OFFER_REJECTED:', err));
-    } else if (response === 'counter') {
-      notifyUser(buyerId, 'NEW_OFFER', {
-        title: 'You received a counter-offer',
-        message: `Seller countered with $${parseFloat(counterAmount).toLocaleString()} on "${updatedAuction.title}".`,
-        actionUrl: `/bidder/offers`,
-        relatedEntity: { type: 'Auction', id: updatedAuction._id },
-        metadata: { amount: parseFloat(counterAmount), isCounter: true },
-      }).catch((err) => console.error('notify NEW_OFFER (counter):', err));
+        const buyerId = offer.buyer._id || offer.buyer;
+
+        notifyUser(buyerId, 'OFFER_ACCEPTED', {
+          title: 'Your offer was accepted!',
+          message: `"${updatedAuction.title}" is yours for $${parseFloat(offer.amount).toLocaleString()}.`,
+          actionUrl: `/bidder/auctions/won`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: parseFloat(offer.amount) },
+        }).catch((err) => console.error('notify OFFER_ACCEPTED (seller accept):', err));
+
+        notifyAdminsAndStaffWithPermission('ADMIN_OFFER_RESPONDED', {
+          title: `Offer accepted — "${updatedAuction.title}"`,
+          message: `$${parseFloat(offer.amount).toLocaleString()}`,
+          actionUrl: `/admin/offers`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: parseFloat(offer.amount) },
+        }).catch((err) => console.error('notify ADMIN_OFFER_RESPONDED (accept):', err));
+
+      } else if (response === "reject") {
+        offerRejectedEmail(
+          offer.buyer,
+          updatedAuction,
+          offer.amount,
+          counterMessage || "Your offer was rejected by the seller."
+        ).catch((e) => console.error("reject email:", e));
+
+        const buyerId = offer.buyer._id || offer.buyer;
+
+        notifyUser(buyerId, 'OFFER_REJECTED', {
+          title: 'Your offer was declined',
+          message: `Seller declined your offer on "${updatedAuction.title}".`,
+          actionUrl: `/bidder/offers`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: parseFloat(offer.amount) },
+        }).catch((err) => console.error('notify OFFER_REJECTED:', err));
+      } else if (response === "counter") {
+        const buyerId = offer.buyer._id || offer.buyer;
+        notifyUser(buyerId, 'COUNTER_OFFER_SENT', {
+          title: 'Counter-offer received',
+          message: `Seller countered with $${parseFloat(counterAmount).toLocaleString()} on "${updatedAuction.title}".`,
+          actionUrl: `/bidder/offers`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: parseFloat(counterAmount) },
+        }).catch((err) => console.error('notify COUNTER_OFFER_SENT:', err));
+
+        offerCounteredEmail(
+          offer.buyer,
+          updatedAuction.seller,
+          updatedAuction,
+          offer.amount,
+          counterAmount,
+          counterMessage || "",
+          offer._id,
+          offer.expiresAt
+        ).catch((e) => console.error("counter email:", e));
+      }
+    } catch (emailError) {
+      console.error("Email error:", emailError);
     }
   } catch (error) {
     console.error("Respond to offer error:", error);
-    res.status(400).json({
-      success: false,
-      message: error.message || "Failed to respond to offer",
-    });
+    res.status(400).json({ success: false, message: error.message || "Failed to respond" });
   }
 };
 
@@ -512,8 +476,8 @@ export const acceptCounterOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email")
-      .populate("seller", "username firstName lastName email");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -569,13 +533,11 @@ export const acceptCounterOffer = async (req, res) => {
 
     // Send email notification to seller
     try {
-      offerAcceptedEmail(
-        updatedAuction.winner,
+      offerCounterAcceptedSellerEmail(
+        updatedAuction.seller,
         updatedAuction,
         offer.counterOffer.amount,
-      ).catch((error) =>
-        console.error("Failed to send offer accepted email:", error),
-      );
+      ).catch((err) => console.error("Failed to send seller counter-accepted email:", err));
     } catch (emailError) {
       console.error(
         "Failed to send acceptance notification email:",
@@ -631,6 +593,225 @@ export const acceptCounterOffer = async (req, res) => {
       success: false,
       message: error.message || "Failed to accept counter offer",
     });
+  }
+};
+
+/**
+ * @desc Buyer accepts OR rejects a seller's counter offer
+ * @route POST /api/v1/offers/auction/:auctionId/offer/:offerId/respond-to-counter
+ * @access Private (Buyer)
+ */
+export const respondToCounterOffer = async (req, res) => {
+  try {
+    const { auctionId, offerId } = req.params;
+    const { accept } = req.body; // boolean
+    const buyerId = req.user._id;
+
+    const auction = await Auction.findById(auctionId)
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences");
+
+    if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
+
+    const offer = auction.offers.id(offerId);
+    if (!offer) return res.status(404).json({ success: false, message: "Offer not found" });
+
+    if (offer.buyer._id.toString() !== buyerId.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized to respond to this counter" });
+    }
+    if (offer.status !== "countered") {
+      return res.status(400).json({ success: false, message: "This offer is not in countered status" });
+    }
+    if (offer.expiresAt && new Date() > offer.expiresAt) {
+      return res.status(400).json({ success: false, message: "This counter offer has expired" });
+    }
+
+    const isAccept = accept === true || accept === "true";
+
+    await auction.respondToCounterOffer(offerId, isAccept);
+    await auction.save();
+
+    const updatedAuction = await Auction.findById(auctionId)
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("winner", "username companyName firstName lastName email phone userType emailPreferences");
+
+    broadcastAuctionChange(auctionId);
+
+    res.status(200).json({
+      success: true,
+      message: isAccept
+        ? "Counter offer accepted! Auction is now sold to you."
+        : "Counter offer declined.",
+      data: { auction: updatedAuction },
+    });
+
+    // Notify seller (and buyer on accept)
+    try {
+      if (isAccept) {
+        sendAuctionEndedSellerEmail(updatedAuction).catch(() => { });
+        sendAuctionWonEmail(updatedAuction).catch(() => { });
+        // Optional: send a "buyer accepted your counter" email to seller
+
+        // Notify seller that buyer accepted their counter
+        offerCounterAcceptedSellerEmail(
+          updatedAuction.seller,
+          updatedAuction,
+          offer.counterOffer.amount,
+        ).catch((err) => console.error("Failed to send seller counter-accepted email:", err));
+
+        const sellerId = auction.seller._id || auction.seller;
+        const buyerId = offer.buyer._id || offer.buyer;
+        const amount = parseFloat(offer.counterOffer?.amount || 0);
+
+        notifyUser(sellerId, 'COUNTER_OFFER_ACCEPTED', {
+          title: 'Your counter-offer was accepted!',
+          message: `"${updatedAuction.title}" is sold for $${amount.toLocaleString()}.`,
+          actionUrl: `/seller/auctions/sold`,
+          relatedEntity: { type: 'Auction', id: auction._id },
+          metadata: { amount },
+        }).catch((err) => console.error('notify COUNTER_OFFER_ACCEPTED:', err));
+
+        notifyUser(buyerId, 'OFFER_ACCEPTED', {
+          title: 'Purchase confirmed',
+          message: `You bought "${updatedAuction.title}" for $${amount.toLocaleString()}.`,
+          actionUrl: `/bidder/auctions/won`,
+          relatedEntity: { type: 'Auction', id: auction._id },
+          metadata: { amount },
+        }).catch((err) => console.error('notify OFFER_ACCEPTED (respondToCounter):', err));
+
+        notifyAdminsAndStaffWithPermission('ADMIN_OFFER_RESPONDED', {
+          title: `Offer completed — "${updatedAuction.title}"`,
+          message: `$${amount.toLocaleString()} via counter-offer`,
+          actionUrl: `/admin/offers`,
+          relatedEntity: { type: 'Auction', id: auction._id },
+          metadata: { amount },
+        }).catch((err) => console.error('notify ADMIN_OFFER_RESPONDED:', err));
+      } else {
+        counterOfferRejectedEmail(
+          updatedAuction.seller,
+          offer.buyer,
+          updatedAuction,
+          offer.counterOffer?.amount,
+          offer._id
+        ).catch((e) => console.error("counter rejected email:", e));
+
+        notifyUser(auction.seller._id, 'COUNTER_OFFER_REJECTED', {
+          title: 'Counter-offer declined',
+          message: `Buyer declined your counter on "${auction.title}".`,
+          actionUrl: `/seller/offers/all`,
+          relatedEntity: { type: 'Auction', id: auction._id },
+          metadata: { amount: parseFloat(offer.counterOffer?.amount || 0) },
+        }).catch((err) => console.error('notify COUNTER_OFFER_REJECTED:', err));
+      }
+    } catch (e) {
+      console.error("Counter response email error:", e);
+    }
+  } catch (error) {
+    console.error("respondToCounterOffer error:", error);
+    res.status(400).json({ success: false, message: error.message || "Failed to respond to counter offer" });
+  }
+};
+
+/**
+ * @desc  Buyer counters the seller's counter offer
+ * @route POST /api/v1/offers/auction/:auctionId/offer/:offerId/buyer-counter
+ * @access Private (Buyer)
+ */
+export const buyerCounterOffer = async (req, res) => {
+  try {
+    const { auctionId, offerId } = req.params;
+    const { amount, message = "" } = req.body;
+    const buyerId = req.user._id;
+
+    const auction = await Auction.findById(auctionId)
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences");
+
+    if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
+
+    const offer = auction.offers.id(offerId);
+    if (!offer) return res.status(404).json({ success: false, message: "Offer not found" });
+
+    if (offer.buyer._id.toString() !== buyerId.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+    if (offer.status !== "countered") {
+      return res.status(400).json({ success: false, message: "No active counter to respond to" });
+    }
+
+    // Convert buyer → base
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid counter amount" });
+    }
+
+    if (numAmount < auction.startPrice) {
+      return res.status(400).json({
+        success: false,
+        message: `Counter cannot be lower than the starting price`,
+      });
+    }
+    if (offer.counterOffer?.amount && numAmount >= offer.counterOffer.amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Your counter must be lower than the seller's counter",
+      });
+    }
+
+    // previous seller counter (what the buyer just rejected) — still on the offer object
+    const prevCounterAmount = offer.counterOffer?.amount || 0;
+
+    await auction.buyerCounterOffer(offerId, buyerId, numAmount, message);
+    await auction.save();
+
+    const updatedAuction = await Auction.findById(auctionId)
+      .populate("offers.buyer", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username companyName firstName lastName email phone userType emailPreferences")
+      .populate("winner", "username companyName firstName lastName email phone userType emailPreferences");
+
+    broadcastAuctionChange(auctionId);
+
+    notifyUser(auction.seller._id, 'COUNTER_OFFER_COUNTERED', {
+      title: 'Buyer countered your counter-offer',
+      message: `Buyer countered with $${parseFloat(numAmount).toLocaleString()} on "${auction.title}".`,
+      actionUrl: `/seller/offers/all`,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { amount: parseFloat(numAmount), previousAmount: parseFloat(offer.counterOffer?.amount || 0) },
+    }).catch((err) => console.error('notify COUNTER_OFFER_COUNTERED:', err));
+
+    notifyUser(buyerId, 'COUNTER_OFFER_SENT', {
+      title: 'Counter-offer sent',
+      message: `You countered with $${numAmount.toLocaleString()} on "${auction.title}".`,
+      actionUrl: `/bidder/offers`,
+      relatedEntity: { type: 'Auction', id: auction._id },
+      metadata: { amount: numAmount, direction: 'buyer_to_seller' },
+    }).catch((err) => console.error('notify COUNTER_OFFER_SENT (buyer):', err));
+
+    res.status(200).json({
+      success: true,
+      message: "Counter offer sent to seller",
+      data: { auction: updatedAuction },
+    });
+
+    // Email seller (non-blocking) — reuse your existing newOfferNotificationEmail
+    // Notify seller that buyer counter-countered
+    try {
+      buyerCounteredEmail(
+        updatedAuction.seller,
+        req.user,
+        updatedAuction,
+        parseFloat(prevCounterAmount),
+        parseFloat(numAmount),
+        message,
+        offer._id
+      ).catch((e) => console.error("buyer countered email:", e));
+    } catch (e) {
+      console.error(e);
+    }
+  } catch (error) {
+    console.error("Buyer counter offer error:", error);
+    res.status(400).json({ success: false, message: error.message || "Failed to send counter offer" });
   }
 };
 
@@ -1612,54 +1793,25 @@ export const adminEndAuctionWithOffer = async (req, res) => {
       }
     }
 
-    // Send notifications
-    // try {
-    //   // Notify buyer
-    //   await auctionEndedByAdminEmail(
-    //     offer.buyer.email,
-    //     offer.buyer.firstName || offer.buyer.username,
-    //     offer.amount,
-    //     auction.title,
-    //     auction._id,
-    //     req.user.username,
-    //     reason || "Administrative action"
-    //   );
+    const buyerId = offer.buyer._id || offer.buyer;
+    const sellerId = updatedAuction.seller._id || updatedAuction.seller;
+    const amountNum = parseFloat(offer.amount);
 
-    //   // Notify seller
-    //   await auctionEndedByAdminSellerEmail(
-    //     auction.seller.email,
-    //     auction.seller.firstName || auction.seller.username,
-    //     offer.amount,
-    //     auction.title,
-    //     auction._id,
-    //     req.user.username,
-    //     reason || "Administrative action"
-    //   );
+    notifyUser(buyerId, 'OFFER_ACCEPTED', {
+      title: 'Your offer was accepted!',
+      message: `"${updatedAuction.title}" is yours for $${amountNum.toLocaleString()}.`,
+      actionUrl: `/bidder/auctions/won`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum, byAdmin: true },
+    }).catch((err) => console.error('notify OFFER_ACCEPTED (admin end):', err));
 
-    //   // Notify all bidders if any
-    //   if (auction.bidCount > 0) {
-    //     const uniqueBidderIds = [
-    //       ...new Set(auction.bids.map((bid) => bid.bidder.toString())),
-    //     ];
-    //     for (const bidderId of uniqueBidderIds) {
-    //       if (bidderId !== offer.buyer._id.toString()) {
-    //         const bidder = await User.findById(bidderId);
-    //         if (bidder) {
-    //           await auctionEndedByAdminBidderEmail(
-    //             bidder.email,
-    //             bidder.username,
-    //             auction.title,
-    //             auction._id,
-    //             req.user.username,
-    //             reason || "Administrative action"
-    //           );
-    //         }
-    //       }
-    //     }
-    //   }
-    // } catch (emailError) {
-    //   console.error("Failed to send notification emails:", emailError);
-    // }
+    notifyUser(sellerId, 'OFFER_COUNTERED', {
+      title: `Item sold — "${updatedAuction.title}"`,
+      message: `Admin accepted an offer of $${amountNum.toLocaleString()}.`,
+      actionUrl: `/seller/auctions/sold`,
+      relatedEntity: { type: 'Auction', id: updatedAuction._id },
+      metadata: { amount: amountNum, byAdmin: true },
+    }).catch((err) => console.error('notify OFFER_COUNTERED (admin end):', err));
 
     broadcastAuctionChange(auctionId);
 
@@ -1699,8 +1851,8 @@ export const reactivateOffer = async (req, res) => {
 
     // Find auction
     const auction = await Auction.findById(auctionId)
-      .populate("offers.buyer", "username firstName lastName email phone")
-      .populate("seller", "username firstName lastName email phone");
+      .populate("offers.buyer", "username firstName lastName email phone userType emailPreferences")
+      .populate("seller", "username firstName lastName email phone userType emailPreferences");
 
     if (!auction) {
       return res.status(404).json({
@@ -1759,6 +1911,14 @@ export const reactivateOffer = async (req, res) => {
         sendAuctionEndedSellerEmail(updatedAuction).catch((error) =>
           console.error("Failed to send seller ended auction email:", error)
         );
+
+        notifyUser(updatedAuction.seller._id || updatedAuction.seller, 'OFFER_COUNTERED', {
+          title: `Item sold — "${updatedAuction.title}"`,
+          message: `Admin accepted an offer of $${parseFloat(offer.amount).toLocaleString()}.`,
+          actionUrl: `/seller/auctions/sold`,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { amount: parseFloat(offer.amount), byAdmin: true },
+        }).catch((err) => console.error('notify OFFER_COUNTERED (reactivate admin):', err));
       }
 
       // since it is being sent by the agenda job after invoice creation

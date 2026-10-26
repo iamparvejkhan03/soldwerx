@@ -956,7 +956,7 @@ export const approveAuction = async (req, res) => {
           _id: { $ne: auction?.seller?._id },
           userType: { $ne: "admin" },
           isActive: true,
-        }).select("email username companyName firstName lastName preferences userType currency");
+        }).select("email username companyName firstName lastName emailPreferences userType");
 
         // In-app: notify seller that listing is live
         const sellerId = auction.seller?._id || auction.seller;
