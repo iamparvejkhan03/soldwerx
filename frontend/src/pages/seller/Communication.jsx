@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { socket } from "../../utils/socket.js";
 
 const SellerCommunication = () => {
     const { auctionId } = useParams();
@@ -49,12 +50,66 @@ const SellerCommunication = () => {
         fetchCommunication();
     }, [auctionId]);
 
+    // Refetch whenever the socket reconnects — catches messages missed while offline
+    useEffect(() => {
+        const onReconnect = () => fetchCommunication();
+        socket.io.on("reconnect", onReconnect);
+        return () => socket.io.off("reconnect", onReconnect);
+    }, [auctionId]);
+
     useEffect(() => {
         if (communication) {
             scrollToBottom();
             markRead();
         }
     }, [communication]);
+
+    useEffect(() => {
+        if (!auctionId) return;
+
+        const join = () => socket.emit('joinCommunication', auctionId);
+
+        if (socket.connected) join();
+        socket.on('connect', join);  // ← essential: rooms are lost on reconnect
+
+        return () => {
+            socket.off('connect', join);
+            socket.emit('leaveCommunication', auctionId);
+        };
+    }, [auctionId]);
+
+    useEffect(() => {
+        const handleMessage = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) => {
+                if (!prev) return prev;
+                // Dedupe: sender's HTTP response already contains this message
+                if (payload.message._id &&
+                    prev.messages.some((m) => String(m._id) === String(payload.message._id))) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    messages: [...prev.messages, payload.message],
+                    lastMessageAt: payload.message.createdAt,
+                };
+            });
+        };
+
+        const handleShipping = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) =>
+                prev ? { ...prev, shippingInfo: payload.shippingInfo } : prev
+            );
+        };
+
+        socket.on('communication:message', handleMessage);
+        socket.on('communication:shipping', handleShipping);
+        return () => {
+            socket.off('communication:message', handleMessage);
+            socket.off('communication:shipping', handleShipping);
+        };
+    }, [auctionId]);
 
     const fetchCommunication = async () => {
         try {
@@ -276,7 +331,6 @@ const SellerCommunication = () => {
                                                 key={idx}
                                                 className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
                                             >
-                                                <div ref={messagesEndRef} />
                                                 <div
                                                     className={`max-w-[75%] rounded-lg p-3 ${isCurrentUser
                                                         ? "bg-black text-white"
@@ -314,6 +368,7 @@ const SellerCommunication = () => {
                                         );
                                     })
                                 )}
+                                <div ref={messagesEndRef} />
                             </div>
 
                             {/* Message input */}

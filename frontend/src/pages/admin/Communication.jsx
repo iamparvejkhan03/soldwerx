@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { socket } from "../../utils/socket.js";
 
 const CommunicationDetail = () => {
     const { auctionId } = useParams();
@@ -36,9 +37,12 @@ const CommunicationDetail = () => {
         fetchCommunication();
     }, [auctionId]);
 
+    // Refetch whenever the socket reconnects — catches messages missed while offline
     useEffect(() => {
-        fetchCommunication();
-    }, []);
+        const onReconnect = () => fetchCommunication();
+        socket.io.on("reconnect", onReconnect);
+        return () => socket.io.off("reconnect", onReconnect);
+    }, [auctionId]);
 
     useEffect(() => {
         if (communication) {
@@ -46,6 +50,53 @@ const CommunicationDetail = () => {
             markRead();
         }
     }, [communication, activeTab]);
+
+    useEffect(() => {
+        if (!auctionId) return;
+
+        const join = () => socket.emit('joinCommunication', auctionId);
+
+        if (socket.connected) join();
+        socket.on('connect', join);  // ← essential: rooms are lost on reconnect
+
+        return () => {
+            socket.off('connect', join);
+            socket.emit('leaveCommunication', auctionId);
+        };
+    }, [auctionId]);
+
+    useEffect(() => {
+        const handleMessage = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) => {
+                if (!prev) return prev;
+                // Dedupe: sender's HTTP response already contains this message
+                if (payload.message._id &&
+                    prev.messages.some((m) => String(m._id) === String(payload.message._id))) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    messages: [...prev.messages, payload.message],
+                    lastMessageAt: payload.message.createdAt,
+                };
+            });
+        };
+
+        const handleShipping = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) =>
+                prev ? { ...prev, shippingInfo: payload.shippingInfo } : prev
+            );
+        };
+
+        socket.on('communication:message', handleMessage);
+        socket.on('communication:shipping', handleShipping);
+        return () => {
+            socket.off('communication:message', handleMessage);
+            socket.off('communication:shipping', handleShipping);
+        };
+    }, [auctionId]);
 
     const fetchCommunication = async () => {
         try {
@@ -151,7 +202,7 @@ const CommunicationDetail = () => {
                     success: (response) => {
                         if (response.data.success) {
                             // 🔁 Refresh from server to apply filtering
-                            fetchCommunication();
+                            setCommunication(response.data.data);
                             setNewMessage("");
                             setAttachments([]);
                             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -198,7 +249,7 @@ const CommunicationDetail = () => {
             );
             if (data.success) {
                 // 🔁 Refresh from server to apply filtering
-                fetchCommunication();
+                setCommunication(data.data);
                 toast.success("Shipping info updated");
             } else {
                 alert("Failed to update shipping");

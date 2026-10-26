@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { socket } from "../../utils/socket.js";
 
 const CommunicationDetail = () => {
     const { auctionId } = useParams();
@@ -46,7 +47,19 @@ const CommunicationDetail = () => {
     }, []);
 
     useEffect(() => {
+        if (!auctionId || auctionId === "undefined") {
+            setError("Invalid ID");
+            setLoading(false);
+            return;
+        }
         fetchCommunication();
+    }, [auctionId]);
+
+    // Refetch whenever the socket reconnects — catches messages missed while offline
+    useEffect(() => {
+        const onReconnect = () => fetchCommunication();
+        socket.io.on("reconnect", onReconnect);
+        return () => socket.io.off("reconnect", onReconnect);
     }, [auctionId]);
 
     useEffect(() => {
@@ -55,6 +68,53 @@ const CommunicationDetail = () => {
             markRead();
         }
     }, [communication, activeTab]);
+
+    useEffect(() => {
+        if (!auctionId) return;
+
+        const join = () => socket.emit('joinCommunication', auctionId);
+
+        if (socket.connected) join();
+        socket.on('connect', join);  // ← essential: rooms are lost on reconnect
+
+        return () => {
+            socket.off('connect', join);
+            socket.emit('leaveCommunication', auctionId);
+        };
+    }, [auctionId]);
+
+    useEffect(() => {
+        const handleMessage = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) => {
+                if (!prev) return prev;
+                // Dedupe: sender's HTTP response already contains this message
+                if (payload.message._id &&
+                    prev.messages.some((m) => String(m._id) === String(payload.message._id))) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    messages: [...prev.messages, payload.message],
+                    lastMessageAt: payload.message.createdAt,
+                };
+            });
+        };
+
+        const handleShipping = (payload) => {
+            if (String(payload.auctionId) !== String(auctionId)) return;
+            setCommunication((prev) =>
+                prev ? { ...prev, shippingInfo: payload.shippingInfo } : prev
+            );
+        };
+
+        socket.on('communication:message', handleMessage);
+        socket.on('communication:shipping', handleShipping);
+        return () => {
+            socket.off('communication:message', handleMessage);
+            socket.off('communication:shipping', handleShipping);
+        };
+    }, [auctionId]);
 
     const fetchCommunication = async () => {
         try {
@@ -303,8 +363,8 @@ const CommunicationDetail = () => {
                                         type="button"
                                         onClick={() => setActiveTab("seller")}
                                         className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "seller"
-                                                ? "border-b-2 border-[#C59D55] text-[#C59D55]"
-                                                : "text-gray-500 hover:text-gray-700"
+                                            ? "border-b-2 border-[#C59D55] text-[#C59D55]"
+                                            : "text-gray-500 hover:text-gray-700"
                                             }`}
                                     >
                                         <User size={16} className="inline mr-2" />
@@ -314,8 +374,8 @@ const CommunicationDetail = () => {
                                         type="button"
                                         onClick={() => setActiveTab("buyer")}
                                         className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "buyer"
-                                                ? "border-b-2 border-[#C59D55] text-[#C59D55]"
-                                                : "text-gray-500 hover:text-gray-700"
+                                            ? "border-b-2 border-[#C59D55] text-[#C59D55]"
+                                            : "text-gray-500 hover:text-gray-700"
                                             }`}
                                     >
                                         <User size={16} className="inline mr-2" />
@@ -347,8 +407,8 @@ const CommunicationDetail = () => {
                                             >
                                                 <div
                                                     className={`max-w-[75%] rounded-lg p-3 ${isCurrentUser
-                                                            ? "bg-black text-white"
-                                                            : "bg-gray-100 text-gray-800"
+                                                        ? "bg-black text-white"
+                                                        : "bg-gray-100 text-gray-800"
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-2 text-xs mb-1">

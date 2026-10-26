@@ -1,12 +1,13 @@
 import Communication from "../models/communication.model.js";
 import Auction from "../models/auction.model.js";
 import User from "../models/user.model.js";
-import { uploadDocumentToCloudinary } from "../utils/cloudinary.js";
+import { uploadAttachmentToCloudinary } from "../utils/cloudinary.js";
 import { newMessageNotificationEmail, shippingUpdatedEmail } from "../utils/nodemailer.js";
 import {
     notifyUser,
     notifyAdminsAndStaffWithPermission,
 } from '../services/notificationService.js';
+import { getIO } from "../utils/socket.js";
 
 // ----- Helper -----
 const getOrCreateCommunication = async (auctionId, userId) => {
@@ -156,7 +157,7 @@ export const sendMessage = async (req, res) => {
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 try {
-                    const result = await uploadDocumentToCloudinary(
+                    const result = await uploadAttachmentToCloudinary(
                         file.buffer,
                         file.originalname,
                         "communication-attachments"
@@ -199,6 +200,13 @@ export const sendMessage = async (req, res) => {
         await comm.populate("seller", "username firstName lastName email");
         await comm.populate("winningBidder", "username firstName lastName email");
         await comm.populate("auction", "title category finalPrice status");
+
+        const newMessage = comm.messages[comm.messages.length - 1];
+        const io = getIO();
+        io?.to(`communication:${auctionId}`).emit('communication:message', {
+            auctionId: String(auctionId),
+            message: newMessage.toObject ? newMessage.toObject() : newMessage,
+        });
 
         // ---------- Email notifications ----------
         const sender = user;
@@ -334,6 +342,18 @@ export const updateShipping = async (req, res) => {
         await comm.populate("winningBidder", "username firstName lastName");
         await comm.populate("auction", "title category finalPrice status");
 
+        const io = getIO();
+        io?.to(`communication:${auctionId}`).emit('communication:shipping', {
+            auctionId: String(auctionId),
+            shippingInfo: comm.shippingInfo,
+        });
+        // Shipping also pushes a system message — emit that too so the bubble appears
+        const sysMsg = comm.messages[comm.messages.length - 1];
+        io?.to(`communication:${auctionId}`).emit('communication:message', {
+            auctionId: String(auctionId),
+            message: sysMsg.toObject ? sysMsg.toObject() : sysMsg,
+        });
+
         // --- Fire-and-forget email to winning bidder ---
         const winningBidder = await User.findById(auction.winner._id).select("email firstName lastName username");
         if (winningBidder && winningBidder.email) {
@@ -373,17 +393,14 @@ export const markRead = async (req, res) => {
         const { auctionId } = req.params;
         const userId = req.user._id;
 
-        const comm = await Communication.findOne({ auction: auctionId });
-        if (!comm) return res.status(404).json({ success: false, message: "Communication not found" });
+        const result = await Communication.updateOne(
+            { auction: auctionId },
+            { $addToSet: { "messages.$[].readBy": userId } }
+        );
 
-        let updated = false;
-        comm.messages.forEach((msg) => {
-            if (!msg.readBy.some(id => id.toString() === userId.toString())) {
-                msg.readBy.push(userId);
-                updated = true;
-            }
-        });
-        if (updated) await comm.save();
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, message: "Communication not found" });
+        }
 
         res.status(200).json({ success: true, message: "Marked as read" });
     } catch (error) {

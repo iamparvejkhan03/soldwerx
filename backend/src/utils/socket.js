@@ -118,5 +118,12 @@ export const attachSocketHandlers = (io) => {
                 });
             } catch (_) { /* ignore */ }
         });
+
+        socket.on('joinCommunication', (id) => {
+            if (id) socket.join(`communication:${id}`);
+        });
+        socket.on('leaveCommunication', (id) => {
+            if (id) socket.leave(`communication:${id}`);
+        });
     });
 };

@@ -356,6 +356,28 @@ export const uploadToR2 = async (buffer, originalName, folder = "auctions") => {
 };
 
 // ------------------------------
+// Chat / communication attachments
+//   - Images  → WebP pipeline (same as auction photos)
+//   - Others  → stored as-is (PDF, DOCX, ZIP, …)
+// ------------------------------
+export const uploadAttachmentToR2 = async (
+    buffer,
+    originalName,
+    folder = "communication-attachments"
+) => {
+    const detected = await fileTypeFromBuffer(buffer);
+    const mime = detected?.mime || "";
+
+    if (mime.startsWith("image/")) {
+        // Reuses sharp: auto-rotate, resize to 1600px, convert to WebP
+        return uploadImageToR2(buffer, folder, originalName);
+    }
+
+    // Non-image → keep original format
+    return uploadDocumentToR2(buffer, originalName, folder);
+};
+
+// ------------------------------
 // 4. Delete functions (unchanged)
 // ------------------------------
 export const deleteFromR2 = async (publicId, resourceType = "image") => {
@@ -394,3 +416,4 @@ export const uploadDocumentToCloudinary = uploadDocumentToR2;
 export const uploadToCloudinary = uploadToR2;
 export const deleteFromCloudinary = deleteFromR2;
 export const deleteMultipleFromCloudinary = deleteMultipleFromR2;
+export const uploadAttachmentToCloudinary = uploadAttachmentToR2;
