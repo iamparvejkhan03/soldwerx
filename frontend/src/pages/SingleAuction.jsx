@@ -1,4 +1,4 @@
-import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare } from "lucide-react";
+import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare, Phone, Mail } from "lucide-react";
 import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, PlaceBidModal, ProxyBidSection, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lazy, Suspense, useRef, useState, useEffect } from "react";
@@ -695,6 +695,117 @@ function SingleAuction() {
                     {/* Dynamic Specifications Section */}
                     <SpecificationsSection auction={auction} />
                 </div>
+
+                {auction?.inspection?.enabled && (
+                    <div>
+                        <hr className="my-8" />
+                        <h3 className="my-5 text-primary text-xl font-semibold">
+                            Inspection Details
+                        </h3>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-5">
+                            {/* Availability */}
+                            <div className="flex items-center gap-3">
+                                <Clock size={20} className="flex-shrink-0 text-primary" strokeWidth={1.5} />
+                                <div>
+                                    <p className="text-secondary text-xs">Availability</p>
+                                    <p className="text-base font-medium">
+                                        {auction.inspection.availability === "walk_in" &&
+                                            "Walk-in during posted hours"}
+                                        {auction.inspection.availability === "by_appointment" &&
+                                            "By appointment"}
+                                        {auction.inspection.availability === "scheduled_only" &&
+                                            "Scheduled dates only"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Contact */}
+                            {(auction.inspection.contactName ||
+                                auction.inspection.contactPhone ||
+                                auction.inspection.contactEmail) && (
+                                    <div className="flex items-start gap-3">
+                                        <User
+                                            size={20}
+                                            className="flex-shrink-0 text-primary mt-0.5"
+                                            strokeWidth={1.5}
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-secondary text-xs mb-1">Contact</p>
+                                            {auction.inspection.contactName && (
+                                                <p className="text-base font-medium">
+                                                    {auction.inspection.contactName}
+                                                </p>
+                                            )}
+                                            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1">
+                                                {auction.inspection.contactPhone && (
+                                                    <a
+                                                        href={`tel:${auction.inspection.contactPhone}`}
+                                                        className="text-blue-600 hover:underline inline-flex items-center gap-1.5 text-sm"
+                                                    >
+                                                        <Phone size={14} />
+                                                        {auction.inspection.contactPhone}
+                                                    </a>
+                                                )}
+                                                {auction.inspection.contactEmail && (
+                                                    <a
+                                                        href={`mailto:${auction.inspection.contactEmail}`}
+                                                        className="text-blue-600 hover:underline inline-flex items-center gap-1.5 text-sm break-all"
+                                                    >
+                                                        <Mail size={14} />
+                                                        {auction.inspection.contactEmail}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                            {/* Address */}
+                            {auction.inspection.address && (
+                                <div className="flex items-start gap-3">
+                                    <MapPin
+                                        size={20}
+                                        className="flex-shrink-0 text-primary mt-0.5"
+                                        strokeWidth={1.5}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-secondary text-xs mb-1">Inspection Address</p>
+                                        <span
+                                            className="text-base text-black break-words"
+                                        >
+                                            {auction.inspection.address}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Hours */}
+                            {auction.inspection.hours && (
+                                <div className="flex items-start gap-3">
+                                    <CalendarDays
+                                        size={20}
+                                        className="flex-shrink-0 text-primary mt-0.5"
+                                        strokeWidth={1.5}
+                                    />
+                                    <div>
+                                        <p className="text-secondary text-xs mb-1">Inspection Hours</p>
+                                        <p className="text-base">{auction.inspection.hours}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Notes */}
+                            {auction.inspection.notes && (
+                                <div className="pt-3 border-t border-gray-200">
+                                    <p className="text-secondary text-xs mb-2">Notes for Buyers</p>
+                                    <p className="text-sm text-gray-700 whitespace-pre-line">
+                                        {auction.inspection.notes}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Features Section */}
                 {auction.features && (

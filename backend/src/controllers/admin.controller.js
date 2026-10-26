@@ -26,6 +26,41 @@ import {
 } from "../utils/auctionCommission.js";
 import { notifyUser } from '../services/notificationService.js';
 
+const parseInspectionInput = (raw) => {
+  if (raw === undefined || raw === null || raw === "") {
+    return { enabled: false };
+  }
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (!parsed || typeof parsed !== "object") return { enabled: false };
+
+    const availability = ["by_appointment", "walk_in", "scheduled_only"].includes(
+      parsed.availability
+    )
+      ? parsed.availability
+      : "by_appointment";
+
+    return {
+      enabled: !!parsed.enabled,
+      contactName:
+        typeof parsed.contactName === "string" ? parsed.contactName.trim() : "",
+      contactPhone:
+        typeof parsed.contactPhone === "string" ? parsed.contactPhone.trim() : "",
+      contactEmail:
+        typeof parsed.contactEmail === "string"
+          ? parsed.contactEmail.trim().toLowerCase()
+          : "",
+      address: typeof parsed.address === "string" ? parsed.address.trim() : "",
+      hours: typeof parsed.hours === "string" ? parsed.hours.trim() : "",
+      availability,
+      notes: typeof parsed.notes === "string" ? parsed.notes.trim() : "",
+    };
+  } catch (err) {
+    console.error("Failed to parse inspection payload:", err);
+    return { enabled: false };
+  }
+};
+
 export const getAdminStats = async (req, res) => {
   try {
     // Get total users count
@@ -1825,6 +1860,7 @@ export const updateAuction = async (req, res) => {
       documents: finalDocuments,
       serviceRecords: finalServiceRecords,
       status: newStatus,
+      inspection: parseInspectionInput(req.body.inspection),
     };
 
     // Add bid increment only for standard and reserve auctions

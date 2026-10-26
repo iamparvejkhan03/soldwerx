@@ -95,6 +95,24 @@ const auctionCommissionSchema = new Schema(
   { _id: false }
 );
 
+const inspectionSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    contactName: { type: String, trim: true, default: "" },
+    contactPhone: { type: String, trim: true, default: "" },
+    contactEmail: { type: String, trim: true, lowercase: true, default: "" },
+    address: { type: String, trim: true, default: "" },
+    hours: { type: String, trim: true, default: "" },
+    availability: {
+      type: String,
+      enum: ["by_appointment", "walk_in", "scheduled_only"],
+      default: "by_appointment",
+    },
+    notes: { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+);
+
 const auctionSchema = new Schema(
   {
     // Basic Auction Info
@@ -129,6 +147,10 @@ const auctionSchema = new Schema(
     videoLink: {
       type: String,
       trim: true,
+    },
+    inspection: {
+      type: inspectionSchema,
+      default: () => ({ enabled: false }),
     },
 
     // Features field (replaces avionics for cars)

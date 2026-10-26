@@ -24,6 +24,14 @@ export async function chargeWinnerDeposit(auctionId) {
             return { status: 'skipped', reason: 'no_price' };
         }
 
+        // Skip deposit for real-estate auctions
+        const isRealEstate = (auction.categories || []).some(
+            (c) => c.toLowerCase() === 'real-estate'
+        );
+        if (isRealEstate) {
+            return { status: 'skipped', reason: 'real_estate' };
+        }
+
         // Idempotency — already charged?
         const existing = await Deposit.findOne({
             auction: auctionId,

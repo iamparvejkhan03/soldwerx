@@ -29,7 +29,8 @@ import {
     ChevronRight,
     AlertCircle,
     Banknote,
-    Zap
+    Zap,
+    Eye
 } from "lucide-react";
 import { RTE, AdminContainer, AdminHeader, AdminSidebar, AiAuctionInputStep } from '../../components';
 import toast from 'react-hot-toast';
@@ -392,7 +393,17 @@ const CreateAuction = () => {
         mode: 'onChange',
         defaultValues: {
             auctionType: 'standard',
-            categories: []
+            categories: [],
+            inspection: {
+                enabled: false,
+                availability: "by_appointment",
+                contactName: "",
+                contactPhone: "",
+                contactEmail: "",
+                address: "",
+                hours: "",
+                notes: "",
+            },
         }
     });
 
@@ -739,6 +750,24 @@ const CreateAuction = () => {
             if (auctionData.specifications) {
                 formData.append('specifications', JSON.stringify(auctionData.specifications));
             }
+
+            const inspectionData = auctionData.inspection || {};
+            const inspectionEnabled = !!inspectionData.enabled;
+            formData.append(
+                "inspection",
+                JSON.stringify({
+                    enabled: inspectionEnabled,
+                    contactName: inspectionEnabled ? inspectionData.contactName || "" : "",
+                    contactPhone: inspectionEnabled ? inspectionData.contactPhone || "" : "",
+                    contactEmail: inspectionEnabled ? inspectionData.contactEmail || "" : "",
+                    address: inspectionEnabled ? inspectionData.address || "" : "",
+                    hours: inspectionEnabled ? inspectionData.hours || "" : "",
+                    availability: inspectionEnabled
+                        ? inspectionData.availability || "by_appointment"
+                        : "by_appointment",
+                    notes: inspectionEnabled ? inspectionData.notes || "" : "",
+                })
+            );
 
             if (auctionData.auctionType === 'giveaway' || auctionData.auctionType === 'buy_now') {
                 formData.append('startPrice', 0);
@@ -1119,6 +1148,162 @@ const CreateAuction = () => {
                                         </div>
 
                                         <hr className="my-6" />
+
+                                        {/* Inspection Details */}
+                                        <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                                                        <Eye size={18} />
+                                                        Inspection Details
+                                                        <span className="text-xs font-normal text-gray-500">(optional)</span>
+                                                    </h3>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Let buyers know when and where they can inspect this item before bidding.
+                                                    </p>
+                                                </div>
+                                                <label className="inline-flex items-center cursor-pointer select-none flex-shrink-0">
+                                                    <input
+                                                        type="checkbox"
+                                                        {...register("inspection.enabled")}
+                                                        className="sr-only"
+                                                    />
+                                                    <div
+                                                        className={`relative w-12 h-6 rounded-full transition-colors ${watch("inspection.enabled") ? "bg-green-500" : "bg-gray-300"
+                                                            }`}
+                                                    >
+                                                        <div
+                                                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${watch("inspection.enabled") ? "translate-x-6" : ""
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                </label>
+                                            </div>
+
+                                            {watch("inspection.enabled") && (
+                                                <div className="mt-4 space-y-4 border-t border-gray-200 pt-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionAvailability"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Availability
+                                                            </label>
+                                                            <select
+                                                                {...register("inspection.availability")}
+                                                                id="inspectionAvailability"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            >
+                                                                <option value="by_appointment">By appointment</option>
+                                                                <option value="walk_in">Walk-in during hours</option>
+                                                                <option value="scheduled_only">Scheduled dates only</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionHours"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Hours
+                                                            </label>
+                                                            <input
+                                                                {...register("inspection.hours")}
+                                                                id="inspectionHours"
+                                                                type="text"
+                                                                placeholder="e.g., Mon–Fri, 9am–5pm"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionContactName"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Contact Name
+                                                            </label>
+                                                            <input
+                                                                {...register("inspection.contactName")}
+                                                                id="inspectionContactName"
+                                                                type="text"
+                                                                placeholder="e.g., John Smith"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            />
+                                                        </div>
+
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionContactPhone"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Contact Phone
+                                                            </label>
+                                                            <input
+                                                                {...register("inspection.contactPhone")}
+                                                                id="inspectionContactPhone"
+                                                                type="tel"
+                                                                placeholder="e.g., +1 555 123 4567"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionContactEmail"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Contact Email
+                                                            </label>
+                                                            <input
+                                                                {...register("inspection.contactEmail")}
+                                                                id="inspectionContactEmail"
+                                                                type="email"
+                                                                placeholder="e.g., inspections@company.com"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            />
+                                                        </div>
+
+                                                        <div>
+                                                            <label
+                                                                htmlFor="inspectionAddress"
+                                                                className="block text-sm font-medium text-secondary mb-1"
+                                                            >
+                                                                Inspection Address
+                                                            </label>
+                                                            <input
+                                                                {...register("inspection.address")}
+                                                                id="inspectionAddress"
+                                                                type="text"
+                                                                placeholder="Street, city, state, country"
+                                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label
+                                                            htmlFor="inspectionNotes"
+                                                            className="block text-sm font-medium text-secondary mb-1"
+                                                        >
+                                                            Notes for Buyers
+                                                        </label>
+                                                        <textarea
+                                                            {...register("inspection.notes")}
+                                                            id="inspectionNotes"
+                                                            rows={3}
+                                                            placeholder="e.g., Bring photo ID. Safety boots required. Test drive available."
+                                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* Auction Type */}
                                         <div className="mb-6">
