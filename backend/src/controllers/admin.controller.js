@@ -960,7 +960,6 @@ export const approveAuction = async (req, res) => {
       );
     } else {
       auction.status = "active";
-      await auction.populate("seller", "email username companyName firstName lastName");
 
       // Fire and forget
       auctionListedEmail(auction, auction.seller).catch((error) =>

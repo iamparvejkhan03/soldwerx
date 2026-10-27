@@ -15,11 +15,11 @@ const navLinks = [
     //     href: '/',
     //     sublabel: null,
     // },
-    {
-        name: 'Buy',
-        href: '/auctions',
-        sublabel: 'Inventory',
-    },
+    // {
+    //     name: 'Buy',
+    //     href: '/auctions',
+    //     sublabel: 'Inventory',
+    // },
     {
         name: 'Sell',
         href: '/sell-with-us',
@@ -45,6 +45,7 @@ function Header() {
     const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
     const [isAuctionTypesOpen, setIsAuctionTypesOpen] = useState(false);
     const [isRealEstateOpen, setIsRealEstateOpen] = useState(false);
+    const [isEventsOpen, setIsEventsOpen] = useState(false);
     const [categories, setCategories] = useState([]);
     const [hoveredCategory, setHoveredCategory] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -53,10 +54,12 @@ function Header() {
     const { user } = useAuth();
     const auctionTypesRef = useRef(null);
     const realEstateRef = useRef(null);
+    const eventsRef = useRef(null);
 
     const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
     const [mobileAuctionTypesOpen, setMobileAuctionTypesOpen] = useState(false);
     const [mobileRealEstateOpen, setMobileRealEstateOpen] = useState(false);
+    const [mobileEventsOpen, setMobileEventsOpen] = useState(false);
     const [activeMobileCategory, setActiveMobileCategory] = useState(null);
 
     useEffect(() => {
@@ -73,6 +76,9 @@ function Header() {
             }
             if (realEstateRef.current && !realEstateRef.current.contains(event.target)) {
                 setIsRealEstateOpen(false);
+            }
+            if (eventsRef.current && !eventsRef.current.contains(event.target)) {
+                setIsEventsOpen(false);
             }
         };
 
@@ -157,6 +163,15 @@ function Header() {
         navigate(`/auctions?${params.toString()}`);
         setIsRealEstateOpen(false);
         setMobileRealEstateOpen(false);
+    };
+
+    const handleEventsSelect = (status, featured = false) => {
+        const params = new URLSearchParams();
+        if (status) params.set('status', status);
+        if (featured) params.set('featured', true);
+        navigate(`/events?${params.toString()}`);
+        setIsEventsOpen(false);
+        setMobileEventsOpen(false);
     };
 
     // Divider color depends on scroll state
@@ -312,6 +327,60 @@ function Header() {
                                                 <DollarSign size={18} />
                                                 <span>Sell a Property</span>
                                             </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </li>
+
+                        {/* Events dropdown */}
+                        <li className="flex items-center">
+                            <span className={dividerClass} />
+                            <div ref={eventsRef} className="relative">
+                                <button
+                                    onClick={() => setIsEventsOpen(!isEventsOpen)}
+                                    className={`group flex flex-col justify-center text-left cursor-pointer transition-colors ${isScrolled ? 'text-white hover:text-[#F5B51B]' : 'text-white hover:text-[#F5B51B]'}`}
+                                >
+                                    <span className={`${mainLabel} flex items-center gap-1`}>
+                                        Events
+                                        <ChevronDown size={13} strokeWidth={2.5} className={`transition-transform ${isEventsOpen ? 'rotate-180' : ''}`} />
+                                    </span>
+                                    <span className={subLabel}>Live & Upcoming</span>
+                                </button>
+
+                                {isEventsOpen && (
+                                    <div className="absolute top-full left-0 mt-4 w-64 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-50">
+                                        <button
+                                            onClick={() => handleEventsSelect('ongoing')}
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-gray-700"
+                                        >
+                                            <Gavel size={18} className="text-[#F5B51B]" />
+                                            <span>Live</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleEventsSelect('upcoming')}
+                                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-gray-700"
+                                        >
+                                            <Clock size={18} className="text-[#F5B51B]" />
+                                            <span>Upcoming</span>
+                                        </button>
+                                        <div className="border-t border-gray-100">
+                                            <button
+                                                onClick={() => handleEventsSelect(null, true)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-[#F5B51B] font-medium"
+                                            >
+                                                <Star size={18} />
+                                                <span>Featured Events</span>
+                                            </button>
+                                        </div>
+                                        <div className="border-t border-gray-100">
+                                            <button
+                                                onClick={() => handleEventsSelect(null)}
+                                                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#F5B51B]/10 transition-colors text-[#F5B51B] font-medium"
+                                            >
+                                                <ChevronRight size={18} />
+                                                <span>Browse All Events</span>
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -474,6 +543,21 @@ function Header() {
                             </button>
                         </li>
 
+                        {/* Mobile Events */}
+                        <li className="relative mx-5 py-2 mb-2">
+                            <button
+                                onClick={() => {
+                                    setMobileEventsOpen(true);
+                                    setIsMenuOpen(false);
+                                }}
+                                className="flex items-center gap-1"
+                            >
+                                Events
+                                <ChevronRight size={16} />
+                            </button>
+                        </li>
+
+                        {/* Mobile categories */}
                         <li className="relative mx-5 py-2 mb-2">
                             <button
                                 onClick={() => {
@@ -632,6 +716,75 @@ function Header() {
                                     className="flex items-center gap-2 text-[#F5B51B] font-medium"
                                 >
                                     <DollarSign size={16} /> Sell a Property
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* MOBILE EVENTS DRAWER */}
+                <div
+                    className={`fixed inset-0 bg-white z-[100] transform transition-transform duration-300 ${mobileEventsOpen ? "translate-x-0" : "translate-x-full"}`}
+                >
+                    <div className="h-full overflow-y-auto">
+                        <div className="flex items-center justify-between p-5 border-b">
+                            <h2 className="text-xl font-bold">Events</h2>
+                            <X
+                                className="cursor-pointer"
+                                onClick={() => setMobileEventsOpen(false)}
+                            />
+                        </div>
+
+                        <div className="p-5 space-y-3">
+                            <div
+                                onClick={() => {
+                                    handleEventsSelect('ongoing');
+                                    setMobileEventsOpen(false);
+                                }}
+                                className="flex items-center gap-4 p-4 border rounded-xl hover:border-[#F5B51B] cursor-pointer"
+                            >
+                                <div className="p-2 rounded-lg bg-gray-100">
+                                    <Gavel size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">Live</h3>
+                                    <p className="text-sm text-gray-500">Ongoing now</p>
+                                </div>
+                            </div>
+
+                            <div
+                                onClick={() => {
+                                    handleEventsSelect('upcoming');
+                                    setMobileEventsOpen(false);
+                                }}
+                                className="flex items-center gap-4 p-4 border rounded-xl hover:border-[#F5B51B] cursor-pointer"
+                            >
+                                <div className="p-2 rounded-lg bg-gray-100">
+                                    <Clock size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold">Upcoming</h3>
+                                    <p className="text-sm text-gray-500">Coming soon</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/events?featured=true"
+                                    onClick={() => setMobileEventsOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    Featured Events <ChevronRight size={16} />
+                                </Link>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-gray-200">
+                                <Link
+                                    to="/events"
+                                    onClick={() => setMobileEventsOpen(false)}
+                                    className="flex items-center gap-2 text-[#F5B51B] font-medium"
+                                >
+                                    Browse all events <ChevronRight size={16} />
                                 </Link>
                             </div>
                         </div>

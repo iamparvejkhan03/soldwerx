@@ -596,7 +596,7 @@ export const resetPassword = async (req, res) => {
 export const getBillingInfo = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "stripeCustomerId paymentMethodId cardLast4 cardBrand cardExpMonth cardExpYear isPaymentVerified userType"
+      "firstName lastName email stripeCustomerId paymentMethodId cardLast4 cardBrand cardExpMonth cardExpYear isPaymentVerified userType"
     );
 
     if (!user) {
@@ -610,6 +610,9 @@ export const getBillingInfo = async (req, res) => {
       stripeCustomerId: user.stripeCustomerId,
       isPaymentVerified: user.isPaymentVerified,
       userType: user.userType,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
     };
 
     // Add card details if available
@@ -899,7 +902,7 @@ export const completeCardUpdate = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Payment method updated successfully. ${cancelledCount} pending authorizations cancelled.`,
+      message: `Payment method updated successfully.`,
       data: {
         card: {
           last4: user.cardLast4,

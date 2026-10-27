@@ -1683,15 +1683,13 @@ export const placeBid = async (req, res) => {
     const { amount } = req.body;
     const bidder = req.user;
 
-    // Validate auction status
+    // Validate bidder account
     if (!bidder?.isActive) {
       return res.status(400).json({
         success: false,
         message: `Account is inactive. Can't place a bid.`,
       });
     }
-
-    // Validate auction status
     if (!bidder?.isVerified) {
       return res.status(400).json({
         success: false,
@@ -1699,16 +1697,7 @@ export const placeBid = async (req, res) => {
       });
     }
 
-    // Check if user is a bidder
-    // if (bidder.userType !== "bidder") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Only bidders can place bids",
-    //   });
-    // }
-
     const auction = await Auction.findById(id);
-
     if (!auction) {
       return res.status(404).json({
         success: false,
@@ -1716,104 +1705,111 @@ export const placeBid = async (req, res) => {
       });
     }
 
-    if (auction.currentBidder && auction.currentBidder.toString() === bidder._id.toString()) {
+    if (
+      auction.currentBidder &&
+      auction.currentBidder.toString() === bidder._id.toString()
+    ) {
       return res.status(400).json({
         success: false,
-        message: "You are already the highest bidder. You cannot outbid yourself."
+        message: "You are already the highest bidder. You cannot outbid yourself.",
       });
     }
 
-    // Store previous highest bidder before placing new bid
     const previousHighestBidder = auction.currentBidder;
-    const previousBidders = [
-      ...new Set(auction.bids.map((bid) => bid.bidder.toString())),
-    ];
 
-    // Place bid using the model method
+    // Place bid, then run proxy engine — proxies may re-bid and change the winner
     await auction.placeBid(bidder._id, bidder.username, parseFloat(amount));
-
-    // Trigger proxy bid processing
     await processProxyBids(auction._id);
 
-    // Populate the updated auction
-    await auction.populate("currentBidder", "username firstName email userType emailPreferences");
-    await auction.populate("seller", "username firstName email userType emailPreferences");
+    // ⚠️ CRITICAL: re-fetch — proxy bids updated the DB but NOT our in-memory copy
+    const finalAuction = await Auction.findById(auction._id)
+      .populate("currentBidder", "username firstName email userType emailPreferences")
+      .populate("seller", "username firstName email userType emailPreferences");
 
     broadcastAuctionChange(auction._id);
 
     res.status(200).json({
       success: true,
       message: "Bid placed successfully",
-      data: { auction },
+      data: { auction: finalAuction },
     });
 
     // ─── In-app notifications ────────────────────────────────
     const amountNum = parseFloat(amount);
-    const auctionUrl = `/auction/${auction._id}`;
+    const auctionUrl = `/auction/${finalAuction._id}`;
 
-    // Notify the bidder
-    notifyUser(bidder._id, 'BID_CONFIRMED', {
-      title: 'Bid placed successfully',
-      message: `Your bid of $${amountNum.toLocaleString()} on "${auction.title}" is confirmed.`,
-      actionUrl: auctionUrl,
-      relatedEntity: { type: 'Auction', id: auction._id },
-      metadata: { amount: amountNum },
-    }).catch((err) => console.error('notify BID_CONFIRMED:', err));
+    // 3. OUTBID — computed from FINAL state (post-proxy), not the stale snapshot
+    const rawWinner =
+      finalAuction.currentBidder?._id ?? finalAuction.currentBidder;
+    const finalWinnerId = rawWinner ? rawWinner.toString() : null;
 
-    // Notify the seller
-    notifyUser(auction.seller._id || auction.seller, 'NEW_BID', {
-      title: `New bid on "${auction.title}"`,
-      message: `$${amountNum.toLocaleString()} from ${bidder.username}`,
-      actionUrl: `/seller/auctions/all`,
-      relatedEntity: { type: 'Auction', id: auction._id },
-      metadata: { amount: amountNum, bidderId: bidder._id, bidderUsername: bidder.username },
-    }).catch((err) => console.error('notify NEW_BID:', err));
+    const allBidders = [
+      ...new Set(
+        (finalAuction.bids || [])
+          .map((b) => {
+            const raw = b.bidder?._id ?? b.bidder;
+            return raw ? raw.toString() : null;
+          })
+          .filter(Boolean)
+      ),
+    ];
 
-    // Notify everyone who was previously in the running (except the new bidder)
-    const othersToNotify = (previousBidders || []).filter(
-      (id) => id?.toString() !== bidder._id.toString()
-    );
-    if (othersToNotify.length > 0) {
-      createBulkNotifications(othersToNotify, 'OUTBID', {
-        title: `You've been outbid on "${auction.title}"`,
-        message: `New highest bid: $${amountNum.toLocaleString()}`,
+    const outbidRecipients = allBidders.filter((uid) => uid !== finalWinnerId);
+
+    if (outbidRecipients.length > 0) {
+      createBulkNotifications(outbidRecipients, 'OUTBID', {
+        title: `You've been outbid on "${finalAuction.title}"`,
+        message: `New highest bid: $${(finalAuction.currentPrice || 0).toLocaleString()}`,
         actionUrl: auctionUrl,
-        relatedEntity: { type: 'Auction', id: auction._id },
-        metadata: { newHighestBid: amountNum },
-        dedupKey: `outbid:${auction._id}`, // collapse proxy cascades
+        relatedEntity: { type: 'Auction', id: finalAuction._id },
+        metadata: { newHighestBid: finalAuction.currentPrice },
+        dedupKey: `outbid:${finalAuction._id}`, // collapse proxy cascades
       }).catch((err) => console.error('notify OUTBID:', err));
     }
 
-    // Send bid confirmation to the current bidder
-    bidConfirmationEmail(
-      bidder,
-      auction,
-      amount,
-      auction.currentPrice,
-    ).catch((err) =>
-      console.error(`Failed to send bid confimation email to ${bidder?.email}:`, err)
-    );
+    // 1. Confirm the manual bidder's action (always — they DID place a valid bid)
+    notifyUser(bidder._id, 'BID_CONFIRMED', {
+      title: 'Bid placed successfully',
+      message: `Your bid of $${amountNum.toLocaleString()} on "${finalAuction.title}" is confirmed.`,
+      actionUrl: auctionUrl,
+      relatedEntity: { type: 'Auction', id: finalAuction._id },
+      metadata: { amount: amountNum },
+    }).catch((err) => console.error('notify BID_CONFIRMED:', err));
 
-    newBidNotificationEmail(
-      auction.seller,
-      auction,
-      parseFloat(amount),
-      bidder,
-    ).catch((err) =>
-      console.error(`Failed to send new bid notification email to seller:`, err)
-    );
+    // 2. Notify the seller
+    notifyUser(finalAuction.seller._id || finalAuction.seller, 'NEW_BID', {
+      title: `New bid on "${finalAuction.title}"`,
+      message: `$${amountNum.toLocaleString()} from ${bidder.username}`,
+      actionUrl: `/seller/auctions/all`,
+      relatedEntity: { type: 'Auction', id: finalAuction._id },
+      metadata: {
+        amount: amountNum,
+        bidderId: bidder._id,
+        bidderUsername: bidder.username,
+      },
+    }).catch((err) => console.error('notify NEW_BID:', err));
 
-    // Send outbid notifications to previous bidders (except current bidder)
-    if (
-      previousHighestBidder &&
-      previousHighestBidder.toString() !== bidder._id.toString()
-    ) {
+    // 4. Emails — fire-and-forget
+    bidConfirmationEmail(bidder, finalAuction, amountNum, finalAuction.currentPrice)
+      .catch((err) =>
+        console.error(`Failed to send bid confirmation email to ${bidder?.email}:`, err)
+      );
+
+    newBidNotificationEmail(finalAuction.seller, finalAuction, amountNum, bidder)
+      .catch((err) =>
+        console.error(`Failed to send new bid notification email to seller:`, err)
+      );
+
+    // Outbid emails — pass the FINAL outbidRecipients list instead of the stale
+    // previousBidders snapshot. The batched flusher also re-fetches after 3s
+    // as a second safety net.
+    if (outbidRecipients.length > 0) {
       sendOutbidNotifications(
-        auction,
+        finalAuction,
         previousHighestBidder,
-        previousBidders,
-        bidder._id.toString(),
-        amount,
+        outbidRecipients,
+        finalWinnerId || bidder._id.toString(),
+        finalAuction.currentPrice || amountNum
       );
     }
   } catch (error) {
@@ -2901,65 +2897,33 @@ export const placeProxyBid = async (req, res) => {
     const { maxAmount } = req.body;
     const bidder = req.user;
 
-    // --- Validation ---
     if (!bidder?.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: "Account is inactive. Can't place a proxy bid.",
-      });
+      return res.status(400).json({ success: false, message: "Account is inactive. Can't place a proxy bid." });
     }
-
     if (!bidder?.isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: "Account is not verified. Can't place a proxy bid.",
-      });
+      return res.status(400).json({ success: false, message: "Account is not verified. Can't place a proxy bid." });
     }
 
     const auction = await Auction.findById(id);
+    if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
 
-    if (!auction) {
-      return res.status(404).json({
-        success: false,
-        message: "Auction not found",
-      });
-    }
-
-    // Check auction state
     if (auction.status !== "active") {
-      return res.status(400).json({
-        success: false,
-        message: "Auction is not active",
-      });
+      return res.status(400).json({ success: false, message: "Auction is not active" });
     }
-
     if (new Date() >= auction.endDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Auction has ended",
-      });
+      return res.status(400).json({ success: false, message: "Auction has ended" });
     }
-
     if (auction.seller.toString() === bidder._id.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: "You can't place a proxy bid on your own auction",
-      });
+      return res.status(400).json({ success: false, message: "You can't place a proxy bid on your own auction" });
     }
 
-    // Check if user already has an active proxy bid
     const existingProxyBid = auction.proxyBids.find(
       (pb) => pb.bidder.toString() === bidder._id.toString() && pb.isActive
     );
-
     if (existingProxyBid) {
-      return res.status(400).json({
-        success: false,
-        message: "You already have an active proxy bid on this auction",
-      });
+      return res.status(400).json({ success: false, message: "You already have an active proxy bid on this auction" });
     }
 
-    // Validate maxAmount
     const minBid = auction.bidCount === 0
       ? auction.startPrice
       : auction.currentPrice + auction.bidIncrement;
@@ -2971,7 +2935,6 @@ export const placeProxyBid = async (req, res) => {
       });
     }
 
-    // --- Create proxy bid ---
     const proxyBid = {
       bidder: bidder._id,
       bidderUsername: bidder.username,
@@ -2985,70 +2948,42 @@ export const placeProxyBid = async (req, res) => {
     auction.proxyBids.push(proxyBid);
     await auction.save();
 
-    // --- Immediately place the initial bid if needed ---
-    // Check if this proxy bid can become the current highest bid
-    // const currentHighest = auction.currentBidder
-    //   ? auction.currentPrice
-    //   : auction.startPrice - auction.bidIncrement; // simulate no bid
-
-    // let nextBid = auction.bidCount === 0
-    //   ? auction.startPrice
-    //   : auction.currentPrice + auction.bidIncrement;
-
-    // if (proxyBid.maxAmount >= nextBid) {
-    //   // Place the bid using the service function
-    //   await placeBidDirect(auction._id, bidder._id, bidder.username, nextBid, proxyBid._id);
-    // }
-
-    // // --- Trigger processing of all proxy bids ---
-    // await processProxyBids(auction._id);
-
-    // --- Trigger processing of all proxy bids ---
-    // The newly-added proxy bid is already in auction.proxyBids, so
-    // processProxyBids will pick it up and place the initial bid if its
-    // max allows. Doing it here instead would bypass the outbid-notification
-    // logic that lives inside processProxyBids.
+    // Capture state BEFORE the cascade runs
     const priceBeforeProxy = auction.currentPrice;
+    const previousHighestBidder = auction.currentBidder
+      ? auction.currentBidder.toString()
+      : null;
 
     await processProxyBids(auction._id);
 
-    // --- Fetch updated auction ---
     const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email")
-      .populate("currentBidder", "username firstName lastName email")
-      .populate("bids.bidder", "username firstName lastName email");
+      .populate("seller", "username firstName lastName email phone userType emailPreferences")
+      .populate("currentBidder", "username firstName lastName email phone userType emailPreferences")
+      .populate("bids.bidder", "username firstName lastName email phone userType emailPreferences");
 
     broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
       message: "Proxy bid placed successfully",
-      data: {
-        auction: updatedAuction,
-        proxyBid,
-      },
+      data: { auction: updatedAuction, proxyBid },
     });
 
-    // 1) If this user is now the highest bidder, send them the same
-    //    confirmation a manual bidder would receive. Outbid users are
-    //    handled separately inside processProxyBids.
+    // ─── Post-cascade state ─────────────────────────────────
     const bidderIdStr = bidder._id.toString();
+    const auctionUrl = `/auction/${id}`;
+    const rawWinner = updatedAuction.currentBidder?._id ?? updatedAuction.currentBidder;
+    const finalWinnerId = rawWinner ? rawWinner.toString() : null;
+    const isHighest = finalWinnerId === bidderIdStr;
+    const priceChanged = priceBeforeProxy !== updatedAuction.currentPrice;
+
     const userHighestBid = (updatedAuction.bids || []).reduce((max, b) => {
       const rawId = b.bidder?._id ?? b.bidder;
       if (!rawId || rawId.toString() !== bidderIdStr) return max;
       return b.amount > max ? b.amount : max;
     }, 0);
 
-    const isHighest =
-      updatedAuction.currentBidder &&
-      (updatedAuction.currentBidder._id?.toString?.() ||
-        updatedAuction.currentBidder.toString()) === bidderIdStr;
-
-    const priceChanged = updatedAuction.currentPrice > priceBeforeProxy;
-
-    // ─── In-app notifications ────────────────────────────────
-    const auctionUrl = `/auction/${id}`;
-
+    // 1. Proxy action confirmation — always fires for the placer
     notifyUser(bidder._id, 'PROXY_BID_PLACED', {
       title: 'Proxy bid placed',
       message: `Max bid of $${parseFloat(maxAmount).toLocaleString()} is active on "${updatedAuction.title}".`,
@@ -3057,35 +2992,72 @@ export const placeProxyBid = async (req, res) => {
       metadata: { maxAmount: parseFloat(maxAmount), isHighest },
     }).catch((err) => console.error('notify PROXY_BID_PLACED:', err));
 
-    // If somebody else was displaced, notify them (deduped against cascade)
-    if (priceBeforeProxy !== updatedAuction.currentPrice && updatedAuction.currentBidder) {
-      const currentIdStr = updatedAuction.currentBidder._id?.toString?.() ||
-        updatedAuction.currentBidder.toString();
-      const displaced = (updatedAuction.bids || [])
-        .map((b) => b.bidder?._id?.toString?.() || b.bidder?.toString?.() || b.bidder)
-        .filter((uid) => uid && uid !== currentIdStr && uid !== bidder._id.toString());
-      const unique = [...new Set(displaced)];
-      if (unique.length > 0) {
-        createBulkNotifications(unique, 'OUTBID', {
+    // Seller — only when the cascade moved the price
+    if (priceChanged) {
+      notifyUser(updatedAuction.seller._id || updatedAuction.seller, 'NEW_BID', {
+        title: `New bid on "${updatedAuction.title}"`,
+        message: `$${(updatedAuction.currentPrice || 0).toLocaleString()} from ${bidder.username || 'a bidder'}`,
+        actionUrl: `/seller/auctions/all`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: updatedAuction.currentPrice, bidderUsername: bidder.username },
+      }).catch((err) => console.error('notify NEW_BID (proxy):', err));
+
+      newBidNotificationEmail(updatedAuction.seller, updatedAuction, updatedAuction.currentPrice, req.user)
+        .catch((err) => console.error('newBidNotificationEmail (proxy):', err));
+    }
+
+    // 2. Bid confirmation — only if the placer is the CURRENT winner
+    if (isHighest && userHighestBid > 0) {
+      notifyUser(bidder._id, 'BID_CONFIRMED', {
+        title: `You're the highest bidder`,
+        message: `$${userHighestBid.toLocaleString()} on "${updatedAuction.title}".`,
+        actionUrl: auctionUrl,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: userHighestBid, currentPrice: updatedAuction.currentPrice },
+      }).catch((err) => console.error('notify BID_CONFIRMED (proxy win):', err));
+
+      bidConfirmationEmail(
+        bidder,
+        updatedAuction,
+        userHighestBid,
+        updatedAuction.currentPrice
+      ).catch((err) => console.error("Proxy bid confirmation email failed:", err));
+    }
+
+    // 3. OUTBID — everyone displaced by the cascade (winner excluded)
+    if (priceChanged && finalWinnerId) {
+      const allBidders = [
+        ...new Set(
+          (updatedAuction.bids || [])
+            .map((b) => {
+              const raw = b.bidder?._id ?? b.bidder;
+              return raw ? raw.toString() : null;
+            })
+            .filter(Boolean)
+        ),
+      ];
+
+      const outbidRecipients = allBidders.filter((uid) => uid !== finalWinnerId);
+
+      if (outbidRecipients.length > 0) {
+        createBulkNotifications(outbidRecipients, 'OUTBID', {
           title: `You've been outbid on "${updatedAuction.title}"`,
-          message: `New highest bid: $${updatedAuction.currentPrice.toLocaleString()}`,
+          message: `New highest bid: $${(updatedAuction.currentPrice || 0).toLocaleString()}`,
           actionUrl: auctionUrl,
           relatedEntity: { type: 'Auction', id: updatedAuction._id },
           metadata: { newHighestBid: updatedAuction.currentPrice },
           dedupKey: `outbid:${updatedAuction._id}`,
         }).catch((err) => console.error('notify OUTBID (proxy):', err));
-      }
-    }
 
-    if (isHighest && priceChanged && userHighestBid > 0) {
-      bidConfirmationEmail(
-        bidder,
-        updatedAuction,
-        userHighestBid,               // ← user's real highest bid
-        updatedAuction.currentPrice,  // ← current auction price
-      ).catch((err) =>
-        console.error("Proxy bid confirmation email failed:", err)
-      );
+        // Email batcher — re-fetches after 3s and drops anyone who re-won
+        sendOutbidNotifications(
+          updatedAuction,
+          previousHighestBidder,
+          outbidRecipients,
+          finalWinnerId,
+          updatedAuction.currentPrice
+        );
+      }
     }
 
   } catch (error) {
@@ -3354,64 +3326,36 @@ export const updateProxyBid = async (req, res) => {
     const { maxAmount } = req.body;
     const userId = req.user._id;
 
-    // Basic validation
     if (!maxAmount || parseFloat(maxAmount) <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid maximum bid amount is required.",
-      });
+      return res.status(400).json({ success: false, message: "Valid maximum bid amount is required." });
     }
 
     const auction = await Auction.findById(id);
-    if (!auction) {
-      return res.status(404).json({
-        success: false,
-        message: "Auction not found",
-      });
-    }
+    if (!auction) return res.status(404).json({ success: false, message: "Auction not found" });
 
-    // Check auction state
     if (auction.status !== "active") {
-      return res.status(400).json({
-        success: false,
-        message: "Auction is not active",
-      });
+      return res.status(400).json({ success: false, message: "Auction is not active" });
     }
-
     if (new Date() >= auction.endDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Auction has ended",
-      });
+      return res.status(400).json({ success: false, message: "Auction has ended" });
     }
-
     if (auction.seller.toString() === userId.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: "You can't have a proxy bid on your own auction",
-      });
+      return res.status(400).json({ success: false, message: "You can't have a proxy bid on your own auction" });
     }
 
-    // Find existing proxy bid for this user
     const proxyBid = auction.proxyBids.find(
       (pb) => pb.bidder.toString() === userId.toString()
     );
-
     if (!proxyBid) {
-      return res.status(404).json({
-        success: false,
-        message: "You don't have a proxy bid on this auction.",
-      });
+      return res.status(404).json({ success: false, message: "You don't have a proxy bid on this auction." });
     }
 
-    // Compute minimum bid required to be competitive
     const minBid = auction.bidCount === 0
       ? auction.startPrice
       : auction.currentPrice + auction.bidIncrement;
 
     const newMax = parseFloat(maxAmount);
 
-    // Validate new max
     if (newMax < minBid) {
       return res.status(400).json({
         success: false,
@@ -3419,7 +3363,6 @@ export const updateProxyBid = async (req, res) => {
       });
     }
 
-    // Optional: if proxy bid is active and currentBid is already higher than newMax, reject
     if (proxyBid.isActive && proxyBid.currentBid > newMax) {
       return res.status(400).json({
         success: false,
@@ -3427,72 +3370,126 @@ export const updateProxyBid = async (req, res) => {
       });
     }
 
-    // Update the proxy bid
     proxyBid.maxAmount = newMax;
-    proxyBid.isActive = true; // ensure active (in case it was cancelled)
+    proxyBid.isActive = true;
     proxyBid.updatedAt = new Date();
-
-    // If the new max is higher and the user is not currently the highest, we might need to place a bid.
     await auction.save();
 
+    // Capture state BEFORE the cascade runs
     const priceBeforeProxy = auction.currentPrice;
+    const previousHighestBidder = auction.currentBidder
+      ? auction.currentBidder.toString()
+      : null;
 
-    // Trigger proxy bid processing to potentially place a higher bid immediately
     await processProxyBids(auction._id);
 
-    // Fetch updated auction with populated fields for response
     const updatedAuction = await Auction.findById(id)
-      .populate("seller", "username firstName lastName email")
-      .populate("currentBidder", "username firstName lastName email")
-      .populate("bids.bidder", "username firstName lastName email");
+      .populate("seller", "username firstName lastName email phone userType emailPreferences")
+      .populate("currentBidder", "username firstName lastName email phone userType emailPreferences")
+      .populate("bids.bidder", "username firstName lastName email phone userType emailPreferences");
 
     broadcastAuctionChange(id);
 
     res.status(200).json({
       success: true,
       message: "Proxy bid updated successfully.",
-      data: {
-        auction: updatedAuction,
-        proxyBid: proxyBid,
-      },
+      data: { auction: updatedAuction, proxyBid },
     });
 
-    // --- Email (fire-and-forget) ---
-    // If the user is still/now the highest bidder, confirm.
-
+    // ─── Post-cascade state ─────────────────────────────────
     const userIdStr = userId.toString();
+    const auctionUrl = `/auction/${id}`;
+    const rawWinner = updatedAuction.currentBidder?._id ?? updatedAuction.currentBidder;
+    const finalWinnerId = rawWinner ? rawWinner.toString() : null;
+    const isHighest = finalWinnerId === userIdStr;
+    const priceChanged = priceBeforeProxy !== updatedAuction.currentPrice;
+
     const userHighestBid = (updatedAuction.bids || []).reduce((max, b) => {
       const rawId = b.bidder?._id ?? b.bidder;
       if (!rawId || rawId.toString() !== userIdStr) return max;
       return b.amount > max ? b.amount : max;
     }, 0);
 
-    const isHighest =
-      updatedAuction.currentBidder &&
-      (updatedAuction.currentBidder._id?.toString?.() ||
-        updatedAuction.currentBidder.toString()) === userIdStr;
-
+    // 1. Proxy action confirmation — always fires for the updater
     notifyUser(userId, 'PROXY_BID_PLACED', {
       title: 'Proxy bid updated',
-      message: `Your max bid is now $${parseFloat(maxAmount).toLocaleString()} on "${updatedAuction.title}".`,
-      actionUrl: `/auction/${id}`,
+      message: `Your max bid is now $${newMax.toLocaleString()} on "${updatedAuction.title}".`,
+      actionUrl: auctionUrl,
       relatedEntity: { type: 'Auction', id: updatedAuction._id },
-      metadata: { maxAmount: parseFloat(maxAmount) },
+      metadata: { maxAmount: newMax, isHighest },
     }).catch((err) => console.error('notify PROXY_BID_PLACED (update):', err));
 
+    if (priceChanged) {
+      notifyUser(updatedAuction.seller._id || updatedAuction.seller, 'NEW_BID', {
+        title: `New bid on "${updatedAuction.title}"`,
+        message: `$${(updatedAuction.currentPrice || 0).toLocaleString()} from ${req.user.username || 'a bidder'}`,
+        actionUrl: `/seller/auctions/all`,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: updatedAuction.currentPrice, bidderUsername: req.user.username },
+      }).catch((err) => console.error('notify NEW_BID (proxy update):', err));
+
+      newBidNotificationEmail(updatedAuction.seller, updatedAuction, updatedAuction.currentPrice, req.user)
+        .catch((err) => console.error('newBidNotificationEmail (proxy):', err));
+    }
+
+    // 2. Bid confirmation — only if the updater is the CURRENT winner
     if (isHighest && userHighestBid > 0) {
-      const populatedUser = await User.findById(userId).select("email phone username userType emailPreferences");
+      notifyUser(userId, 'BID_CONFIRMED', {
+        title: `You're the highest bidder`,
+        message: `$${userHighestBid.toLocaleString()} on "${updatedAuction.title}".`,
+        actionUrl: auctionUrl,
+        relatedEntity: { type: 'Auction', id: updatedAuction._id },
+        metadata: { amount: userHighestBid, currentPrice: updatedAuction.currentPrice },
+      }).catch((err) => console.error('notify BID_CONFIRMED (proxy update):', err));
+
+      const populatedUser = await User.findById(userId).select(
+        "email phone username userType emailPreferences"
+      );
       if (populatedUser?.email) {
         bidConfirmationEmail(
           populatedUser,
           updatedAuction,
           userHighestBid,
-          updatedAuction.currentPrice,
-        ).catch((err) =>
-          console.error("Proxy bid update confirmation email failed:", err)
+          updatedAuction.currentPrice
+        ).catch((err) => console.error("Proxy bid update confirmation email failed:", err));
+      }
+    }
+
+    // 3. OUTBID — everyone displaced by the cascade (winner excluded)
+    if (priceChanged && finalWinnerId) {
+      const allBidders = [
+        ...new Set(
+          (updatedAuction.bids || [])
+            .map((b) => {
+              const raw = b.bidder?._id ?? b.bidder;
+              return raw ? raw.toString() : null;
+            })
+            .filter(Boolean)
+        ),
+      ];
+
+      const outbidRecipients = allBidders.filter((uid) => uid !== finalWinnerId);
+
+      if (outbidRecipients.length > 0) {
+        createBulkNotifications(outbidRecipients, 'OUTBID', {
+          title: `You've been outbid on "${updatedAuction.title}"`,
+          message: `New highest bid: $${(updatedAuction.currentPrice || 0).toLocaleString()}`,
+          actionUrl: auctionUrl,
+          relatedEntity: { type: 'Auction', id: updatedAuction._id },
+          metadata: { newHighestBid: updatedAuction.currentPrice },
+          dedupKey: `outbid:${updatedAuction._id}`,
+        }).catch((err) => console.error('notify OUTBID (proxy-update):', err));
+
+        sendOutbidNotifications(
+          updatedAuction,
+          previousHighestBidder,
+          outbidRecipients,
+          finalWinnerId,
+          updatedAuction.currentPrice
         );
       }
     }
+
   } catch (error) {
     console.error("Update proxy bid error:", error);
     res.status(500).json({

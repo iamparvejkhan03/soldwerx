@@ -62,6 +62,16 @@ const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentInten
         );
     }
 
+    // Calculate total
+    const calculateTotal = (auction) => {
+        if (!auction) return 0;
+        const winningBid = auction.finalPrice || auction.currentPrice || auction.finalBid || 0;
+        const buyerFee = auction.buyerFeeAmount || 0;
+        const tax = auction.taxAmount || 0;
+        const depositCharged = (auction?.depositStatus == "charged" || auction?.depositStatus == "credited") ? auction?.depositAmount : 0;
+        return winningBid - depositCharged + buyerFee + tax;
+    };
+
     return createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
@@ -79,8 +89,8 @@ const CardPaymentModal = ({ isOpen, onClose, auction, clientSecret, paymentInten
                         <p className="text-sm text-gray-600">Amount to pay:</p>
                         <p className="text-2xl font-bold text-green-600">
                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-                                (auction.finalPrice || auction.finalBid || auction.winningBid || 0) + (auction.buyerFeeAmount || 0) + (auction.taxAmount || 0) - (auction?.depositAmount || 0)
-                            )}
+                                calculateTotal(auction)
+                            )} 
                         </p>
                         {auction?.depositStatus === 'charged' && auction?.depositAmount > 0 && <p className="text-xs text-gray-500">Credited deposit {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(auction.depositAmount || 0)}</p>}
                         

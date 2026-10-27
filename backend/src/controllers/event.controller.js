@@ -250,9 +250,12 @@ export const getEvents = async (req, res) => {
         }
 
         // ---- Featured filter (boolean) ----
-        // Featured filter
-        if (featured === "true") filter.featured = true;
-        else if (featured === "false") filter.featured = false;
+        /// ---- Featured filter (boolean) ----
+        if (featured === "true") {
+            conditions.push({ featured: true });
+        } else if (featured === "false") {
+            conditions.push({ featured: false });
+        }
 
         // ---- User-scope filter ----
         if (req.user) {

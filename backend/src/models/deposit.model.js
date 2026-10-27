@@ -32,6 +32,8 @@ const depositSchema = new Schema(
                 'processing_failed',
                 'canceled',
                 'refunded',
+                'failed',
+                'charged',
             ],
             default: 'created',
         },

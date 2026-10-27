@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Gavel, Users } from "lucide-react";
+import { useMemo } from "react";
 
 const EventCard = ({ event }) => {
     const getStatusBadge = (status, eventDate, endDate) => {
@@ -33,6 +34,12 @@ const EventCard = ({ event }) => {
             return { class: "bg-orange-100 text-orange-800", text: "Featured" };
         }
     };
+
+    const plainDescription = useMemo(() => {
+        if (!event.description) return "";
+        const doc = new DOMParser().parseFromString(event.description, "text/html");
+        return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+    }, [event.description]);
 
     const statusConfig = getStatusBadge(event.status, event.eventDate, event.endDate);
     const featuredConfig = getFeaturedBadge(event?.featured);
@@ -99,8 +106,7 @@ const EventCard = ({ event }) => {
                     </h3>
 
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {event.description?.replace(/<[^>]*>/g, '').substring(0, 100)}
-                        {event.description?.replace(/<[^>]*>/g, '').length > 100 ? '...' : ''}
+                        {plainDescription || "No description provided."}
                     </p>
 
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">

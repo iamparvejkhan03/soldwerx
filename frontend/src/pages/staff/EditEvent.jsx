@@ -791,7 +791,7 @@ function EditEvent() {
                                             {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                             <div>
                                                 <label htmlFor="location" className="block text-sm font-medium text-secondary mb-1">
                                                     Location
@@ -810,12 +810,12 @@ function EditEvent() {
 
                                             <div>
                                                 <label htmlFor="eventDate" className="block text-sm font-medium text-secondary mb-1">
-                                                    Event Date & Time *
+                                                    Start Date & Time *
                                                 </label>
                                                 <div className="relative">
                                                     <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                                     <input
-                                                        {...register('eventDate', { required: 'Event date is required' })}
+                                                        {...register('eventDate', { required: 'Start date is required' })}
                                                         id="eventDate"
                                                         type="datetime-local"
                                                         className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -823,22 +823,21 @@ function EditEvent() {
                                                 </div>
                                                 {errors.eventDate && <p className="text-red-500 text-sm mt-1">{errors.eventDate.message}</p>}
                                             </div>
-                                        </div>
 
-                                        <div className="mb-6">
-                                            <label htmlFor="endDate" className="block text-sm font-medium text-secondary mb-1">
-                                                End Date & Time (Optional)
-                                            </label>
-                                            <div className="relative">
-                                                <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                                <input
-                                                    {...register('endDate')}
-                                                    id="endDate"
-                                                    type="datetime-local"
-                                                    className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                                                />
+                                            <div>
+                                                <label htmlFor="endDate" className="block text-sm font-medium text-secondary mb-1">
+                                                    End Date & Time *
+                                                </label>
+                                                <div className="relative">
+                                                    <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        {...register('endDate', { required: 'End date is required' })}
+                                                        id="endDate"
+                                                        type="datetime-local"
+                                                        className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                                                    />
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-secondary mt-1">If not provided, event ends on the event date</p>
                                         </div>
 
                                         <div className="mb-6">
@@ -1008,7 +1007,7 @@ function EditEvent() {
                                                                 <p className="font-medium">{watch('location') || 'Not specified'}</p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs text-secondary">Event Date</p>
+                                                                <p className="text-xs text-secondary">Start Date</p>
                                                                 <p className="font-medium">
                                                                     {watch('eventDate') ? new Date(watch('eventDate')).toLocaleString() : 'Not provided'}
                                                                 </p>

@@ -118,19 +118,19 @@ const RAW_CATEGORIES = {
                 default: true,
                 audience: "seller"
             },
-            giveaway_entered: {
-                label: "Giveaway entry confirmed",
-                description: "Confirmation when you enter a giveaway",
-                default: true,
-                audience: "bidder"
-            },
-            giveaway_won: {
-                label: "Giveaway winner",
-                description: "When you win a giveaway",
-                default: true,
-                critical: true,
-                audience: "bidder"
-            },
+            // giveaway_entered: {
+            //     label: "Giveaway entry confirmed",
+            //     description: "Confirmation when you enter a giveaway",
+            //     default: true,
+            //     audience: "bidder"
+            // },
+            // giveaway_won: {
+            //     label: "Giveaway winner",
+            //     description: "When you win a giveaway",
+            //     default: true,
+            //     critical: true,
+            //     audience: "bidder"
+            // },
         },
     },
 
@@ -334,8 +334,8 @@ const RAW_CATEGORIES = {
     },
 
     admin: {
-        label: "Admin & Staff",
-        description: "Operational notifications — visible to admins and staff only",
+        label: "Admin",
+        description: "Operational notifications — visible to admins only",
         audience: "admin",
         emails: {
             new_user_registered: {

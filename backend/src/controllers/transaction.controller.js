@@ -501,6 +501,11 @@ export const getTransactionStats = async (req, res) => {
                     totalTransactions: combinedCount,
                     averageTransaction: combinedAvg
                 },
+                deposit: {
+                    totalRevenue: depositOverall?.totalRevenue,
+                    totalTransactions: depositOverall?.totalTransactions,
+                    averageTransaction: depositOverall?.averageTransaction
+                },
                 recentActivity,
                 statusDistribution,
                 topBidders

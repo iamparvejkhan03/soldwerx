@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoadingSpinner, LowerReserveModal, SellerContainer, SellerHeader, SellerSidebar } from "../../components";
-import { Gavel, Eye, Award, BarChart3, TrendingUp, DollarSign, Clock, Search, Filter, SortAsc, Users, MoreVertical, Loader } from "lucide-react";
+import { Gavel, Eye, Award, BarChart3, TrendingUp, DollarSign, Clock, Search, Filter, SortAsc, Users, MoreVertical, Loader, Star } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
@@ -200,20 +200,46 @@ function AllAuctions() {
         });
 
     // Helper functions
-    const getStatusBadge = (auction) => {
-        const now = new Date();
-        const end = new Date(auction.endDate);
-        const diffHours = (end - now) / (1000 * 60 * 60);
+    const getStatusBadge = (status, endDate, auctionType) => {
+        const config = {
+            active: {
+                color: "bg-green-100 text-green-800",
+                text: new Date(endDate) > new Date() ? "Active" : auctionType === "buy_now" ? "active" : "Ending Soon"
+            },
+            draft: { color: "bg-amber-100 text-amber-800", text: "Pending" },
+            approved: { color: "bg-green-100 text-green-800", text: "Approved" },
+            ended: { color: "bg-gray-100 text-gray-800", text: "Ended" },
+            sold: { color: "bg-blue-100 text-blue-800", text: "Sold" },
+            cancelled: { color: "bg-red-100 text-red-800", text: "Cancelled" },
+            reserve_not_met: { color: "bg-orange-100 text-orange-800", text: "Reserve Not Met" },
+        };
+        const { color, text } = config[status] || { color: "bg-gray-100 text-gray-800", text: status };
+        return <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>{text}</span>;
+    };
 
-        if (diffHours < 24 && diffHours > 0) {
-            return { class: "bg-amber-100 text-amber-800", text: "Ending Soon" };
-        } else if (diffHours <= 0) {
-            return { class: "bg-gray-100 text-gray-800", text: "Ended" };
-        } else if (auction.status === 'draft') {
-            return { class: "bg-blue-100 text-blue-800", text: "Upcoming" };
-        } else {
-            return { class: "bg-green-100 text-green-800", text: "Active" };
-        }
+    const getAuctionTypeBadge = (auctionType) => {
+        return auctionType === 'reserve' ? (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                Reserve
+            </span>
+        ) : auctionType === 'standard' ? (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Standard
+            </span>
+        ) : (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                Buy Now
+            </span>
+        );
+    };
+
+    const formatCategory = (slug) => {
+        if (!slug) return "";
+        return String(slug)
+            .split(/[-_]+/)              // split on hyphens or underscores
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(" ");
     };
 
     const formatDate = (dateString) => {
@@ -348,7 +374,7 @@ function AllAuctions() {
                         </div>
 
                         {/* Quick Filters with Status */}
-                        <div className="flex flex-wrap gap-3">
+                        {/* <div className="flex flex-wrap gap-3">
                             <button
                                 onClick={() => setFilter("all")}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
@@ -379,7 +405,7 @@ function AllAuctions() {
                             >
                                 Pending
                             </button>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Auctions Table */}
@@ -397,9 +423,7 @@ function AllAuctions() {
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Initial Price</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Bid</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bids</th>
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Watchers</th>
-                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ends In</th>
-                                            {/* <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> */}
+                                            <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -424,6 +448,18 @@ function AllAuctions() {
                                                             <div className="ml-4">
                                                                 <Link to={`/auction/${auction._id}`} target="_blank" className="font-medium text-gray-900">{auction.title}</Link>
                                                             </div>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                                    {formatCategory(auction?.categories?.[0])}
+                                                                </span>
+                                                                {getAuctionTypeBadge(auction.auctionType)}
+                                                                {auction.featured && (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs rounded-full">
+                                                                        <Star size={10} />
+                                                                        Featured
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="py-4 px-6 text-sm text-gray-900">${auction.auctionType === 'buy_now' ? auction.buyNowPrice : auction.startPrice?.toLocaleString('en-US')}</td>
@@ -437,20 +473,14 @@ function AllAuctions() {
                                                             {auction.bidCount || 0}
                                                         </div>
                                                     </td>
-                                                    <td className="py-4 px-6 text-sm text-gray-900">
-                                                        <div className="flex items-center">
-                                                            <Eye size={14} className="mr-1 text-gray-500" />
-                                                            {auction.watchlistCount || 0}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-sm text-gray-900">
+                                                    {/* <td className="py-4 px-6 text-sm text-gray-900">
                                                         {auction.auctionType === "buy_now" ? auction.status : formatTimeLeft(auction.endDate)}
-                                                    </td>
-                                                    {/* <td className="py-4 px-6 text-sm">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig.class}`}>
-                                                            {statusConfig.text}
-                                                        </span>
                                                     </td> */}
+                                                    <td className="py-4 px-6 text-sm">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig.class}`}>
+                                                            {getStatusBadge(auction?.status, auction?.endDate, auction?.auctionType)}
+                                                        </span>
+                                                    </td>
                                                     <td className="py-4 px-6 text-sm font-medium text-center">
                                                         <div className="relative inline-block">
                                                             <MoreVertical

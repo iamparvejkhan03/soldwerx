@@ -194,11 +194,11 @@ export const sendMessage = async (req, res) => {
         await comm.save();
 
         // ---------- Populate for response ----------
-        await comm.populate("messages.sender", "username firstName lastName userType");
-        await comm.populate("messages.recipient", "username firstName lastName userType");
-        await comm.populate("shippingInfo.updatedBy", "username firstName lastName");
-        await comm.populate("seller", "username firstName lastName email");
-        await comm.populate("winningBidder", "username firstName lastName email");
+        await comm.populate("messages.sender", "username firstName lastName userType email phone emailPreferences");
+        await comm.populate("messages.recipient", "username firstName lastName userType email phone emailPreferences");
+        await comm.populate("shippingInfo.updatedBy", "username firstName lastName email phone emailPreferences");
+        await comm.populate("seller", "username firstName lastName email phone emailPreferences");
+        await comm.populate("winningBidder", "username firstName lastName email phone emailPreferences");
         await comm.populate("auction", "title category finalPrice status");
 
         const newMessage = comm.messages[comm.messages.length - 1];
@@ -211,9 +211,9 @@ export const sendMessage = async (req, res) => {
         // ---------- Email notifications ----------
         const sender = user;
         const seller = await User.findById(auction.seller._id)
-            .select("email firstName lastName username userType");
+            .select("email firstName lastName username userType phone emailPreferences");
         const winningBidder = await User.findById(auction.winner._id)
-            .select("email firstName lastName username userType");
+            .select("email firstName lastName username userType phone emailPreferences");
 
         const sendNotification = (recipientUser, senderUser, auctionData, messageContent, commId) => {
             if (recipientUser && recipientUser.email && recipientUser._id.toString() !== senderUser._id.toString()) {
@@ -337,9 +337,9 @@ export const updateShipping = async (req, res) => {
         await comm.save();
 
         // Populate for response
-        await comm.populate("messages.sender", "username firstName lastName userType");
-        await comm.populate("seller", "username firstName lastName");
-        await comm.populate("winningBidder", "username firstName lastName");
+        await comm.populate("messages.sender", "username firstName lastName email phone emailPreferences userType");
+        await comm.populate("seller", "username firstName lastName email phone emailPreferences");
+        await comm.populate("winningBidder", "username firstName lastName email phone emailPreferences");
         await comm.populate("auction", "title category finalPrice status");
 
         const io = getIO();

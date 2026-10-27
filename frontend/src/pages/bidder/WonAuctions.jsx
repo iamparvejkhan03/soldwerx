@@ -349,8 +349,8 @@ function WonAuctions() {
         const winningBid = auction.finalPrice || auction.currentPrice || auction.finalBid || 0;
         const buyerFee = auction.buyerFeeAmount || 0;
         const tax = auction.taxAmount || 0;
-        const depositAmount = auction?.depositAmount || 0;
-        return winningBid - depositAmount + buyerFee + tax;
+        const depositCharged = (auction?.depositStatus == "charged" || auction?.depositStatus == "credited") ? auction?.depositAmount : 0;
+        return winningBid - depositCharged + buyerFee + tax;
     };
 
     const formatCurrency = (amount) => {
@@ -561,8 +561,11 @@ function WonAuctions() {
                                         <div className="text-right">
                                             <div className="">
                                                 <span className="text-2xl font-bold text-green-600">{formatCurrency(auction.finalBid)}</span>
-                                                {auction?.depositStatus == "charged" && auction?.depositAmount > 0 && (
+                                                {(auction?.depositStatus == "charged" || auction?.depositStatus == "credited") && auction?.depositAmount > 0 && (
                                                     <span className="text-sm font-semibold text-green-600"> (- {formatCurrency(auction.depositAmount)})</span>
+                                                )}
+                                                {(auction?.depositStatus !== "charged" || auction?.depositStatus == "credited" || auction?.depositStatus !== "refunded") && auction?.depositAmount > 0 && (
+                                                    <span className="text-sm font-semibold text-green-600"> (+ {formatCurrency(auction.depositAmount)})</span>
                                                 )}
                                                 {auction?.buyerFeeAmount > 0 && auction?.buyerFeeType !== null && (
                                                     <span className="text-sm font-semibold text-green-600"> (+ {formatCurrency(auction.buyerFeeAmount)})</span>
@@ -572,7 +575,7 @@ function WonAuctions() {
                                                 )}
                                             </div>
                                             {/* <div className="text-sm text-gray-500">Winning Bid</div> */}
-                                            <div className="text-xs text-gray-500 max-w-sm">Winning Amount {auction?.depositStatus == "charged" && auction?.depositAmount > 0 && ' - Bid Deposit'} {auction?.buyerFeeAmount > 0 && auction?.buyerFeeType !== null && " + Buyer's Premimum"} + Tax</div>
+                                            <div className="text-xs text-gray-500 max-w-sm">Winning Amount {(auction?.depositStatus == "charged" || auction?.depositStatus == "credited") && auction?.depositAmount > 0 && ' - Bid Deposit'} {(auction?.depositStatus !== "charged" || auction?.depositStatus !== "credited" || auction?.depositStatus !== "refunded") && auction?.depositAmount > 0 && ' + Bid Deposit'} {auction?.buyerFeeAmount > 0 && auction?.buyerFeeType !== null && " + Buyer's Premimum"} + Tax</div>
                                         </div>
                                     </div>
 
@@ -633,7 +636,7 @@ function WonAuctions() {
                                             )
                                         }
                                         {
-                                            auction?.depositStatus === 'charged' && auction?.depositAmount > 0 && (
+                                            (auction?.depositStatus === 'charged' || auction?.depositStatus == "credited") && auction?.depositAmount > 0 && (
                                                 <div>
                                                     {/* <p className="text-sm text-gray-500">Your Max Bid</p> */}
                                                     <p className="text-sm text-gray-500">Deposit Paid</p>

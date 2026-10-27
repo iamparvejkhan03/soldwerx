@@ -342,13 +342,13 @@ function AllAuctions() {
     };
 
     const formatCategory = (slug) => {
-    if (!slug) return "";
-    return String(slug)
-        .split(/[-_]+/)              // split on hyphens or underscores
-        .filter(Boolean)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ");
-};
+        if (!slug) return "";
+        return String(slug)
+            .split(/[-_]+/)              // split on hyphens or underscores
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(" ");
+    };
 
     return (
         <section className="flex min-h-screen bg-gray-50">

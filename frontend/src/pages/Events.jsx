@@ -152,26 +152,16 @@ function Events() {
 
     // Read URL parameters on page load
     useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const statusParam = searchParams.get('status');
-        const searchParam = searchParams.get('search');
-        const locationParam = searchParams.get('location');
-        const sortByParam = searchParams.get('sortBy');
-        const sortOrderParam = searchParams.get('sortOrder');
-        const featuredParam = searchParams.get('featured');
-
-        const newFilters = { ...uiFilters };
-
-        if (statusParam) newFilters.status = statusParam;
-        if (searchParam) newFilters.search = searchParam;
-        if (locationParam) newFilters.location = locationParam;
-        if (sortByParam) newFilters.sortBy = sortByParam;
-        if (sortOrderParam) newFilters.sortOrder = sortOrderParam;
-        if (featuredParam) newFilters.featured = featuredParam;
-
+        const sp = new URLSearchParams(location.search);
+        const newFilters = {
+            status: sp.get('status') || '',
+            search: sp.get('search') || '',
+            location: sp.get('location') || '',
+            sortBy: sp.get('sortBy') || 'eventDate',
+            sortOrder: sp.get('sortOrder') || 'asc',
+            featured: sp.get('featured') || '',
+        };
         setUiFilters(newFilters);
-
-        // Fetch events with the initial filters
         fetchEvents(1, newFilters);
     }, [location.search]);
 
@@ -223,31 +213,22 @@ function Events() {
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
-        const newFilters = {
-            ...uiFilters,
-            [name]: value
-        };
-
+        const newFilters = { ...uiFilters, [name]: value };
         setUiFilters(newFilters);
 
-        // Update URL with the new filter
-        const searchParams = new URLSearchParams(location.search);
+        // ✅ use the LIVE url, not useLocation().search
+        const searchParams = new URLSearchParams(window.location.search);
         if (value) {
             searchParams.set(name, value);
         } else {
             searchParams.delete(name);
         }
-        const newUrl = `${location.pathname}?${searchParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
         window.history.replaceState(null, '', newUrl);
 
-        // Use debounce for text inputs
         if (['search', 'location'].includes(name)) {
-            if (debounceTimer) {
-                clearTimeout(debounceTimer);
-            }
-            const timer = setTimeout(() => {
-                fetchEvents(1, newFilters);
-            }, 500);
+            if (debounceTimer) clearTimeout(debounceTimer);
+            const timer = setTimeout(() => fetchEvents(1, newFilters), 500);
             setDebounceTimer(timer);
         } else {
             fetchEvents(1, newFilters);
@@ -267,7 +248,7 @@ function Events() {
         fetchEvents(1, resetFilters);
         setShowMobileFilters(false);
         // Reset URL
-        window.history.replaceState(null, '', location.pathname);
+        window.history.replaceState(null, '', window.location.pathname);
     };
 
     return (
