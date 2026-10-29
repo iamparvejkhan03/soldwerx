@@ -27,7 +27,7 @@ const faqs = [
             },
             {
                 question: "Are there any fees for buyers?",
-                answer: "Yes. A buyer's premium applies to the final sale price. The premium is not fixed — it is auction-specific and is disclosed at the time you bid or make an offer."
+                answer: "Yes. A buyer's premium applies to the final sale price. The premium is not fixed — it is auction-specific and is disclosed at the time you bid or make an offer. Additionally, a 5% non-refundable Winning Bidder Deposit (capped at $5,000) is automatically charged when you win, which is credited toward your final purchase price."
             },
             {
                 question: "Can I inspect an item before bidding?",
@@ -65,7 +65,7 @@ const faqs = [
             },
             {
                 question: "How long do I have to make payment?",
-                answer: "There's no fixed deadline — we ask that payment be made as soon as possible once you've won. Sellers are waiting on it, so please don't delay."
+                answer: "Unless otherwise stated in the specific auction terms, full payment of the remaining balance is due within 24 hours of auction completion. Sellers are waiting on it, so please don't delay."
             },
             {
                 question: "What happens after I make payment?",

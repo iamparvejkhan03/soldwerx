@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
@@ -11,7 +11,7 @@ const BuyerAgreement = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Buyer Agreement</h1>
-                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 24, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 29, 2026</p>
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-blue-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
@@ -65,7 +65,7 @@ const BuyerAgreement = () => {
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-red-600 font-semibold text-sm">
-                                    All bids and direct purchases are legally binding. Bid retractions are not permitted.
+                                    All bids and direct purchases are legally binding. Bid retractions are not permitted, except where expressly allowed by applicable law prior to the completion of the auction.
                                 </p>
                             </div>
                         </div>
@@ -130,7 +130,8 @@ const BuyerAgreement = () => {
                                 <li>Accepted payment methods are card, bank transfer, and cash</li>
                                 <li>All payments must be made in USD and to the SoldWerX collection account</li>
                                 <li>Cash payments are only accepted where permitted and only through the payment instructions provided on the platform — never off-platform</li>
-                                <li>Payment should be made as soon as possible after winning an auction or confirming a direct purchase; failure to pay may result in forfeiture of your deposit</li>
+                                <li><strong>Winning Bidder Deposit:</strong> A 5% non-refundable Winning Bidder Deposit (maximum $5,000) is automatically charged to your registered payment method immediately upon auction completion. This deposit is credited toward your total balance.</li>
+                                <li><strong>Payment Deadline:</strong> Full payment of the remaining balance is due within <strong>24 hours</strong> of auction completion, unless otherwise stated in the auction-specific terms. Failure to pay may result in forfeiture of your deposit.</li>
                                 <li>Assets will not be released until full payment clears</li>
                                 <li>Title and ownership pass only after full payment is received and confirmed</li>
                                 <li>Once payment is verified, we release funds to the seller</li>
@@ -222,7 +223,7 @@ const BuyerAgreement = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Buyer Agreement was last updated on October 24, 2026. It forms an integral part of
+                                This Buyer Agreement was last updated on October 29, 2026. It forms an integral part of
                                 the contract for every asset purchase made through SoldWerX.
                             </p>
                         </div>

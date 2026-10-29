@@ -11,7 +11,7 @@ const TermsOfUse = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Auction Terms & Conditions</h1>
-                    <p className="text-gray-600 mb-6">SOLDWERX INC. | Last Updated: October 24, 2026</p>
+                    <p className="text-gray-600 mb-6">SOLDWERX INC. | Revised: October 27, 2026</p>
 
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
                         <p className="text-red-800 font-semibold mb-2">IMPORTANT – PLEASE READ</p>
@@ -182,21 +182,11 @@ const TermsOfUse = () => {
                         {/* Section 9 */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. BUYER'S PREMIUM</h2>
-                            <p className="text-gray-700 mb-3">A Buyer's Premium is charged in addition to the winning bid.</p>
-                            <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>15% of the winning bid for amounts up to $100,000.</li>
-                                <li>For winning bids over $100,000: $15,000 + 6% of the amount exceeding $100,000.</li>
-                            </ul>
-                            <div className="bg-gray-50 p-4 rounded mb-3">
-                                <p className="font-semibold text-gray-900 mb-2">Example:</p>
-                                <p className="text-gray-700 text-sm">Winning Bid: $150,000</p>
-                                <p className="text-gray-700 text-sm">Buyer's Premium on first $100,000: $15,000</p>
-                                <p className="text-gray-700 text-sm">6% of remaining $50,000: $3,000</p>
-                                <p className="text-gray-700 font-semibold mt-1">Total Buyer's Premium: $18,000</p>
-                            </div>
-                            <p className="text-gray-700 mb-3">There is no maximum Buyer's Premium unless an individual auction specifically states otherwise.</p>
+                            <p className="text-gray-700 mb-3">
+                                A buyer's premium may apply in addition to the winning bid. The applicable rate or fee will be disclosed on the auction or individual lot listing before bidding.
+                            </p>
                             <p className="text-gray-700">
-                                The Buyer's Premium applicable to an auction will be disclosed before bidding and may not be negotiated after bidding has begun.
+                                Buyer's premiums may vary by auction or lot. By placing a bid, the bidder agrees to the buyer's premium disclosed for that auction or lot.
                             </p>
                         </div>
 
@@ -706,79 +696,6 @@ const TermsOfUse = () => {
                             <p className="text-gray-700">constitute the agreement governing participation in the auction.</p>
                         </div>
 
-                        {/* Auction Summary Table */}
-                        <div className="border-t pt-8 mt-8">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">AUCTION SUMMARY</h2>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left text-gray-700 border-collapse border border-gray-300">
-                                    <thead className="text-xs text-gray-900 uppercase bg-gray-100">
-                                        <tr>
-                                            <th className="px-4 py-3 border border-gray-300 w-1/3">TERM</th>
-                                            <th className="px-4 py-3 border border-gray-300 w-2/3">SUMMARY</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Currency</td>
-                                            <td className="px-4 py-3">USD</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Buyer's Premium</td>
-                                            <td className="px-4 py-3">15% on winning bids up to $100,000.<br />For winning bids over $100,000: $15,000 + 6% of the amount over $100,000.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Winning Bidder Deposit</td>
-                                            <td className="px-4 py-3">5% of the winning bid.<br />Maximum deposit: $5,000.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Deposit Status</td>
-                                            <td className="px-4 py-3">NON-REFUNDABLE upon Buyer default to the fullest extent permitted by law.<br />The deposit is credited toward the purchase balance when the transaction is completed.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Unsuccessful Bidders</td>
-                                            <td className="px-4 py-3">No Winning Bidder Deposit charged.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Deposit Timing</td>
-                                            <td className="px-4 py-3">Automatically charged to the successful bidder's registered payment method immediately following completion of the auction.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Remaining Balance</td>
-                                            <td className="px-4 py-3">Generally payable by wire transfer or another SOLDWERX-approved payment method.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Payment Due</td>
-                                            <td className="px-4 py-3">Within 24 hours of auction completion unless otherwise stated.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Extended Bidding</td>
-                                            <td className="px-4 py-3">Unless otherwise stated, a qualifying bid during the final 2 minutes may reset or extend bidding so approximately 2 minutes remain.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Condition</td>
-                                            <td className="px-4 py-3">ALL PROPERTY SOLD AS-IS, WHERE-IS, WITH ALL FAULTS unless expressly stated otherwise.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Inspection</td>
-                                            <td className="px-4 py-3">Strongly recommended before bidding.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50 border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Returns</td>
-                                            <td className="px-4 py-3">No returns, refunds, exchanges, or cancellations after a completed sale except where expressly authorized or required by law.</td>
-                                        </tr>
-                                        <tr className="bg-white border-b">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Shipping & Removal</td>
-                                            <td className="px-4 py-3">Buyer's responsibility unless otherwise stated.</td>
-                                        </tr>
-                                        <tr className="bg-gray-50">
-                                            <td className="px-4 py-3 font-semibold border-r border-gray-300">Sales Tax</td>
-                                            <td className="px-4 py-3">Applicable taxes are additional where required.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
                         {/* Contact */}
                         <div className="border-t pt-6 mt-8">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
@@ -796,7 +713,7 @@ const TermsOfUse = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                These Terms were last updated on October 24, 2026. If you have questions about these Terms,
+                                These Terms were last revised on October 27, 2026. If you have questions about these Terms,
                                 please contact us at {email}.
                             </p>
                         </div>

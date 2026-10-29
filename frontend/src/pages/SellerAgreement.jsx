@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
@@ -11,7 +11,7 @@ const SellerAgreement = () => {
                 {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Seller Agreement</h1>
-                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 24, 2026</p>
+                    <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 29, 2026</p>
 
                     <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
                         <p className="text-green-800 font-semibold mb-2">IMPORTANT – PLEASE READ CAREFULLY</p>
@@ -112,8 +112,8 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. Listing Withdrawal</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Sellers may withdraw listings at any time before bids are received</li>
-                                <li><strong>Withdrawal is not permitted during an active auction</strong> once bids have been placed</li>
+                                <li>Sellers may withdraw listings before completion of the auction when permitted by applicable law and the auction terms</li>
+                                <li><strong>Withdrawal is not permitted during an active auction</strong> once bids have been placed, except as required by applicable law</li>
                                 <li>For direct purchase listings, withdrawal is not permitted once a purchase is confirmed</li>
                                 <li>Unauthorized withdrawal during active bidding may result in account suspension</li>
                             </ul>
@@ -283,7 +283,7 @@ const SellerAgreement = () => {
                         {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
-                                This Seller Agreement was last updated on October 24, 2026. It forms an integral part of
+                                This Seller Agreement was last updated on October 29, 2026. It forms an integral part of
                                 the contract for every asset listing made through SoldWerX.
                             </p>
                         </div>
