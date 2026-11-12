@@ -13,9 +13,9 @@ import about from './about.webp';
 import spinner from './spinner.png';
 
 const otherData = {
-    phone: '+11234567890',
-    email: 'admin@soldwerx.com',
-    address: 'United States',
+    phone: '269-921-0224',
+    email: 'soldwerx@gmail.com',
+    address: 'Michigan, USA',
 }
 
 export {

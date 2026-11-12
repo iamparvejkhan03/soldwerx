@@ -77,7 +77,7 @@ const catalog = [
         lot: "05",
         icon: BarChart3,
         title: "Market insights",
-        desc: "Closed-sale pricing history helps you set a fair ask or know when a bid is genuinely worth chasing.",
+        desc: "Closed-sale bid history helps you set a fair ask or know when a bid is genuinely worth chasing.",
     },
     {
         lot: "06",
@@ -203,7 +203,7 @@ function About() {
                             </p>
 
                             <p className="mt-7 max-w-xl text-base leading-7 text-[#4B4B4B]">
-                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on one flat 5% fee. No surprises, just a straight path from listed to sold.
+                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on one flat 5% seller fee. No surprises, just a straight path from listed to sold.
                             </p>
 
                             <div className="mt-9 flex flex-wrap gap-3">
@@ -283,7 +283,7 @@ function About() {
                             </p>
 
                             <div className="mt-8 space-y-3">
-                                {["Browse verified listings", "Bid in real time", "Skip the wait with Buy Now", "Check pricing history before you commit"].map((item) => (
+                                {["Browse verified listings", "Bid in real time", "Skip the wait with Buy Now", "Check bid history before you commit"].map((item) => (
                                     <div key={item} className="flex items-start gap-3 text-sm text-white/75">
                                         <Check size={15} className="mt-0.5 shrink-0 text-[#F5B51B]" />
                                         {item}
@@ -314,7 +314,7 @@ function About() {
                             </p>
 
                             <div className="mt-8 space-y-3">
-                                {["Reach buyers who are ready to bid", "Run a standard or reserve auction, take offers, or list Buy Now", "One flat 5% fee, nothing hidden", "Track every sale from your account"].map((item) => (
+                                {["Reach buyers who are ready to bid", "Run a standard or reserve auction, take offers, or list Buy Now", "One flat 5% seller fee, nothing hidden", "Track every sale from your account"].map((item) => (
                                     <div key={item} className="flex items-start gap-3 text-sm text-[#4B4B4B]">
                                         <Check size={15} className="mt-0.5 shrink-0 text-[#F5B51B]" />
                                         {item}
