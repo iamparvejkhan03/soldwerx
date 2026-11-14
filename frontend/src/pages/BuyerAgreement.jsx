@@ -2,13 +2,12 @@ import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email } = otherData;
 
 const BuyerAgreement = () => {
     return (
         <section className="pt-28 pb-16 bg-white">
             <Container>
-                {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Buyer Agreement</h1>
                     <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 29, 2026</p>
@@ -22,10 +21,8 @@ const BuyerAgreement = () => {
                     </div>
                 </div>
 
-                {/* Main Content */}
                 <div className="max-w-full mx-auto">
                     <div className="space-y-8">
-                        {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
                                 <strong>SoldWerX</strong> ("we", "our", "us") and you, the buyer ("Buyer"),
@@ -38,30 +35,29 @@ const BuyerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 1 - Eligibility */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX is open to both businesses and private buyers</li>
+                                <li>Buyers must be at least 18 years of age and legally capable of entering into a binding contract</li>
                                 <li>All buyers must register and maintain accurate account information</li>
                                 <li>We reserve the right to verify identity, business details, and eligibility</li>
-                                <li>Buyers must be at least 18 years of age</li>
                             </ul>
                         </div>
 
-                        {/* Section 2 - Binding Contract */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Binding Contract</h2>
                             <p className="text-gray-700 mb-3">A legally binding contract is formed when:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>You win an auction (highest bid at final close)</li>
+                                <li>You win an auction (highest bid at final close, provided the reserve, if any, has been met)</li>
                                 <li>You confirm a direct purchase at the listed price</li>
                                 <li>Your offer is accepted by the seller</li>
                             </ul>
                             <p className="text-gray-700 mb-3">
                                 Auctions use a soft-close rule. If a bid is placed close to the scheduled closing time,
                                 the auction is extended to allow other bidders to respond. The highest bid at the
-                                <strong> final </strong> close wins.
+                                <strong> final </strong> close wins, provided the reserve, if any, has been met. If the
+                                reserve is not met, no sale occurs and no deposit is charged.
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-red-600 font-semibold text-sm">
@@ -70,18 +66,16 @@ const BuyerAgreement = () => {
                             </div>
                         </div>
 
-                        {/* Section 3 - Buyer Fees */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Buyer Fees</h2>
                             <p className="text-gray-700">
                                 A buyer's premium applies to all successful purchases. The premium is not fixed —
-                                it depends on the specific auction and is disclosed at the time you bid or make an
-                                offer, and is clearly displayed before you commit. All fees are in USD and are
-                                non-refundable.
+                                it may follow SoldWerX's global tiered schedule or be set per auction, and is disclosed
+                                at the time you bid or make an offer, and is clearly displayed before you commit.
+                                All fees are in USD and are non-refundable.
                             </p>
                         </div>
 
-                        {/* Section 4 - Asset Condition */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Asset Condition</h2>
                             <p className="text-gray-700 mb-3">All assets are sold:</p>
@@ -97,19 +91,17 @@ const BuyerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 5 - Inspections */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. Inspections</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Inspections are allowed by appointment where available — especially for trucks and equipment</li>
-                                <li>Each listing includes inspection availability and scheduling instructions</li>
+                                <li>Inspection availability, scheduling instructions, and location are posted by the seller on the auction page</li>
                                 <li>If you have questions about a listing, please ask the seller through our secure communication window</li>
                                 <li>We strongly recommend inspecting and/or asking questions before placing a bid or confirming a purchase</li>
                                 <li>Failure to inspect or ask questions before purchasing is at the buyer's sole risk</li>
                             </ul>
                         </div>
 
-                        {/* Section 6 - Concerns After Purchase */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">6. Concerns After Purchase</h2>
                             <p className="text-gray-700 mb-3">
@@ -123,45 +115,44 @@ const BuyerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 7 - Payment */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">7. Payment</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>Accepted payment methods are card, bank transfer, and cash</li>
+                                <li>Remaining purchase balances are generally payable by wire transfer, ACH or another approved electronic payment method when offered, or other payment methods specifically approved by SoldWerX</li>
+                                <li>Credit or debit cards may be accepted for additional amounts when specifically permitted by SoldWerX and its payment processor</li>
+                                <li>Cash is accepted only when expressly authorized by SoldWerX, and only through the payment instructions provided on the platform — never off-platform</li>
+                                <li>Personal checks are not accepted unless expressly approved in writing</li>
                                 <li>All payments must be made in USD and to the SoldWerX collection account</li>
-                                <li>Cash payments are only accepted where permitted and only through the payment instructions provided on the platform — never off-platform</li>
-                                <li><strong>Winning Bidder Deposit:</strong> A 5% non-refundable Winning Bidder Deposit (maximum $5,000) is automatically charged to your registered payment method immediately upon auction completion. This deposit is credited toward your total balance.</li>
+                                <li><strong>Winning Bidder Deposit:</strong> A 5% non-refundable Winning Bidder Deposit (maximum $5,000) is automatically charged to your registered payment method when you win — that is, when the auction closes with you as the highest bidder and the reserve, if any, has been met. This deposit is credited toward your total balance.</li>
                                 <li><strong>Payment Deadline:</strong> Full payment of the remaining balance is due within <strong>24 hours</strong> of auction completion, unless otherwise stated in the auction-specific terms. Failure to pay may result in forfeiture of your deposit.</li>
                                 <li>Assets will not be released until full payment clears</li>
                                 <li>Title and ownership pass only after full payment is received and confirmed</li>
-                                <li>Once payment is verified, we release funds to the seller</li>
+                                <li>Funds are released to the seller only after payment has fully cleared, the asset has been collected or delivered, all transaction conditions are satisfied, and no disputes or concerns are pending</li>
                             </ul>
                         </div>
 
-                        {/* Section 8 - Collection & Delivery */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. Collection & Delivery</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Buyer and seller are responsible for arranging and managing pickup, freight, or delivery between themselves</li>
-                                <li>Collection can be arranged directly with the seller after payment is confirmed</li>
+                                <li>Collection and pickup logistics — including pickup address, scheduling, and site-access instructions — are arranged with the seller through the platform's communication window after payment is confirmed</li>
+                                <li>Delivery partner details, tracking identifiers, and estimated delivery dates are entered by the seller and visible to the buyer on the platform</li>
                                 <li>Risk of loss or damage transfers to the buyer upon collection or delivery</li>
                                 <li>Buyers are responsible for insurance and any applicable transport permits from the moment of collection or delivery</li>
-                                <li>Tracking, bill of lading, or shipping labels can be shared through our secure communication window</li>
                             </ul>
                         </div>
 
-                        {/* Section 9 - Communication Rules */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Communication Rules</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
-                                <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
-                                <li>Only tracking, shipping, or bill of lading labels may be shared through the secure communication window</li>
+                                <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) for the purpose of communicating or transacting outside the platform is prohibited</li>
+                                <li>After payment is confirmed, buyers and sellers may exchange the pickup and delivery logistics necessary to complete collection — including pickup address, scheduling, and site-access instructions — through the platform's communication window</li>
+                                <li>Delivery partner details, tracking identifiers, and estimated delivery dates are entered by the seller and visible to the buyer on the platform</li>
                                 <li>Off-platform communication may result in account suspension</li>
                             </ul>
                         </div>
 
-                        {/* Section 10 - Default & Enforcement */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">10. Default & Enforcement</h2>
                             <p className="text-gray-700 mb-2">If payment is not completed as required, we may:</p>
@@ -174,7 +165,6 @@ const BuyerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 11 - Limitation of Liability */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Limitation of Liability</h2>
                             <p className="text-gray-700">
@@ -185,7 +175,6 @@ const BuyerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 12 - Governing Law */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
@@ -194,7 +183,6 @@ const BuyerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 13 - Entire Agreement */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">13. Entire Agreement</h2>
                             <p className="text-gray-700">
@@ -203,7 +191,6 @@ const BuyerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Acceptance & Contact */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Acceptance & Contact</h2>
                             <p className="text-gray-700 mb-4">
@@ -220,7 +207,6 @@ const BuyerAgreement = () => {
                             </div>
                         </div>
 
-                        {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Buyer Agreement was last updated on October 29, 2026. It forms an integral part of
@@ -229,7 +215,6 @@ const BuyerAgreement = () => {
                         </div>
                     </div>
 
-                    {/* Navigation Links */}
                     <div className="mt-12 pt-8 border-t">
                         <div className="flex flex-wrap gap-3">
                             <Link

@@ -2,13 +2,12 @@ import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email } = otherData;
 
 const SellerAgreement = () => {
     return (
         <section className="pt-28 pb-16 bg-white">
             <Container>
-                {/* Header */}
                 <div className="max-w-full mx-auto mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Seller Agreement</h1>
                     <p className="text-gray-600 mb-6">SoldWerX | Last Updated: October 29, 2026</p>
@@ -22,10 +21,8 @@ const SellerAgreement = () => {
                     </div>
                 </div>
 
-                {/* Main Content */}
                 <div className="max-w-full mx-auto">
                     <div className="space-y-8">
-                        {/* Introduction */}
                         <div className="mb-8">
                             <p className="text-gray-700 mb-4">
                                 <strong>SoldWerX</strong> ("we", "our", "us") and you, the seller ("Seller"),
@@ -38,35 +35,38 @@ const SellerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 1 - Eligibility */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">1. Eligibility</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX is open to both trade sellers and private individuals</li>
                                 <li>Trade sellers include dealers, fleet operators, equipment resellers, and estate representatives</li>
+                                <li>Sellers must be at least 18 years of age and legally capable of entering into a binding contract</li>
                                 <li>All sellers must register and maintain accurate account information</li>
                                 <li>We may verify identity, business details, or eligibility where required by law</li>
-                                <li>Sellers must be at least 18 years of age</li>
                             </ul>
                         </div>
 
-                        {/* Section 2 - Seller Fees */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Seller Fees</h2>
                             <p className="text-gray-700 mb-3">
-                                Seller fees are listing-specific and disclosed up front before you list. The applicable
-                                fee is deducted from the sale proceeds, and there are no hidden charges beyond the
-                                disclosed fee.
+                                SoldWerX applies a default seller commission of 15% on the first $50,000 of the
+                                final sale price, 10% on the portion from $50,000 to $100,000, and 5% on any portion
+                                above $100,000 — each rate applying only to the slice of the sale price within its band.
+                                No listing fees are charged, and no featured-placement upsells apply.
+                            </p>
+                            <p className="text-gray-700 mb-3">
+                                An individual auction may carry a different commission structure set by an administrator.
+                                Where it does, that structure is clearly disclosed before you list, and it supersedes the
+                                default for that auction.
                             </p>
                             <p className="text-gray-700 mb-2">Important notes:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>The applicable seller fee is clearly displayed before listing</li>
-                                <li>Fees are deducted from sale proceeds</li>
+                                <li>The applicable commission is clearly displayed before you list</li>
+                                <li>Commission is deducted from sale proceeds</li>
                                 <li>All fees are in USD</li>
                             </ul>
                         </div>
 
-                        {/* Section 3 - Seller Responsibilities */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">3. Seller Responsibilities</h2>
                             <p className="text-gray-700 mb-2">Sellers are solely responsible for:</p>
@@ -75,6 +75,8 @@ const SellerAgreement = () => {
                                 <li>Uploading clear, honest photographs, including of any defects or damage</li>
                                 <li>Ensuring all descriptions are truthful and not misleading</li>
                                 <li>Disclosing accurate hours, mileage, year, make, model, VIN/serial number, and any known mechanical issues</li>
+                                <li>Entering accurate inspection availability, scheduling instructions, and location details at the time of listing creation</li>
+                                <li>Keeping delivery partner details, tracking identifiers, and estimated delivery dates current through the platform</li>
                                 <li>Responding to buyer questions through our secure communication window</li>
                                 <li>Cooperating with buyer inspection requests where the listing offers inspections</li>
                                 <li>Complying with all applicable laws, including any licensing or title transfer requirements</li>
@@ -87,7 +89,6 @@ const SellerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 4 - Listing Accuracy */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">4. Listing Accuracy</h2>
                             <p className="text-gray-700 mb-2">Sellers must ensure:</p>
@@ -108,7 +109,6 @@ const SellerAgreement = () => {
                             </div>
                         </div>
 
-                        {/* Section 5 - Listing Withdrawal */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. Listing Withdrawal</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
@@ -119,18 +119,18 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 6 - Contract Formation */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">6. Contract Formation</h2>
                             <p className="text-gray-700 mb-3">A legally binding contract is formed when:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-3">
-                                <li>A buyer wins an auction (highest bid at final close)</li>
+                                <li>A buyer wins an auction (highest bid at final close, provided the reserve, if any, has been met)</li>
                                 <li>A buyer confirms a direct purchase at the listed price</li>
                             </ul>
                             <p className="text-gray-700 mb-3">
                                 Auctions use a soft-close rule. If a bid is placed close to the scheduled closing time,
                                 the auction is extended to allow other bidders to respond. The highest bid at the
-                                <strong> final </strong> close wins.
+                                <strong> final </strong> close wins, provided the reserve, if any, has been met. If the
+                                reserve is not met, no contract is formed and the asset is not sold.
                             </p>
                             <div className="bg-gray-50 p-4 rounded">
                                 <p className="text-gray-700 font-semibold mb-2">Seller's Obligation:</p>
@@ -141,13 +141,12 @@ const SellerAgreement = () => {
                             </div>
                         </div>
 
-                        {/* Section 7 - Payment to Sellers */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">7. Payment to Sellers</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>SoldWerX collects full payment from buyers in USD via the platform's accepted methods — card, bank transfer, and cash where permitted</li>
+                                <li>SoldWerX collects full payment from buyers in USD to the SoldWerX collection account via wire transfer, ACH or another approved electronic method, other methods specifically approved by SoldWerX, or cash where expressly authorized</li>
                                 <li>Cash is accepted only through the payment instructions provided on the platform — never off-platform</li>
-                                <li>The applicable seller fee is deducted from the sale proceeds</li>
+                                <li>The applicable seller commission is deducted from the sale proceeds</li>
                                 <li>Payment to sellers is processed after:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
                                     <li>• Buyer's payment has fully cleared into the SoldWerX collection account</li>
@@ -159,20 +158,19 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 8 - Transfer of Assets */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. Transfer of Assets</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Sellers must make assets available for pickup, freight, or delivery promptly after payment is confirmed</li>
-                                <li>Sellers must cooperate with buyers to arrange pickup, freight, or delivery</li>
+                                <li>Sellers must cooperate with buyers to arrange pickup, freight, or delivery through the platform's communication window</li>
+                                <li>Pickup logistics — including pickup address, scheduling, and site-access instructions — are exchanged with the buyer through the platform's communication window</li>
+                                <li>Sellers enter delivery partner details, tracking identifiers, and estimated delivery dates on the platform for the buyer to access</li>
                                 <li>Title and ownership transfer only after full payment is received and confirmed by SoldWerX</li>
                                 <li>Risk transfers to buyer upon collection or delivery, whichever occurs first</li>
                                 <li>Sellers must provide any applicable title documents, bills of sale, or release of lien as required by law</li>
-                                <li>Tracking, bill of lading, or shipping labels can be shared through our secure communication window</li>
                             </ul>
                         </div>
 
-                        {/* Section 9 - Seller Default */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. Seller Default</h2>
                             <p className="text-gray-700 mb-2">If a seller fails to transfer assets after a sale:</p>
@@ -190,7 +188,6 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 10 - Asset Not as Described */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">10. Asset Not as Described</h2>
                             <p className="text-gray-700 mb-2">
@@ -208,18 +205,17 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 11 - Communication Rules */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">11. Communication Rules</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>All communication between buyers and sellers must go through the SoldWerX platform</li>
-                                <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) is strictly prohibited</li>
-                                <li>Only tracking, bill of lading, or shipping labels may be shared through the secure communication window</li>
+                                <li>Sharing personal contact information (phone numbers, email addresses, physical addresses, etc.) for the purpose of communicating or transacting outside the platform is prohibited</li>
+                                <li>After payment is confirmed, buyers and sellers may exchange the pickup and delivery logistics necessary to complete collection — including pickup address, scheduling, and site-access instructions — through the platform's communication window</li>
+                                <li>Delivery partner details, tracking identifiers, and estimated delivery dates are entered by the seller and visible to the buyer on the platform</li>
                                 <li>Off-platform communication may result in account suspension</li>
                             </ul>
                         </div>
 
-                        {/* Section 12 - Prohibited Conduct */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. Prohibited Conduct</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
@@ -234,7 +230,6 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 13 - Governing Law */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">13. Governing Law & Disputes</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
@@ -243,7 +238,6 @@ const SellerAgreement = () => {
                             </ul>
                         </div>
 
-                        {/* Section 14 - Changes to Agreement */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">14. Changes to This Agreement</h2>
                             <p className="text-gray-700">
@@ -253,7 +247,6 @@ const SellerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Section 15 - Entire Agreement */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">15. Entire Agreement</h2>
                             <p className="text-gray-700">
@@ -262,7 +255,6 @@ const SellerAgreement = () => {
                             </p>
                         </div>
 
-                        {/* Acceptance & Contact */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Acceptance & Contact</h2>
                             <p className="text-gray-700 mb-4">
@@ -280,7 +272,6 @@ const SellerAgreement = () => {
                             </div>
                         </div>
 
-                        {/* Footer Note */}
                         <div className="border-t pt-6 mt-8">
                             <p className="text-gray-500 text-sm">
                                 This Seller Agreement was last updated on October 29, 2026. It forms an integral part of
@@ -289,7 +280,6 @@ const SellerAgreement = () => {
                         </div>
                     </div>
 
-                    {/* Navigation Links */}
                     <div className="mt-12 pt-8 border-t">
                         <div className="flex flex-wrap gap-3">
                             <Link

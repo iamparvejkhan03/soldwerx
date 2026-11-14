@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email } = otherData;
 
 const PrivacyPolicy = () => {
     return (
@@ -106,7 +106,7 @@ const PrivacyPolicy = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>Service providers (IT services, hosting partners, logistics and freight partners)</li>
                                 <li>Payment processors (e.g., Stripe) that securely handle card and bank details. SoldWerX does not store raw financial data on its own servers.</li>
-                                <li>Other users (limited information necessary to complete the transaction, such as shipping/tracking details. This is shared strictly through the platform's secure communication window. Personal contact information is never shared).</li>
+                                <li>Other users (limited information necessary to complete the transaction, such as shipping, tracking, or delivery-partner details. Pickup and delivery logistics — including pickup address, scheduling, and site-access instructions — are shared strictly through the platform's secure communication window. Personal contact information is never shared except as necessary to complete pickup and delivery).</li>
                                 <li>Legal authorities when required by law</li>
                                 <li>Successors in business transfers (mergers, acquisitions)</li>
                             </ul>

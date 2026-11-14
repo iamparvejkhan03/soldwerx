@@ -17,35 +17,17 @@ import { Link } from "react-router-dom";
 
 import { Container } from "../components";
 
-// ============================================================
-// FONTS — move this block into your global stylesheet / index.html
-// once you're happy with it; kept inline here so the page renders
-// correctly on its own.
-// ============================================================
-
-// const FontImports = () => (
-//     <style>{`
-//         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
-//         .font-display { font-family: 'Fraunces', serif; }
-//         .font-body { font-family: 'Inter', sans-serif; }
-//         .font-ledger { font-family: 'IBM Plex Mono', monospace; }
-
-//         @media (prefers-reduced-motion: reduce) {
-//             .seal-spin { animation: none !important; }
-//         }
-//     `}</style>
-// );
-
-// ============================================================
-// DATA
-// ============================================================
-
 const ledger = [
     { value: "500+", label: "sellers served" },
     { value: "450", label: "auctions closed" },
     { value: "600+", label: "active bidders" },
     { value: "1,200", label: "verified accounts" },
+];
+
+const commissionTiers = [
+    { band: "First $50,000", rate: "15%" },
+    { band: "$50,000 – $100,000", rate: "10%" },
+    { band: "Above $100,000", rate: "5%" },
 ];
 
 const catalog = [
@@ -65,7 +47,7 @@ const catalog = [
         lot: "03",
         icon: Wallet,
         title: "Secure payments",
-        desc: "Funds move through bank-verified transfers, held until both sides confirm the asset is as described.",
+        desc: "Funds move through bank-verified transfers, released to the seller only after payment clears, the asset is collected or delivered, all transaction conditions are met, and no disputes are pending.",
     },
     {
         lot: "04",
@@ -100,8 +82,8 @@ const standard = [
     },
     {
         icon: CircleDollarSign,
-        title: "One flat fee",
-        desc: "5% on the final sale, period. No listing fees, no featured-placement upsells, no charges you find out about later.",
+        title: "Commission that steps down",
+        desc: "Our default seller commission is 15% on the first $50,000, 10% on the portion from $50,000 to $100,000, and 5% above that — each rate applying only to the slice of the sale within its band. Per-auction terms may vary, and are always disclosed before listing. No listing fees, no featured-placement upsells.",
     },
     {
         icon: Fingerprint,
@@ -109,10 +91,6 @@ const standard = [
         desc: "From your first question about a listing to the moment it leaves your lot — someone's actually reachable.",
     },
 ];
-
-// ============================================================
-// AUTHENTICATION SEAL — the page's signature visual device
-// ============================================================
 
 function AuthSeal({ size = 240, className = "" }) {
     return (
@@ -152,7 +130,6 @@ function AuthSeal({ size = 240, className = "" }) {
     );
 }
 
-// Torn ticket-stub perforation, used between the buyer / seller panels
 function Perforation() {
     return (
         <div className="relative hidden w-px shrink-0 self-stretch lg:block">
@@ -166,26 +143,14 @@ function Perforation() {
 function LotTag({ number, children }) {
     return (
         <span className="inline-flex items-center gap-2 rounded-full border border-[#F5B51B]/35 bg-[#F5B51B]/[0.06] px-3.5 py-1.5 text-[12px] font-body text-[#8A6A00]">
-            {/* <span className="font-ledger text-[11px] text-[#F5B51B]">No. {number}</span> */}
-            {/* <span className="h-1 w-1 rounded-full bg-[#F5B51B]" /> */}
             {children}
         </span>
     );
 }
 
-// ============================================================
-// ABOUT PAGE
-// ============================================================
-
 function About() {
     return (
         <main className="overflow-hidden bg-white font-body text-[#08090A]">
-            {/* <FontImports /> */}
-
-            {/* =====================================================
-                HERO
-            ====================================================== */}
-
             <section className="relative border-b border-[#E7E5DF] bg-[#F8F7F4]">
                 <Container>
                     <div className="grid gap-12 pb-16 pt-24 md:pt-28 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:pb-20 lg:pt-32">
@@ -203,7 +168,7 @@ function About() {
                             </p>
 
                             <p className="mt-7 max-w-xl text-base leading-7 text-[#4B4B4B]">
-                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on one flat 5% seller fee. No surprises, just a straight path from listed to sold.
+                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on a seller commission that steps down as the price climbs. No surprises, just a straight path from listed to sold.
                             </p>
 
                             <div className="mt-9 flex flex-wrap gap-3">
@@ -228,31 +193,8 @@ function About() {
                             <AuthSeal size={260} />
                         </div>
                     </div>
-
-                    {/* LEDGER */}
-                    {/* <div className="border-t border-[#E7E5DF] py-8">
-                        <p className="font-ledger mb-4 text-[11px] tracking-wide text-[#F5B51B]">By the numbers</p>
-
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
-                            {ledger.map((row, i) => (
-                                <div
-                                    key={row.label}
-                                    className={i !== 0 ? "border-l border-[#E7E5DF] pl-6" : ""}
-                                >
-                                    <div className="font-ledger text-3xl font-medium text-[#08090A] sm:text-4xl">
-                                        {row.value}
-                                    </div>
-                                    <div className="mt-1.5 text-sm text-[#8A6A00]">{row.label}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div> */}
                 </Container>
             </section>
-
-            {/* =====================================================
-                BUYERS & SELLERS
-            ====================================================== */}
 
             <section className="py-14">
                 <Container>
@@ -270,7 +212,6 @@ function About() {
 
                     <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E7E5DF] lg:flex-row lg:items-stretch">
 
-                        {/* BUYERS */}
                         <div className="flex-1 bg-[#08090A] p-8 md:p-12">
                             <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">For buyers</p>
 
@@ -301,7 +242,6 @@ function About() {
 
                         <Perforation />
 
-                        {/* SELLERS */}
                         <div className="flex-1 bg-[#F8F7F4] p-8 md:p-12">
                             <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">For sellers</p>
 
@@ -314,12 +254,42 @@ function About() {
                             </p>
 
                             <div className="mt-8 space-y-3">
-                                {["Reach buyers who are ready to bid", "Run a standard or reserve auction, take offers, or list Buy Now", "One flat 5% seller fee, nothing hidden", "Track every sale from your account"].map((item) => (
+                                {[
+                                    "Reach buyers who are ready to bid",
+                                    "Run a standard or reserve auction, take offers, or list Buy Now",
+                                    "No listing fees, no upsells — you pay commission only when it sells",
+                                    "Track every sale from your account",
+                                ].map((item) => (
                                     <div key={item} className="flex items-start gap-3 text-sm text-[#4B4B4B]">
                                         <Check size={15} className="mt-0.5 shrink-0 text-[#F5B51B]" />
                                         {item}
                                     </div>
                                 ))}
+                            </div>
+
+                            <div className="mt-8">
+                                <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">
+                                    Default seller commission
+                                </p>
+
+                                <div className="mt-3 overflow-hidden rounded-lg border border-[#E7E5DF] bg-white">
+                                    {commissionTiers.map((tier, i) => (
+                                        <div
+                                            key={tier.band}
+                                            className={`flex items-baseline justify-between gap-4 px-4 py-2.5 text-[13px] ${i !== 0 ? "border-t border-[#E7E5DF]" : ""
+                                                }`}
+                                        >
+                                            <span className="text-[#4B4B4B]">{tier.band}</span>
+                                            <span className="font-ledger font-medium text-[#08090A]">{tier.rate}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <p className="mt-2.5 text-[11px] leading-5 text-[#8A6A00]">
+                                    Each rate applies only to the portion of the sale price within its band — an
+                                    $80,000 sale pays $7,500 on the first $50,000 plus $3,000 on the next $30,000,
+                                    or $10,500. Per-auction terms may differ, and are always disclosed before you list.
+                                </p>
                             </div>
 
                             <Link
@@ -332,10 +302,6 @@ function About() {
                     </div>
                 </Container>
             </section>
-
-            {/* =====================================================
-                THE CATALOG (formerly "why choose us")
-            ====================================================== */}
 
             <section className="border-y border-[#E7E5DF] bg-[#F8F7F4] pt-14 pb-5">
                 <Container>
@@ -369,10 +335,6 @@ function About() {
                 </Container>
             </section>
 
-            {/* =====================================================
-                THE STANDARD (formerly "highlights")
-            ====================================================== */}
-
             <section className="py-14">
                 <Container>
                     <div className="mb-12 max-w-7xl">
@@ -398,10 +360,6 @@ function About() {
                             );
                         })}
                     </div>
-
-                    {/* =================================================
-                        CLOSING
-                    ================================================== */}
 
                     <div className="mt-8 overflow-hidden rounded-2xl bg-[#08090A]">
                         <div className="relative flex flex-col gap-8 px-7 py-14 md:flex-row md:items-center md:justify-between md:px-12 md:py-16 lg:px-16">

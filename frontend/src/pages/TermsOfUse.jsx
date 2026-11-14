@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Container } from "../components";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email } = otherData;
 
 const TermsOfUse = () => {
     return (
@@ -93,7 +93,7 @@ const TermsOfUse = () => {
                                 By registering a payment method, the bidder authorizes SOLDWERX and/or its payment processor to securely store or tokenize the payment credential for use in accordance with these Terms.
                             </p>
                             <p className="text-gray-700 mb-3">
-                                The bidder specifically authorizes SOLDWERX to automatically charge the Winning Bidder Deposit described in Section 8 if the bidder becomes the successful Buyer.
+                                The bidder specifically authorizes SOLDWERX to automatically charge the Winning Bidder Deposit described in Section 8 if the bidder becomes the successful Buyer (that is, the highest bidder at final close, provided the reserve, if any, has been met).
                             </p>
                             <p className="text-gray-700 mb-3">
                                 SOLDWERX does not require a large monetary authorization hold merely to participate in ordinary bidding unless an individual auction expressly provides otherwise.
@@ -118,7 +118,7 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">5. BIDS & AUCTION COMPLETION</h2>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>A bid constitutes an offer to purchase the property at the amount bid subject to these Terms.</li>
-                                <li>An auction sale becomes complete when the SOLDWERX auction system closes the applicable lot and identifies the successful bidder, or when completion is otherwise announced in accordance with applicable law.</li>
+                                <li>An auction sale becomes complete when the SOLDWERX auction system closes the applicable lot and identifies the successful bidder, provided the reserve, if any, has been met, or when completion is otherwise announced in accordance with applicable law.</li>
                                 <li>After the sale has been completed, the winning bid is binding and the successful bidder becomes the Buyer.</li>
                                 <li>Prior to completion of the auction, a bidder may have rights to retract a bid under applicable law.</li>
                                 <li>Where applicable law permits a bid retraction before completion, the bidder must promptly communicate the retraction through the available platform procedure or directly to SOLDWERX before the auction is completed.</li>
@@ -147,6 +147,7 @@ const TermsOfUse = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5 mb-4">
                                 <li>A reserve may be enforced through the SOLDWERX auction system without disclosure of the reserve amount unless disclosure is required by law.</li>
                                 <li>Property offered with reserve may be withdrawn before completion of the sale to the extent permitted by applicable law.</li>
+                                <li>If the reserve is not met by the final close, no sale occurs, no contract is formed, and no Winning Bidder Deposit is charged.</li>
                             </ul>
                             <p className="font-semibold text-gray-900 mb-2">Seller Bidding / Shill Bidding</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
@@ -163,7 +164,7 @@ const TermsOfUse = () => {
                             <h2 className="text-xl font-bold text-gray-900 mb-3">8. NON-REFUNDABLE WINNING BIDDER DEPOSIT</h2>
                             <p className="text-gray-700 mb-3">No Winning Bidder Deposit is charged merely to participate in an auction.</p>
                             <p className="font-bold text-gray-900 mb-3">UNSUCCESSFUL BIDDERS ARE NOT CHARGED.</p>
-                            <p className="text-gray-700 mb-2">Upon completion of an auction, the successful Buyer authorizes SOLDWERX to automatically charge a:</p>
+                            <p className="text-gray-700 mb-2">Upon completion of an auction where a winning bid is confirmed and the reserve, if any, has been met, the successful Buyer authorizes SOLDWERX to automatically charge a:</p>
                             <div className="bg-yellow-50 p-4 rounded mb-3">
                                 <p className="text-red-600 font-bold text-center mb-1">5% NON-REFUNDABLE WINNING BIDDER DEPOSIT</p>
                                 <p className="text-red-600 text-center text-sm">(Maximum deposit: $5,000)</p>
@@ -183,10 +184,10 @@ const TermsOfUse = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">9. BUYER'S PREMIUM</h2>
                             <p className="text-gray-700 mb-3">
-                                A buyer's premium may apply in addition to the winning bid. The applicable rate or fee will be disclosed on the auction or individual lot listing before bidding.
+                                A buyer's premium may apply in addition to the winning bid. Buyer's premiums follow SOLDWERX's global tiered schedule unless an auction or lot specifies a different rate, in which case the auction-specific rate applies for that auction or lot.
                             </p>
                             <p className="text-gray-700">
-                                Buyer's premiums may vary by auction or lot. By placing a bid, the bidder agrees to the buyer's premium disclosed for that auction or lot.
+                                The applicable rate or fee will be disclosed on the auction or individual lot listing before bidding. Buyer's premiums may vary by auction or lot. By placing a bid, the bidder agrees to the buyer's premium disclosed for that auction or lot.
                             </p>
                         </div>
 
@@ -232,7 +233,7 @@ const TermsOfUse = () => {
                         {/* Section 12 */}
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">12. PAYMENT DEADLINE</h2>
-                            <p className="text-gray-700 mb-3">The Winning Bidder Deposit is due and may be charged immediately following completion of the auction.</p>
+                            <p className="text-gray-700 mb-3">The Winning Bidder Deposit is due and may be charged immediately following completion of the auction where a winning bid is confirmed and the reserve, if any, has been met.</p>
                             <p className="text-gray-700 mb-2">Unless different terms are posted for the particular auction:</p>
                             <div className="bg-red-50 p-4 rounded mb-3">
                                 <p className="text-red-700 font-bold text-center">FULL PAYMENT IS DUE WITHIN 24 HOURS OF AUCTION COMPLETION.</p>

@@ -392,7 +392,7 @@ function Contact() {
                                     Response Hours
                                 </p>
                                 <p className="mt-1 text-sm font-semibold text-[#08090A]">
-                                    Mon–Fri · 9AM–5PM
+                                    Mon–Fri · 8AM–6PM Central
                                 </p>
                             </div>
                         </div>

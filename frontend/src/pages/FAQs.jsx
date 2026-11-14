@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { otherData } from "../assets";
 
-const { phone, email, address } = otherData;
+const { phone, email } = otherData;
 
 const faqs = [
     {
@@ -23,27 +23,27 @@ const faqs = [
         questions: [
             {
                 question: "Who can bid on SoldWerX?",
-                answer: "Anyone. SoldWerX is open to individuals and businesses — whether you're sourcing equipment for a job, adding to a fleet, or buying your first asset at auction."
+                answer: "Anyone 18 or older with a registered SoldWerX account and accurate account information. SoldWerX is open to individuals and businesses — whether you're sourcing equipment for a job, adding to a fleet, or buying your first asset at auction."
             },
             {
                 question: "Are there any fees for buyers?",
-                answer: "Yes. A buyer's premium applies to the final sale price. The premium is not fixed — it is auction-specific and is disclosed at the time you bid or make an offer. Additionally, a 5% non-refundable Winning Bidder Deposit (capped at $5,000) is automatically charged when you win, which is credited toward your final purchase price."
+                answer: "Yes. A buyer's premium applies to the final sale price. The premium is not fixed — it may follow SoldWerX's global tiered schedule or be set per auction, and is disclosed at the time you bid or make an offer. Additionally, a 5% non-refundable Winning Bidder Deposit (capped at $5,000) is automatically charged when you win, which is credited toward your final balance."
             },
             {
                 question: "Can I inspect an item before bidding?",
-                answer: "Yes. Inspections are allowed by appointment where available — especially for trucks and equipment. Each listing includes inspection availability and scheduling instructions. We recommend inspecting anything mechanical or high-value before you commit."
+                answer: "Yes. Inspections are allowed by appointment where available — especially for trucks and equipment. Inspection availability, scheduling instructions, and location are posted on each auction page by the seller. We recommend inspecting anything mechanical or high-value before you commit."
             },
             {
                 question: "What is a reserve auction?",
-                answer: "A reserve auction has a minimum price the seller will accept. You'll see whether the reserve has been met, but not the reserve amount itself. If bidding closes without meeting the reserve, the item doesn't sell."
+                answer: "A reserve auction has a minimum price the seller will accept. You'll see whether the reserve has been met, but not the reserve amount itself. If bidding closes without meeting the reserve, the item doesn't sell — no contract is formed and no deposit is charged."
             },
             {
                 question: "How does bidding work?",
-                answer: "Place your bid before the auction closes. Auctions use soft-close anti-sniping: if a bid is placed close to closing, the auction extends to allow other bidders to respond. After the final close, the highest bid wins. Depending on the listing, you may also be able to make an offer while the auction is live, or skip bidding entirely with Buy Now where available."
+                answer: "Place your bid before the auction closes. Auctions use soft-close anti-sniping: if a bid is placed close to closing, the auction extends to allow other bidders to respond. After the final close, the highest bid wins, provided the reserve, if any, has been met. Depending on the listing, you may also be able to make an offer while the auction is live, or skip bidding entirely with Buy Now where available."
             },
             {
                 question: "Are bids binding?",
-                answer: "Yes. Every bid is a legally binding commitment. Once you win, you're obligated to complete payment and the sale. If you fail to complete the purchase, your deposit may be forfeited."
+                answer: "Yes. Every bid is a legally binding commitment. Once you win — that is, once you're the highest bidder at final close and the reserve, if any, has been met — you're obligated to complete payment and the sale. If you fail to complete the purchase, your deposit may be forfeited."
             },
             {
                 question: "Are items sold with a warranty?",
@@ -61,7 +61,7 @@ const faqs = [
         questions: [
             {
                 question: "What payment methods do you accept?",
-                answer: "We accept card payments, bank transfers, and cash. Available options are shown at checkout or confirmed through the platform."
+                answer: "Remaining purchase balances are generally payable by wire transfer, ACH or another approved electronic payment method when offered, or other payment methods specifically approved by SoldWerX. Credit or debit cards may be accepted for certain amounts when specifically permitted by SoldWerX and its payment processor. Cash is accepted only when expressly authorized by SoldWerX and only through the payment instructions provided on the platform — never off-platform. Personal checks are not accepted unless expressly approved in writing. All payments are made in USD to the SoldWerX collection account."
             },
             {
                 question: "How long do I have to make payment?",
@@ -69,11 +69,11 @@ const faqs = [
             },
             {
                 question: "What happens after I make payment?",
-                answer: "Once your payment clears, we release the funds to the seller. The seller is then notified to arrange pickup or delivery with you directly."
+                answer: "Once your payment clears, SoldWerX notifies the seller to arrange pickup or delivery with you through the platform's communication window. Funds are released to the seller only after payment has fully cleared, the asset has been collected or delivered, all transaction conditions are satisfied, and no disputes or concerns are pending."
             },
             {
                 question: "Is off-platform communication or payment allowed?",
-                answer: "No. All communication, offers, and payments must go through SoldWerX. Taking a deal off-platform — including sharing personal contact details — is prohibited and can result in account suspension."
+                answer: "No. All communication, offers, and payments must go through SoldWerX. Taking a deal off-platform — including sharing personal contact details for that purpose — is prohibited and can result in account suspension."
             }
         ]
     },
@@ -83,19 +83,19 @@ const faqs = [
         questions: [
             {
                 question: "Who arranges shipping or transport?",
-                answer: "The buyer and seller arrange it between themselves. For heavy equipment and vehicles, buyers typically arrange their own freight, but the two of you can agree on whatever works."
+                answer: "The buyer and seller arrange it between themselves through the platform's communication window. For heavy equipment and vehicles, buyers typically arrange their own freight, but the two of you can agree on whatever works. Sellers enter delivery partner details, tracking identifiers, and estimated delivery dates on the platform for the buyer to access."
             },
             {
                 question: "Can I collect the item myself?",
-                answer: "Yes. Self-pickup is common, especially for equipment and trailers. Once payment clears, arrange a time and location directly with the seller."
+                answer: "Yes. Self-pickup is common, especially for equipment and trailers. Once payment clears, arrange pickup logistics — including pickup address, scheduling, and site-access instructions — with the seller through the platform's communication window."
             },
             {
                 question: "Do you handle title transfer for vehicles?",
-                answer: "No. Title transfer is handled between the buyer and the seller directly. We recommend confirming title status and any liens with the seller before bidding."
+                answer: "Title transfer is handled between the buyer and the seller, coordinated through the platform. Title and ownership pass only after full payment is received and confirmed. We recommend confirming title status and any liens with the seller before bidding."
             },
             {
                 question: "Can you share tracking or shipping labels?",
-                answer: "Yes. Sellers can upload tracking details or shipping documents through the platform once the item is on its way. Personal contact information should never be shared outside SoldWerX."
+                answer: "Yes. Sellers can enter delivery partner details, tracking identifiers, and estimated delivery dates through the platform once the item is on its way, and the buyer can access them from the auction's communication page. Personal contact information should never be shared outside SoldWerX except as necessary to complete pickup and delivery through the platform."
             }
         ]
     },
@@ -105,7 +105,7 @@ const faqs = [
         questions: [
             {
                 question: "What are your seller fees?",
-                answer: "Seller fees depend on the specific listing and are disclosed up front."
+                answer: "SoldWerX applies a default seller commission of 15% on the first $50,000 of the final sale price, 10% on the portion from $50,000 to $100,000, and 5% on any portion above $100,000 — each rate applying only to the slice of the sale within its band. An individual auction may carry a different structure, disclosed before you list. There are no listing fees or hidden charges."
             },
             {
                 question: "Do you help with listings?",
@@ -113,7 +113,7 @@ const faqs = [
             },
             {
                 question: "How and when do I get paid?",
-                answer: "Once the buyer's payment clears and the item has been picked up or delivered, we release your funds — minus applicable seller fees. Payouts go out by bank transfer."
+                answer: "Once the buyer's payment has fully cleared, the asset has been collected or delivered, all transaction conditions are satisfied, and no disputes or concerns are pending, SoldWerX releases your funds — minus applicable seller fees. Payouts go out by USD bank transfer to your registered account."
             }
         ]
     },
@@ -139,7 +139,7 @@ const faqs = [
             },
             {
                 question: "How can I contact SoldWerX?",
-                answer: `SoldWerX | Phone: ${otherData.phone} | Email: admin@soldwerx.com`
+                answer: `SoldWerX | Phone: ${phone} | Email: ${email}`
             }
         ]
     }
@@ -193,10 +193,6 @@ function FAQsPage() {
     return (
         <main className="overflow-hidden bg-white text-[#08090A]">
 
-            {/* =====================================================
-                HERO
-            ====================================================== */}
-
             <section className="relative overflow-hidden bg-[#08090A] text-white">
 
                 <div className="pointer-events-none absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-[#F5B51B]/10 blur-[130px]" />
@@ -220,7 +216,6 @@ function FAQsPage() {
                             Search the record below, or browse by topic — bidding, payments, delivery, and selling all get their own section.
                         </p>
 
-                        {/* Search */}
                         <div className="relative mt-10 max-w-2xl">
                             <Search
                                 size={18}
@@ -247,7 +242,6 @@ function FAQsPage() {
                             )}
                         </div>
 
-                        {/* Ledger metadata row */}
                         <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] font-medium text-white/40">
                             <span>{totalQuestions} entries</span>
                             <span className="h-3 w-px bg-white/15" />
@@ -255,24 +249,16 @@ function FAQsPage() {
                             <span className="h-3 w-px bg-white/15" />
                             <span className="flex items-center gap-1.5">
                                 <Clock size={12} className="text-[#F5B51B]" />
-                                Mon–Fri, 9–6 CST
+                                Mon–Fri, 8–6 Central
                             </span>
                         </div>
                     </div>
                 </Container>
             </section>
 
-            {/* =====================================================
-                FAQ WORKSPACE
-            ====================================================== */}
-
             <section className="py-14 md:py-16">
                 <Container>
                     <div className="grid gap-10 lg:grid-cols-[260px_1fr]">
-
-                        {/* =================================================
-                            CATEGORY NAVIGATION
-                        ================================================== */}
 
                         <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
 
@@ -280,7 +266,6 @@ function FAQsPage() {
                                 Browse by section
                             </p>
 
-                            {/* Desktop categories */}
                             <div className="hidden divide-y divide-gray-200 border-y border-gray-200 lg:block">
                                 {faqs.map((category, index) => {
                                     const Icon = category.icon.type;
@@ -322,7 +307,6 @@ function FAQsPage() {
                                 })}
                             </div>
 
-                            {/* Mobile category scroll */}
                             <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {faqs.map((category) => {
                                     const active = activeCategory === category.category;
@@ -342,7 +326,6 @@ function FAQsPage() {
                                 })}
                             </div>
 
-                            {/* Desktop contact box */}
                             <div className="mt-8 hidden rounded-xl border border-gray-200 bg-[#F8F7F4] p-5 lg:block">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#F5B51B]/30 bg-[#F5B51B]/5 text-[#F5B51B]">
                                     <MessageCircleQuestion size={17} />
@@ -366,13 +349,8 @@ function FAQsPage() {
                             </div>
                         </aside>
 
-                        {/* =================================================
-                            QUESTIONS
-                        ================================================== */}
-
                         <div className="min-w-0">
 
-                            {/* Section heading */}
                             <div className="mb-7 flex flex-col gap-2 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
                                 <div>
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5B51B]">
@@ -388,7 +366,6 @@ function FAQsPage() {
                                 </p>
                             </div>
 
-                            {/* No results */}
                             {filteredQuestions.length === 0 && (
                                 <div className="rounded-xl border border-dashed border-gray-200 bg-[#F8F7F4] px-6 py-16 text-center">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-300">
@@ -413,7 +390,6 @@ function FAQsPage() {
                                 </div>
                             )}
 
-                            {/* FAQ list */}
                             <div className="divide-y divide-gray-200 border-t border-gray-200">
                                 {filteredQuestions.map((faq, index) => {
                                     const isOpen = openIndex === index;
@@ -467,10 +443,6 @@ function FAQsPage() {
                                     );
                                 })}
                             </div>
-
-                            {/* =================================================
-                                BOTTOM CONTACT CTA
-                            ================================================== */}
 
                             <div className="relative mt-10 w-full min-w-0 max-w-full overflow-hidden rounded-2xl bg-[#08090A] p-5 sm:p-7 md:p-9">
                                 <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#F5B51B]/10 blur-[80px]" />
