@@ -175,7 +175,7 @@ function About() {
                                 </Link>
 
                                 <Link
-                                    to="/register"
+                                    to="/sell-with-us"
                                     className="inline-flex items-center gap-2 rounded-md border border-[#08090A]/20 px-6 py-3.5 text-sm font-semibold text-[#08090A] transition-colors duration-200 hover:border-[#08090A]/40 hover:bg-[#08090A]/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5B51B]"
                                 >
                                     List an asset
@@ -262,7 +262,7 @@ function About() {
                             </div>
 
                             <Link
-                                to="/register"
+                                to="/sell-with-us"
                                 className="mt-9 inline-flex items-center gap-2 border-b border-[#F5B51B] pb-0.5 text-sm font-semibold text-[#B38C00] transition-colors hover:text-[#8A6A00]"
                             >
                                 Start selling
