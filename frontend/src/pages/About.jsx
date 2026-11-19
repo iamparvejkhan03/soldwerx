@@ -24,12 +24,6 @@ const ledger = [
     { value: "1,200", label: "verified accounts" },
 ];
 
-const commissionTiers = [
-    { band: "First $50,000", rate: "15%" },
-    { band: "$50,000 – $100,000", rate: "10%" },
-    { band: "Above $100,000", rate: "5%" },
-];
-
 const catalog = [
     {
         lot: "01",
@@ -82,8 +76,8 @@ const standard = [
     },
     {
         icon: CircleDollarSign,
-        title: "Commission that steps down",
-        desc: "Our default seller commission is 15% on the first $50,000, 10% on the portion from $50,000 to $100,000, and 5% above that — each rate applying only to the slice of the sale within its band. Per-auction terms may vary, and are always disclosed before listing. No listing fees, no featured-placement upsells.",
+        title: "Commission agreed with you",
+        desc: "A separately agreed seller commission applies to each sale — disclosed before you list. No listing fees, no featured-placement upsells, no charges you find out about later.",
     },
     {
         icon: Fingerprint,
@@ -168,7 +162,7 @@ function About() {
                             </p>
 
                             <p className="mt-7 max-w-xl text-base leading-7 text-[#4B4B4B]">
-                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on a seller commission that steps down as the price climbs. No surprises, just a straight path from listed to sold.
+                                SoldWerX connects buyers and sellers across the United States — a marketplace where every listing is reviewed, every bid is real, and every sale runs on a separately agreed seller commission. No surprises, just a straight path from listed to sold.
                             </p>
 
                             <div className="mt-9 flex flex-wrap gap-3">
@@ -265,31 +259,6 @@ function About() {
                                         {item}
                                     </div>
                                 ))}
-                            </div>
-
-                            <div className="mt-8">
-                                <p className="font-ledger text-[11px] tracking-wide text-[#F5B51B]">
-                                    Default seller commission
-                                </p>
-
-                                <div className="mt-3 overflow-hidden rounded-lg border border-[#E7E5DF] bg-white">
-                                    {commissionTiers.map((tier, i) => (
-                                        <div
-                                            key={tier.band}
-                                            className={`flex items-baseline justify-between gap-4 px-4 py-2.5 text-[13px] ${i !== 0 ? "border-t border-[#E7E5DF]" : ""
-                                                }`}
-                                        >
-                                            <span className="text-[#4B4B4B]">{tier.band}</span>
-                                            <span className="font-ledger font-medium text-[#08090A]">{tier.rate}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <p className="mt-2.5 text-[11px] leading-5 text-[#8A6A00]">
-                                    Each rate applies only to the portion of the sale price within its band — an
-                                    $80,000 sale pays $7,500 on the first $50,000 plus $3,000 on the next $30,000,
-                                    or $10,500. Per-auction terms may differ, and are always disclosed before you list.
-                                </p>
                             </div>
 
                             <Link

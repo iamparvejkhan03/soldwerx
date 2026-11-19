@@ -590,7 +590,7 @@ const Register = () => {
                             </div>
 
                             {/* User Type */}
-                            <div className="border-t pt-6">
+                            {/* <div className="border-t pt-6">
                                 <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-4">
                                     <User size={20} /> <span>User Type</span>
                                 </label>
@@ -652,7 +652,7 @@ const Register = () => {
                                         </div>
                                     </label>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Card + Consent for bidders */}
                             {userType === 'bidder' && (

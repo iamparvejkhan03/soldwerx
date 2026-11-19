@@ -105,7 +105,7 @@ const faqs = [
         questions: [
             {
                 question: "What are your seller fees?",
-                answer: "SoldWerX applies a default seller commission of 15% on the first $50,000 of the final sale price, 10% on the portion from $50,000 to $100,000, and 5% on any portion above $100,000 — each rate applying only to the slice of the sale within its band. An individual auction may carry a different structure, disclosed before you list. There are no listing fees or hidden charges."
+                answer: "Seller commission is separately agreed with you and disclosed before you list. There are no listing fees or hidden charges."
             },
             {
                 question: "Do you help with listings?",
@@ -113,7 +113,7 @@ const faqs = [
             },
             {
                 question: "How and when do I get paid?",
-                answer: "Once the buyer's payment has fully cleared, the asset has been collected or delivered, all transaction conditions are satisfied, and no disputes or concerns are pending, SoldWerX releases your funds — minus applicable seller fees. Payouts go out by USD bank transfer to your registered account."
+                answer: "Once the buyer's payment has fully cleared, the asset has been collected or delivered, all transaction conditions are satisfied, and no disputes or concerns are pending, SoldWerX releases your funds — minus the separately agreed seller commission. Payouts go out by USD bank transfer to your registered account."
             }
         ]
     },

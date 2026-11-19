@@ -49,19 +49,13 @@ const SellerAgreement = () => {
                         <div className="border-t pt-6">
                             <h2 className="text-xl font-bold text-gray-900 mb-3">2. Seller Fees</h2>
                             <p className="text-gray-700 mb-3">
-                                SoldWerX applies a default seller commission of 15% on the first $50,000 of the
-                                final sale price, 10% on the portion from $50,000 to $100,000, and 5% on any portion
-                                above $100,000 — each rate applying only to the slice of the sale price within its band.
-                                No listing fees are charged, and no featured-placement upsells apply.
-                            </p>
-                            <p className="text-gray-700 mb-3">
-                                An individual auction may carry a different commission structure set by an administrator.
-                                Where it does, that structure is clearly disclosed before you list, and it supersedes the
-                                default for that auction.
+                                SoldWerX charges a separately agreed seller commission on each sale. The applicable
+                                commission is agreed with you and clearly disclosed before you list. No listing fees
+                                are charged, and no featured-placement upsells apply.
                             </p>
                             <p className="text-gray-700 mb-2">Important notes:</p>
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
-                                <li>The applicable commission is clearly displayed before you list</li>
+                                <li>The applicable seller commission is clearly displayed before you list</li>
                                 <li>Commission is deducted from sale proceeds</li>
                                 <li>All fees are in USD</li>
                             </ul>
@@ -146,7 +140,7 @@ const SellerAgreement = () => {
                             <ul className="text-gray-700 space-y-2 list-disc pl-5">
                                 <li>SoldWerX collects full payment from buyers in USD to the SoldWerX collection account via wire transfer, ACH or another approved electronic method, other methods specifically approved by SoldWerX, or cash where expressly authorized</li>
                                 <li>Cash is accepted only through the payment instructions provided on the platform — never off-platform</li>
-                                <li>The applicable seller commission is deducted from the sale proceeds</li>
+                                <li>The separately agreed seller commission is deducted from the sale proceeds</li>
                                 <li>Payment to sellers is processed after:</li>
                                 <ul className="pl-5 mt-1 space-y-1">
                                     <li>• Buyer's payment has fully cleared into the SoldWerX collection account</li>
