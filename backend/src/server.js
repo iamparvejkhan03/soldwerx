@@ -1,4 +1,5 @@
 import express from "express";
+import expressSitemapXml from '@lydell/express-sitemap-xml';
 import "dotenv/config";
 import dbConnect from "./db/index.js";
 import cors from "cors";
@@ -31,6 +32,9 @@ import { Server } from "socket.io";
 import { setIO, attachSocketHandlers } from "./utils/socket.js";
 import notificationRouter from "./routes/notification.route.js";
 
+// 👇 Sitemap Imports (Correct)
+import { getSitemapUrls } from "./utils/sitemapUrls.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -50,14 +54,19 @@ try {
     console.error('❌ Failed to start Agenda:', error);
 }
 
+// Standard Middleware
 app.use(compression());
 app.use(express.json({ limit: '16kb' }));
-app.use(express.urlencoded({ limit: '16kb' }));
+app.use(express.urlencoded({ limit: '16kb', extended: true })); // Added extended: true
 
 app.use(cors({
     origin: ['https://www.soldwerx.com', 'https://soldwerx.com', 'https://soldwerx-frontend.onrender.com', 'https://soldwerx-backend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
 }));
+
+// 👇 SITEMAP MIDDLEWARE (Correctly placed BEFORE routes and 404 handlers)
+// This intercepts requests to /sitemap.xml and serves the dynamic XML
+app.use(expressSitemapXml(getSitemapUrls, 'https://soldwerx.com'));
 
 // Health check
 app.get('/api/v1/health', (req, res) => {
@@ -79,7 +88,6 @@ app.use('/api/v1/bid-payments', bidPaymentRouter);
 app.use('/api/v1/contact', contactQueryRouter);
 app.use('/api/v1/offers', offerRouter);
 app.use('/api/v1/buy-now', buyNowRouter);
-// app.use('/api/v1/admin/categories', categoryRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use("/api/v1/communication", communicationRouter);
 app.use("/api/v1/payouts", payoutRouter);
@@ -92,11 +100,11 @@ app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/notifications', notificationRouter);
 
 app.get('/api/v1/time', (req, res) => {
-    res.set('Cache-Control', 'no-store'); // never cache
+    res.set('Cache-Control', 'no-store');
     res.status(200).json({ serverTime: Date.now() });
 });
 
-// 404 handler - SIMPLIFIED VERSION
+// 404 handler - Catches anything that didn't match the routes above
 app.use((req, res, next) => {
     res.status(404).json({
         success: false,
@@ -129,20 +137,14 @@ const io = new Server(server, {
         credentials: true,
     },
     transports: ["websocket", "polling"],
-
-    // Give mobile clients more room before we drop them.
-    // Default is pingInterval 25000 / pingTimeout 20000.
     pingInterval: 20000,
     pingTimeout: 25000,
-
-    // Fail fast on stale connections so server resources free up.
     connectTimeout: 20000,
 });
 
 setIO(io);
 attachSocketHandlers(io);
 
-// Replace: const server = app.listen(PORT, ...)
 server.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
 });

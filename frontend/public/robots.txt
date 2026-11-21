@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /seller/
+Disallow: /bidder/
+Disallow: /dashboard/
+Disallow: /api/
+
+Sitemap: https://soldwerx.com/sitemap.xml

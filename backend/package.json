@@ -16,6 +16,7 @@
     "@aws-sdk/client-s3": "^3.1142.0",
     "@aws-sdk/lib-storage": "^3.1142.0",
     "@google/genai": "^2.22.0",
+    "@lydell/express-sitemap-xml": "^1.1.1",
     "agenda": "^5.0.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
