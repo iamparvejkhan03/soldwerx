@@ -1,4 +1,4 @@
-import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare, Phone, Mail } from "lucide-react";
+import { CalendarDays, CheckSquare, Clock, Download, File, Fuel, Gauge, Gavel, Heart, Loader, MapPin, MessageCircle, PaintBucket, Plane, ShieldCheck, Tag, User, Users, Weight, Zap, Banknote, MessageSquare, Phone, Mail, Share2 } from "lucide-react";
 import { BidConfirmationModal, BuyNowModal, Container, LoadingSpinner, MobileBidStickyBar, PlaceBidModal, ProxyBidSection, SpecificationsSection, TabSection, TimerDisplay, WatchlistButton } from "../components";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { lazy, Suspense, useRef, useState, useEffect } from "react";
@@ -69,6 +69,22 @@ function SingleAuction() {
         setIsMakeOfferModalOpen(false);
         setOfferAmount('');
         setOfferMessage('');
+    };
+
+    // Add this right after const updateAuctionState = ...
+    const handleShare = () => {
+        if (navigator.share) {
+            navigator.share({
+                title: auction?.title,
+                text: auction?.description?.replace(/<[^>]*>/g, '').substring(0, 100),
+                url: window.location.href,
+            }).catch(() => { });
+        } else {
+            // Copy to clipboard fallback
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => toast.success('Link copied to clipboard!'))
+                .catch(() => toast.error('Failed to copy link'));
+        }
     };
 
     useEffect(() => {
@@ -581,6 +597,15 @@ function SingleAuction() {
                                 <span>{auction.offers?.length}</span>
                             </p>
                         )}
+
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center gap-2 border border-gray-200 py-1 px-3 rounded-full cursor-pointer hover:bg-gray-100 transition-colors"
+                            title="Share this auction"
+                        >
+                            <Share2 size={18} />
+                            <span className="hidden sm:inline">Share</span>
+                        </button>
                     </div>
                 </div>
 
